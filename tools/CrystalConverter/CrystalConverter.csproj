@@ -41,5 +41,6 @@
     <AvaloniaResource Include="../../src/Filee.App/Styles/Soft.axaml" Link="Styles/Soft.axaml" />
     <AvaloniaResource Include="../../src/Filee.App/Styles/Icons.axaml" Link="Styles/Icons.axaml" />
     <AvaloniaResource Include="../../src/Filee.App/Assets/Icons/filee.png" Link="Assets/Icons/filee.png" />
+    <AvaloniaResource Include="../../src/Filee.App/Assets/Icons/filee.ico" Link="Assets/Icons/filee.ico" />
   </ItemGroup>
 </Project>
