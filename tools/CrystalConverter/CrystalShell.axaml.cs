@@ -165,7 +165,7 @@ internal sealed partial class CrystalShell : UserControl
     private T Part<T>(string name) where T : Control =>
         this.FindControl<T>(name) ?? throw new InvalidOperationException($"Missing Filee control: {name}");
 
-    public string OutputDirectory => Part<TextBox>("OutputDirectory").Text ?? "";
+    public string OutputPath => Part<TextBox>("OutputDirectory").Text ?? "";
     public bool Cartesian => Part<CheckBox>("CartesianOption").IsChecked == true;
     public DrawingColor CurrentAccent => ToDrawing(_accent);
     public double CurrentOpacity => _opacity / 100;
