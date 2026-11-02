@@ -3,12 +3,12 @@ using System.Windows.Forms;
 
 namespace Filee.CrystalConverter;
 
-internal sealed class MainForm : Form
+internal sealed partial class MainForm : Form
 {
-    private static readonly Color Background = Color.FromArgb(16, 20, 33);
-    private static readonly Color PanelColor = Color.FromArgb(25, 31, 48);
-    private static readonly Color TextColor = Color.FromArgb(230, 237, 247);
-    private static readonly Color Accent = Color.FromArgb(97, 205, 179);
+    private static readonly Color Background = Color.FromArgb(24, 24, 23);
+    private static readonly Color PanelColor = Color.FromArgb(38, 38, 36);
+    private static readonly Color TextColor = Color.FromArgb(241, 239, 232);
+    private static readonly Color Accent = Color.FromArgb(127, 119, 221);
 
     private readonly ListBox _files = new();
     private readonly ListBox _log = new();
@@ -20,98 +20,40 @@ internal sealed class MainForm : Form
     private readonly ConversionWheel _wheel = new();
     private readonly WheelPopup _popup = new();
     private readonly GlobalTriggerHost _global = new();
+    private readonly System.Windows.Forms.Timer _dragGraceTimer = new() { Interval = 350 };
     private readonly List<string> _paths = [];
     private CancellationTokenSource? _cancellation;
     private bool _busy;
+    private bool _popupFromDrag;
 
     public MainForm()
     {
-        Text = "Filee Crystal · POSCAR ↔ CIF";
-        ClientSize = new Size(960, 715);
-        MinimumSize = new Size(960, 715);
-        MaximumSize = new Size(960, 715);
-        MaximizeBox = false;
-        StartPosition = FormStartPosition.CenterScreen;
-        BackColor = Background;
-        ForeColor = TextColor;
-        Font = new Font("Microsoft YaHei UI", 10);
-        KeyPreview = true;
-        AllowDrop = true;
-
-        Controls.Add(TextLabel("Filee Crystal", 29, 20, 440, 47, 24, Accent, true));
-        Controls.Add(TextLabel("独立晶体结构转换器 · VASP POSCAR / CONTCAR ↔ CIF", 31, 71, 720, 30, 10));
-        Controls.Add(TextLabel("Ctrl + 左键拖动（资源管理器）  /  Ctrl + Alt + Space", 580, 26, 350, 57, 9,
-            Color.FromArgb(168, 180, 201)));
-
-        var left = Card(25, 123, 566, 285);
-        Controls.Add(left);
-        left.Controls.Add(TextLabel("结构文件", 18, 11, 220, 29, 12, TextColor, true));
-        left.Controls.Add(TextLabel("支持多选、拖放；无扩展名 POSCAR / CONTCAR 可直接识别", 19, 40, 520, 26, 9,
-            Color.FromArgb(170, 185, 203)));
-        _files.Location = new Point(17, 73);
-        _files.Size = new Size(530, 154);
-        _files.BorderStyle = BorderStyle.None;
-        _files.SelectionMode = SelectionMode.MultiExtended;
-        _files.BackColor = Color.FromArgb(18, 24, 38);
-        _files.ForeColor = TextColor;
-        _files.Font = new Font("Consolas", 10);
-        left.Controls.Add(_files);
-        left.Controls.Add(ActionButton("＋ 添加文件", 17, 236, 145, 35, (_, _) => BrowseFiles()));
-        left.Controls.Add(ActionButton("移除选中", 173, 236, 112, 35, (_, _) => RemoveSelected()));
-        left.Controls.Add(ActionButton("清空列表", 295, 236, 112, 35, (_, _) => ClearFiles()));
-
-        Controls.Add(TextLabel("选择导出格式", 651, 111, 260, 29, 12, TextColor, true));
-        _wheel.Location = new Point(616, 138);
-        _wheel.FormatChosen += target => _ = StartBatchAsync(target);
-        Controls.Add(_wheel);
-
-        var options = Card(25, 427, 909, 93);
-        Controls.Add(options);
-        options.Controls.Add(TextLabel("输出目录", 17, 11, 130, 24, 10, TextColor, true));
-        _output.Location = new Point(130, 10);
-        _output.Size = new Size(610, 27);
-        _output.BackColor = Color.FromArgb(18, 24, 38);
-        _output.ForeColor = TextColor;
-        _output.BorderStyle = BorderStyle.FixedSingle;
-        options.Controls.Add(_output);
-        options.Controls.Add(ActionButton("浏览…", 752, 8, 131, 32, (_, _) => BrowseFolder()));
-        options.Controls.Add(TextLabel("留空则输出到原文件所在文件夹，自动避开已有同名文件", 17, 52, 530, 25, 9,
-            Color.FromArgb(170, 185, 203)));
-        _cartesian.Text = "POSCAR 输出用 Cartesian 坐标（默认 Direct）";
-        _cartesian.Location = new Point(540, 50);
-        _cartesian.Size = new Size(345, 29);
-        _cartesian.ForeColor = TextColor;
-        options.Controls.Add(_cartesian);
-
-        Controls.Add(TextLabel("批量导出记录", 29, 536, 250, 27, 11, TextColor, true));
-        _log.Location = new Point(25, 566);
-        _log.Size = new Size(909, 93);
-        _log.BackColor = PanelColor;
-        _log.ForeColor = TextColor;
-        _log.BorderStyle = BorderStyle.None;
-        _log.Font = new Font("Consolas", 9);
-        Controls.Add(_log);
-
-        _progress.Location = new Point(25, 671);
-        _progress.Size = new Size(585, 13);
-        Controls.Add(_progress);
-        _status.Location = new Point(621, 663);
-        _status.Size = new Size(230, 30);
-        _status.ForeColor = Color.FromArgb(170, 185, 203);
-        _status.TextAlign = ContentAlignment.MiddleRight;
-        Controls.Add(_status);
-        _cancel = ActionButton("取消", 866, 662, 68, 31, (_, _) => _cancellation?.Cancel());
-        _cancel.Enabled = false;
-        Controls.Add(_cancel);
+        BuildLayout();
 
         _popup.FormatChosen += target =>
         {
+            _dragGraceTimer.Stop();
             _popup.Hide();
+            _popupFromDrag = false;
             _ = StartBatchAsync(target);
         };
-        _global.DragStarted += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y)));
+        _popup.FilesDropped += (target, files) =>
+        {
+            _dragGraceTimer.Stop();
+            _popup.Hide();
+            _popupFromDrag = false;
+            AddFiles(files, replace: true);
+            _ = StartBatchAsync(target);
+        };
+        _dragGraceTimer.Tick += (_, _) =>
+        {
+            _dragGraceTimer.Stop();
+            if (_popupFromDrag) _popup.Hide();
+            _popupFromDrag = false;
+        };
+        _global.DragStarted += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y), dragMode: true));
         _global.DragEnded += (x, y) => Post(() => EndExplorerDrag(new Point(x, y)));
-        _global.ShortcutPressed += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y)));
+        _global.ShortcutPressed += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y), dragMode: false));
         _global.Failure += error => Post(() => Log("全局手势不可用：" + error));
 
         DragEnter += (_, e) => e.Effect = e.Data?.GetDataPresent(DataFormats.FileDrop) == true
@@ -131,6 +73,7 @@ internal sealed class MainForm : Form
         FormClosed += (_, _) =>
         {
             _cancellation?.Cancel();
+            _dragGraceTimer.Dispose();
             _global.Dispose();
             _popup.Dispose();
         };
@@ -216,21 +159,23 @@ internal sealed class MainForm : Form
         RefreshFiles();
     }
 
-    private void OpenExplorerWheel(Point at)
+    private void OpenExplorerWheel(Point at, bool dragMode)
     {
         if (_busy || _popup.Visible) return;
         var selection = _global.SelectedFiles();
         if (!selection.Any(path => ConversionBatch.Detect(path) is not null)) return;
         AddFiles(selection, replace: true);
+        _popupFromDrag = dragMode;
         _popup.OpenAt(at);
     }
 
     private void EndExplorerDrag(Point at)
     {
-        if (!_popup.Visible) return;
-        var choice = _popup.HitScreenPoint(at);
-        _popup.Hide();
-        if (choice is { } target) _ = StartBatchAsync(target);
+        if (!_popup.Visible || !_popupFromDrag) return;
+        // The OLE Drop event can arrive slightly after the global mouse-up.
+        // Do not hide the drop target first or Explorer will show "×" and lose the drop.
+        _dragGraceTimer.Stop();
+        _dragGraceTimer.Start();
     }
 
     private void Post(Action action)

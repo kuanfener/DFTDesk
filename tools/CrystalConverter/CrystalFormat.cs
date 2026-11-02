@@ -1,4 +1,4 @@
-// Crystal structures use full precision, periodic fractional coordinates and Ångström units.
+// Crystal structures use double precision internally, periodic fractional coordinates and Ångström units.
 // CIF symmetry operations are expanded before writing POSCAR. POSCAR -> CIF uses P 1;
 // Selective dynamics, oxidation states, disorder and space-group metadata cannot round-trip.
 
@@ -57,7 +57,19 @@ internal static class CrystalFormat
         return number;
     }
 
-    private static string F(double value) => value.ToString("G17", Invariant);
+    // VESTA-style exports: 10 decimals for cell geometry, 8 for atomic positions.
+    // Keep the full double precision internally; this rounding is only for the exported text.
+    private static string PoscarNumber(double value, int decimals)
+    {
+        // Suppress numerical noise such as 7.8e-16 from orthogonal CIF cells,
+        // including the otherwise surprising negative zero in fixed-point output.
+        if (Math.Abs(value) < 0.5 * Math.Pow(10, -decimals)) value = 0;
+        return value.ToString($"F{decimals}", Invariant);
+    }
+
+    private static string PoscarVector(CrystalVector vector, int decimals) =>
+        string.Join("  ", new[] { vector.X, vector.Y, vector.Z }
+            .Select(v => PoscarNumber(v, decimals).PadLeft(decimals + 6)));
     private static string[] Fields(string line) => line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
 
     private static CrystalVector Vector(string line)
@@ -142,7 +154,7 @@ internal static class CrystalFormat
         sb.AppendLine(string.IsNullOrWhiteSpace(structure.Title) ? "Converted crystal structure" : structure.Title.Replace('\n', ' '));
         sb.AppendLine("1.0");
         foreach (var v in new[] { structure.A, structure.B, structure.C })
-            sb.AppendLine($"  {F(v.X)}  {F(v.Y)}  {F(v.Z)}");
+            sb.AppendLine(PoscarVector(v, 10));
         sb.AppendLine(string.Join(" ", elements));
         sb.AppendLine(string.Join(" ", elements.Select(e => structure.Sites.Count(s => s.Element == e).ToString(Invariant))));
         sb.AppendLine(cartesian ? "Cartesian" : "Direct");
@@ -151,7 +163,7 @@ internal static class CrystalFormat
             {
                 var fractional = Wrap(site.Fractional);
                 var v = cartesian ? structure.ToCartesian(fractional) : fractional;
-                sb.AppendLine($"  {F(v.X)}  {F(v.Y)}  {F(v.Z)}");
+                sb.AppendLine(PoscarVector(v, 8));
             }
         return sb.ToString();
     }
@@ -165,12 +177,12 @@ internal static class CrystalFormat
         sb.AppendLine("data_filee");
         sb.AppendLine("_space_group_name_H-M_alt 'P 1'");
         sb.AppendLine("_space_group_IT_number 1");
-        sb.AppendLine($"_cell_length_a {F(structure.A.Length)}");
-        sb.AppendLine($"_cell_length_b {F(structure.B.Length)}");
-        sb.AppendLine($"_cell_length_c {F(structure.C.Length)}");
-        sb.AppendLine($"_cell_angle_alpha {F(Angle(structure.B, structure.C))}");
-        sb.AppendLine($"_cell_angle_beta {F(Angle(structure.A, structure.C))}");
-        sb.AppendLine($"_cell_angle_gamma {F(Angle(structure.A, structure.B))}");
+        sb.AppendLine($"_cell_length_a {PoscarNumber(structure.A.Length, 10)}");
+        sb.AppendLine($"_cell_length_b {PoscarNumber(structure.B.Length, 10)}");
+        sb.AppendLine($"_cell_length_c {PoscarNumber(structure.C.Length, 10)}");
+        sb.AppendLine($"_cell_angle_alpha {PoscarNumber(Angle(structure.B, structure.C), 10)}");
+        sb.AppendLine($"_cell_angle_beta {PoscarNumber(Angle(structure.A, structure.C), 10)}");
+        sb.AppendLine($"_cell_angle_gamma {PoscarNumber(Angle(structure.A, structure.B), 10)}");
         sb.AppendLine("loop_");
         sb.AppendLine("_space_group_symop_operation_xyz");
         sb.AppendLine("'x,y,z'");
@@ -187,7 +199,7 @@ internal static class CrystalFormat
             labels.TryGetValue(site.Element, out var index);
             labels[site.Element] = ++index;
             var v = Wrap(site.Fractional);
-            sb.AppendLine($"{site.Element}{index} {site.Element} {F(v.X)} {F(v.Y)} {F(v.Z)} 1");
+            sb.AppendLine($"{site.Element}{index} {site.Element} {PoscarNumber(v.X, 8)} {PoscarNumber(v.Y, 8)} {PoscarNumber(v.Z, 8)} 1");
         }
         return sb.ToString();
     }

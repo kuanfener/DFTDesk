@@ -93,6 +93,40 @@ public class ConversionTests
     }
 
     [Fact]
+    public void Poscar_export_uses_vesta_style_fixed_precision_and_aligned_columns()
+    {
+        var source = new CrystalStructure("4", new(14.9375, 0, 0),
+            new(7.8057762330853144e-16, 12.7478, 0),
+            new(1.1021821192326179e-15, 1.1021821192326179e-15, 18),
+            [new("C", new(0.98516000000000004, 0.050560000000000001, 0.43648999999999999))]);
+        var text = CrystalFormat.WritePoscar(source);
+        var lines = text.Replace("\r", "").Split('\n');
+
+        Assert.Equal("1.0", lines[1]);
+        Assert.Equal("14.9375000000", lines[2].Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]);
+        Assert.Equal("0.0000000000", lines[3].Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]);
+        Assert.Equal("0.0000000000", lines[4].Split(' ', StringSplitOptions.RemoveEmptyEntries)[0]);
+        Assert.Equal("18.0000000000", lines[4].Split(' ', StringSplitOptions.RemoveEmptyEntries)[2]);
+        Assert.Equal("Direct", lines[7]);
+        Assert.Equal(new[] { "0.98516000", "0.05056000", "0.43649000" },
+            lines[8].Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        Assert.DoesNotContain("E-", text);
+        Assert.DoesNotContain("E+", text);
+        Assert.Equal(1, CrystalFormat.ReadPoscar(text).Sites.Count);
+    }
+
+    [Fact]
+    public void Cif_export_uses_fixed_point_cell_and_site_precision()
+    {
+        var text = CrystalFormat.WriteCif(CrystalFormat.ReadPoscar(Poscar));
+        Assert.Contains("_cell_length_a 4.1000000000", text);
+        Assert.Contains("_atom_site_fract_x", text);
+        Assert.Contains("Si1 Si 0.12500000 0.25000000 0.37500000 1", text);
+        Assert.DoesNotContain("E-", text);
+        Assert.Equal(3, CrystalFormat.ReadCif(text).Sites.Count);
+    }
+
+    [Fact]
     public void Cif_symmetry_expands_and_partial_occupancy_is_rejected()
     {
         var structure = CrystalFormat.ReadCif(InversionCif);
