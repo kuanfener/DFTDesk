@@ -286,6 +286,12 @@
                     <WrapPanel x:Name="AccentSwatches" HorizontalAlignment="Left"/>
                     <StackPanel Orientation="Horizontal" Spacing="10">
                       <TextBlock Classes="label" Text="自定义" VerticalAlignment="Center"/>
+                      <ColorPicker x:Name="AccentPicker" Color="#7F77DD"
+                                   IsAlphaEnabled="False" MinHeight="40" MinWidth="90"
+                                   IsAlphaVisible="False" IsColorSpectrumVisible="True"
+                                   IsColorPaletteVisible="False" IsColorComponentsVisible="False"
+                                   IsColorModelVisible="False" IsColorPreviewVisible="True"
+                                   FlowDirection="LeftToRight"/>
                       <TextBox x:Name="AccentHex" Width="120" PlaceholderText="#7F77DD" LostFocus="OnAccentHexCommit"/>
                     </StackPanel>
                     <TextBlock Classes="caption" Text="柔和预设" FontWeight="SemiBold"/>
