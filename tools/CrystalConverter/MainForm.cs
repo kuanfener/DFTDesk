@@ -214,6 +214,7 @@ internal sealed partial class MainForm : Form
             return;
         }
         _busy = true;
+        _shell.SetBusy(true);
         _cancellation = new CancellationTokenSource();
         _cancel.Enabled = true;
         _progress.Maximum = inputs.Length;
@@ -249,6 +250,7 @@ internal sealed partial class MainForm : Form
             _cancellation.Dispose();
             _cancellation = null;
             _busy = false;
+            _shell.SetBusy(false);
             _cancel.Enabled = false;
             Log($"完成：成功 {success}，失败 {failed}" + (cancelled ? "（已取消）" : ""));
             UpdateStatus();
