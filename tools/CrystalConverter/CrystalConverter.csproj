@@ -31,6 +31,14 @@
     <Compile Include="../../src/Filee.App/Controls/DonutGeometry.cs" Link="OriginalFileeDonut/DonutGeometry.cs" />
     <Compile Include="../../src/Filee.App/Services/Motion.cs" Link="OriginalFileeDonut/Motion.cs" />
     <Compile Include="../../src/Filee.App/Services/KeyNames.cs" Link="OriginalFileeDonut/KeyNames.cs" />
+    <!-- Filee's runtime palette math is the only source of truth for Soft and M3. -->
+    <Compile Include="../../src/Filee.App/Services/SoftPalette.cs" Link="OriginalFileeThemes/SoftPalette.cs" />
+    <Compile Include="../../src/Filee.App/Services/MaterialYouPalette.cs" Link="OriginalFileeThemes/MaterialYouPalette.cs" />
+    <Compile Include="../../src/Filee.App/Services/AppLanguages.cs" Link="OriginalFileeThemes/AppLanguages.cs" />
     <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="Filee.CrystalConverter.FileeIcon.png" />
+    <!-- The standalone shell uses the exact original Filee styles and icon paths. -->
+    <AvaloniaResource Include="../../src/Filee.App/Styles/Soft.axaml" Link="Styles/Soft.axaml" />
+    <AvaloniaResource Include="../../src/Filee.App/Styles/Icons.axaml" Link="Styles/Icons.axaml" />
+    <AvaloniaResource Include="../../src/Filee.App/Assets/Icons/filee.png" Link="Assets/Icons/filee.png" />
   </ItemGroup>
 </Project>
