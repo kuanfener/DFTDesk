@@ -32,13 +32,6 @@ internal static class FileeDonutFactory
             OuterRadius = radius,
             HoleRatio = .42,
             SliceOpacity = .96,
-            CornerRadius = new CornerRadius(16),
-            SliceBrush = new SolidColorBrush(Color.FromRgb(255, 255, 255)),
-            SliceBorderBrush = new SolidColorBrush(Color.FromRgb(222, 219, 238)),
-            CenterBrush = new SolidColorBrush(Color.FromRgb(249, 248, 245)),
-            Foreground = new SolidColorBrush(Color.FromRgb(31, 30, 29)),
-            SecondaryForeground = new SolidColorBrush(Color.FromRgb(107, 106, 102)),
-            DangerBrush = new SolidColorBrush(Color.FromRgb(215, 70, 70)),
         };
         ApplyAccent(donut, accent);
         return donut;
@@ -128,6 +121,7 @@ internal sealed class FileeDonutHost : WinFormsAvaloniaControlHost
         }
     }
 
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public double SliceOpacity
     {
         get => _donut.SliceOpacity;
