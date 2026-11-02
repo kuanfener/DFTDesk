@@ -4,7 +4,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Filee.CrystalConverter.CrystalShell"
-             FontSize="14" FontFamily="Microsoft YaHei UI, Segoe UI, sans-serif"
+             FontSize="14" FontFamily="{DynamicResource AppFontFamily}"
              Foreground="{DynamicResource TextPrimaryBrush}">
   <UserControl.Styles>
     <Style Selector="Border#DropZone">
@@ -43,13 +43,16 @@
       <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
     </Style>
+    <Style Selector="ListBox#Navigation ListBoxItem">
+      <Setter Property="Padding" Value="12,9"/>
+    </Style>
   </UserControl.Styles>
   <Grid ColumnDefinitions="Auto,*">
-    <Border x:Name="NavPane" Width="230" ClipToBounds="True"
+    <Border x:Name="NavPane" Classes="navpane" Width="230" ClipToBounds="True"
             Background="{DynamicResource SurfaceBrush}"
             BorderBrush="{DynamicResource SubtleBorderBrush}" BorderThickness="0,0,1,0">
       <DockPanel Margin="14,18">
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="10" Margin="0,0,0,20">
+        <StackPanel DockPanel.Dock="Top" Classes="navheader" Orientation="Horizontal" Spacing="10">
           <Image Source="avares://Filee.CrystalConverter/Assets/Icons/filee.png" Width="30" Height="30"/>
           <StackPanel x:Name="BrandText" VerticalAlignment="Center">
             <TextBlock Text="Filee" FontSize="18" FontWeight="Bold"/>
@@ -139,7 +142,9 @@
 
     <Border Grid.Column="1" Background="{DynamicResource PageBrush}">
       <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <Grid Margin="32,26,32,32" HorizontalAlignment="Stretch" MaxWidth="980">
+        <ContentControl x:Name="PageHost" Classes="page"
+                        Margin="32,26,32,32" HorizontalAlignment="Stretch" MaxWidth="980">
+        <Grid x:Name="PageContainer">
           <!-- Original Filee homepage structure: title, drop zone and history. -->
           <StackPanel x:Name="HomePage" Spacing="22">
             <TextBlock Classes="h1" Text="首页"/>
@@ -423,6 +428,7 @@
             </Border>
           </StackPanel>
         </Grid>
+        </ContentControl>
       </ScrollViewer>
     </Border>
   </Grid>
