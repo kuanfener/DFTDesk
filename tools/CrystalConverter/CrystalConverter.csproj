@@ -22,6 +22,7 @@
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Win32.Interoperability" />
     <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" />
     <PackageReference Include="SharpHook" />
     <ProjectReference Include="../../src/Filee.Platform.Windows/Filee.Platform.Windows.csproj" />
     <Compile Include="../../src/Filee.App/Services/Triggers/GestureDetector.cs" Link="GestureDetector.cs" />
