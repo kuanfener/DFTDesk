@@ -525,6 +525,11 @@ internal sealed partial class MainForm
         _wheel.AccentColor = color;
         _popup.AccentColor = color;
         if (_themePreviewWheel is not null) _themePreviewWheel.AccentColor = color;
+        foreach (var button in _pages.Values.SelectMany(AllButtons).Where(b => Equals(b.Tag, "accent")))
+        {
+            button.BackColor = color;
+            button.FlatAppearance.BorderColor = color;
+        }
         foreach (var button in swatches.Controls.OfType<Button>())
         {
             var selected = button.BackColor == color;
@@ -533,6 +538,15 @@ internal sealed partial class MainForm
         }
         if (_pageHint is not null)
             _pageHint.Text = $"强调色已更新为 #{color.R:X2}{color.G:X2}{color.B:X2}，弹出轮盘同步生效。";
+    }
+
+    private static IEnumerable<Button> AllButtons(Control parent)
+    {
+        foreach (Control child in parent.Controls)
+        {
+            if (child is Button button) yield return button;
+            foreach (var descendant in AllButtons(child)) yield return descendant;
+        }
     }
 
     private Control CreateAboutPage()
@@ -603,6 +617,7 @@ internal sealed partial class MainForm
             ForeColor = filled ? Color.White : TextColor,
             Font = new Font("Microsoft YaHei UI", 9),
             Cursor = Cursors.Hand,
+            Tag = filled ? "accent" : null,
         };
         button.FlatAppearance.BorderColor = filled ? Accent : Border;
         button.FlatAppearance.BorderSize = 1;
