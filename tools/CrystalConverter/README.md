@@ -1,0 +1,34 @@
+# Filee Crystal · 独立 POSCAR / CIF 转换器
+
+这是一个 **Windows 独立小程序**，与 Filee 主程序分开运行、设置和打包；不会替换或改动主程序的格式分类、轮盘、预设、引擎优先级。
+
+## 功能与操作
+
+- 识别 VASP `POSCAR` / `CONTCAR`（无扩展名）、`.vasp`、`.poscar` 和 `.cif`。
+- 支持多选文件、拖进窗口和批量转换；轮盘上半部输出 CIF、下半部输出 POSCAR 格式。
+- **资源管理器**中选中一个或多个文件，按住 **Ctrl + 鼠标左键拖动**，会在鼠标附近显示独立轮盘；松开到目标扇区开始转换。也支持在资源管理器中选中文件后按 `Ctrl + Alt + Space` 调出轮盘。
+- 可设置统一输出文件夹；留空时保存在源文件所在文件夹。遇到同名文件自动加 `(2)`、`(3)`，**不覆盖输入或已有文件**。
+- 输出 POSCAR 格式时可选择 `Direct`（分数坐标，默认）或 `Cartesian`（笛卡尔坐标）。输出扩展名为 `.vasp`，可按 VASP 习惯重命名为无扩展名 `POSCAR`。
+- 全部转换都在本机完成，不上传结构。
+
+> Filee 主程序的默认手势也是 **Ctrl + 左键拖动**，而不是只按一下 Ctrl。如果同时运行两个程序，它们可能响应同一个全局手势；建议只启用其中一个程序的轮盘。
+
+## 格式支持范围
+
+- POSCAR：VASP 5 的元素行、Direct / Cartesian、常见缩放因子；原子坐标和晶胞完整转换。
+- CIF：晶胞长度/角度、原子位置、显式的对称操作；写出 POSCAR 前展开对称等价位置。
+- CIF 输出使用 `P 1` 全原子位点；空间群元数据不会往返保留。
+- POSCAR 的 Selective dynamics 标记不会写入 CIF。部分占据、无对称操作的非 P1 CIF 以及 VASP 4 不含元素名称的 POSCAR 会给出明确错误，避免静默生成错误结果。
+
+## 下载与构建
+
+GitHub Actions 的 **Crystal Converter (standalone)** 工作流完成后，在构建结果的 Artifacts 中下载 `Filee-CrystalConverter-win-x64`，解压运行 `Filee.CrystalConverter.exe`。它使用 .NET 自包含单文件发布，运行电脑不需要额外安装 .NET。
+
+也可以在安装 .NET 10 SDK 的 Windows 电脑上执行：
+
+```powershell
+dotnet test tools/CrystalConverter.Tests/CrystalConverter.Tests.csproj -c Release
+dotnet publish tools/CrystalConverter/CrystalConverter.csproj -c Release -r win-x64 --self-contained true -o dist/CrystalConverter
+```
+
+这是未签名的开发构建，Windows 可能显示 SmartScreen 提示。请从可信的仓库 Actions 下载并核对来源。

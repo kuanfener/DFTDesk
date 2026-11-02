@@ -1,0 +1,131 @@
+using Filee.CrystalConverter;
+
+namespace Filee.CrystalConverter.Tests;
+
+public class ConversionTests
+{
+    private const string Poscar = """
+        Si O crystal
+        1.0
+        4.1 0 0
+        0.7 4.8 0
+        0.4 0.8 5.2
+        Si O
+        1 2
+        Selective dynamics
+        Direct
+        0.125 0.25 0.375 T F T
+        0.9 0.1 0.2 F F F
+        0.4 0.6 0.8 T T T
+        """;
+
+    private const string InversionCif = """
+        data_iron
+        _cell_length_a 5.2(2)
+        _cell_length_b 6.1
+        _cell_length_c 7.3
+        _cell_angle_alpha 90
+        _cell_angle_beta 102
+        _cell_angle_gamma 90
+        _space_group_IT_number 2
+        loop_
+        _space_group_symop_operation_xyz
+        'x, y, z'
+        '-x, -y, -z'
+        loop_
+        _atom_site_label
+        _atom_site_type_symbol
+        _atom_site_fract_x
+        _atom_site_fract_y
+        _atom_site_fract_z
+        _atom_site_occupancy
+        Fe1 Fe 0.12 0.23 0.34 1
+        """;
+
+    [Fact]
+    public void Format_detection_understands_vasp_and_extensionless_names()
+    {
+        Assert.Equal(ExportFormat.Poscar, ConversionBatch.Detect("POSCAR"));
+        Assert.Equal(ExportFormat.Poscar, ConversionBatch.Detect("contcar"));
+        Assert.Equal(ExportFormat.Poscar, ConversionBatch.Detect("sample.vasp"));
+        Assert.Equal(ExportFormat.Poscar, ConversionBatch.Detect("sample.poscar"));
+        Assert.Equal(ExportFormat.Cif, ConversionBatch.Detect("sample.cif"));
+        Assert.Null(ConversionBatch.Detect("sample.pdb"));
+    }
+
+    [Fact]
+    public void Triclinic_round_trip_preserves_species_cell_and_coordinates()
+    {
+        var initial = CrystalFormat.ReadPoscar(Poscar);
+        var result = CrystalFormat.ReadPoscar(CrystalFormat.WritePoscar(
+            CrystalFormat.ReadCif(CrystalFormat.WriteCif(initial))));
+        Assert.Equal(new[] { "Si", "O", "O" }, result.Sites.Select(s => s.Element));
+        Assert.Equal(initial.Volume, result.Volume, 8);
+        for (var i = 0; i < result.Sites.Count; i++)
+        {
+            Assert.Equal(initial.Sites[i].Fractional.X, result.Sites[i].Fractional.X, 10);
+            Assert.Equal(initial.Sites[i].Fractional.Y, result.Sites[i].Fractional.Y, 10);
+            Assert.Equal(initial.Sites[i].Fractional.Z, result.Sites[i].Fractional.Z, 10);
+        }
+    }
+
+    [Fact]
+    public void Cartesian_poscar_export_and_negative_volume_scale_work()
+    {
+        var source = CrystalFormat.ReadPoscar(Poscar);
+        var cartesian = CrystalFormat.WritePoscar(source, cartesian: true);
+        Assert.Contains("Cartesian", cartesian);
+        var parsed = CrystalFormat.ReadPoscar(cartesian);
+        Assert.Equal(source.Sites[0].Fractional.X, parsed.Sites[0].Fractional.X, 10);
+
+        var negative = """
+            Negative volume
+            -64
+            2 0 0
+            0 2 0
+            0 0 2
+            Fe
+            1
+            Cartesian
+            0.5 1.0 1.5
+            """;
+        Assert.Equal(64, CrystalFormat.ReadPoscar(negative).Volume, 8);
+    }
+
+    [Fact]
+    public void Cif_symmetry_expands_and_partial_occupancy_is_rejected()
+    {
+        var structure = CrystalFormat.ReadCif(InversionCif);
+        Assert.Equal(2, structure.Sites.Count);
+        Assert.Equal(0.88, structure.Sites[1].Fractional.X, 10);
+        var partial = InversionCif.Replace("0.34 1", "0.34 0.5");
+        Assert.Throws<FormatException>(() => CrystalFormat.ReadCif(partial));
+        var missingOperators = InversionCif.Replace(
+            "loop_\n_space_group_symop_operation_xyz\n'x, y, z'\n'-x, -y, -z'\n", "");
+        Assert.Throws<FormatException>(() => CrystalFormat.ReadCif(missingOperators));
+    }
+
+    [Fact]
+    public void Batch_conversion_creates_unique_outputs_without_overwriting_inputs()
+    {
+        var folder = Path.Combine(Path.GetTempPath(), "filee-crystal-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var source = Path.Combine(folder, "POSCAR");
+            File.WriteAllText(source, Poscar);
+            var first = ConversionBatch.ConvertOne(source, folder, ExportFormat.Cif, false);
+            var second = ConversionBatch.ConvertOne(source, folder, ExportFormat.Cif, false);
+            Assert.NotEqual(first, second);
+            Assert.EndsWith("POSCAR.cif", first, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(Poscar, File.ReadAllText(source));
+            var back = ConversionBatch.ConvertOne(first, folder, ExportFormat.Poscar, true);
+            Assert.EndsWith(".vasp", back, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(3, CrystalFormat.ReadPoscar(File.ReadAllText(back)).Sites.Count);
+        }
+        finally
+        {
+            Directory.Delete(folder, recursive: true);
+        }
+    }
+}
