@@ -374,9 +374,11 @@ internal sealed partial class CrystalShell : UserControl
         _collapsed = !_collapsed;
         Part<Border>("NavPane").Width = _collapsed ? 64 : 230;
         Part<Border>("NavPane").Classes.Set("collapsed", _collapsed);
+        Part<DockPanel>("NavDock").Margin = new Thickness(_collapsed ? 10 : 14, 18);
         Part<StackPanel>("BrandText").IsVisible = !_collapsed;
         Part<Grid>("NavFooterButtons").IsVisible = !_collapsed;
         Part<TextBlock>("VersionText").IsVisible = !_collapsed;
+        Part<StackPanel>("CollapsedFooter").IsVisible = _collapsed;
         foreach (var item in Part<ListBox>("Navigation").Items.OfType<ListBoxItem>())
             if (item.Content is StackPanel panel)
                 foreach (var label in panel.Children.OfType<TextBlock>())
