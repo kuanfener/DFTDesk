@@ -202,6 +202,8 @@
   "engine.model3d.description": "3Dモデル（GLB、glTF、STL、OBJ、3MF、PLY）を相互変換します。FBXから各形式への変換と、PNGプレビューの作成にも対応します。",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "地理空間ベクターデータ（GeoJSON、KML、KMZ、GPX、Shapefile、経度・緯度またはWKTのCSV）を相互変換します。\n結果はWGS 84の経度・緯度です。投影座標系のShapefile（UTM、Webメルカトル、ランベルト、アルベルス）も変換します。",
+  "engine.crystal.name": "結晶構造（内蔵）",
+  "engine.crystal.description": "VASP POSCAR / CONTCAR と CIF の結晶構造を相互変換します。原子サイトが完全占有されている構造のみ対応します。",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "ZIP、7Z、RAR、TAR、ISOなどを展開し、ZIP、7Z、TAR.GZ形式で圧縮します（7-Zip）。",
   "engine.ebook.name": "E-books (built-in)",

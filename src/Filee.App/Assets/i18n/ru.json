@@ -209,6 +209,8 @@
   "engine.model3d.description": "3D-модели: GLB, glTF, STL, OBJ, 3MF и PLY друг в друга, FBX — в любой из них, плюс превью в PNG.",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "Векторные геоданные: GeoJSON, KML, KMZ, GPX, Shapefile и CSV (долгота/широта или WKT) друг в друга.\nРезультат — долгота и широта в WGS 84; Shapefile в проекциях (UTM, Web Mercator, Lambert, Albers) пересчитываются.",
+  "engine.crystal.name": "Кристаллические структуры (встроенный)",
+  "engine.crystal.description": "Преобразует кристаллические структуры VASP POSCAR / CONTCAR и CIF в обоих направлениях. Поддерживаются только полностью занятые атомные позиции.",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "Распаковывает ZIP, 7Z, RAR, TAR, ISO и другие, упаковывает в ZIP, 7Z или TAR.GZ (7-Zip).",
   "engine.ebook.name": "E-books (built-in)",

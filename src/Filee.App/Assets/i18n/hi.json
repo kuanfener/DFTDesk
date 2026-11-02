@@ -202,6 +202,8 @@
   "engine.model3d.description": "3D मॉडल: GLB, glTF, STL, OBJ, 3MF और PLY एक-दूसरे में, FBX इनमें से किसी में भी, और PNG प्रीव्यू।",
   "engine.geo.name": "Geospatial vector data (built-in)",
   "engine.geo.description": "भू-स्थानिक वेक्टर डेटा: GeoJSON, KML, KMZ, GPX, Shapefile और CSV (देशांतर/अक्षांश या WKT) एक-दूसरे में।\nनतीजे WGS 84 देशांतर/अक्षांश में होते हैं। प्रोजेक्टेड Shapefile (UTM, Web Mercator, Lambert, Albers) कन्वर्ट किए जाते हैं।",
+  "engine.crystal.name": "क्रिस्टल संरचनाएँ (अंतर्निहित)",
+  "engine.crystal.description": "VASP POSCAR / CONTCAR और CIF क्रिस्टल संरचनाओं के बीच रूपांतरण। केवल पूरी तरह भरे परमाणु स्थल समर्थित हैं।",
   "engine.archive.name": "Archives (7-Zip)",
   "engine.archive.description": "ZIP, 7Z, RAR, TAR, ISO और अन्य को खोलता है, और ZIP, 7Z या TAR.GZ में पैक करता है (7-Zip)।",
   "engine.ebook.name": "E-books (built-in)",
