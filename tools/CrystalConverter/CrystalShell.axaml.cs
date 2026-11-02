@@ -65,6 +65,10 @@ internal sealed partial class CrystalShell : UserControl
             Part<Control>("ThemePage"), Part<Control>("EnginesPage"),
             Part<Control>("AboutPage")
         ];
+        var pageContainer = Part<Grid>("PageContainer");
+        foreach (var page in _pages)
+            pageContainer.Children.Remove(page);
+        Part<ContentControl>("PageHost").Content = null;
 
         _wheel = FileeDonutFactory.Create(125, DrawingColor.FromArgb(127, 119, 221));
         _wheel.SegmentInvoked += (_, index) =>
@@ -169,6 +173,12 @@ internal sealed partial class CrystalShell : UserControl
         _initializing = false;
         ApplyTheme();
         SetPage(0);
+        AttachedToVisualTree += (_, _) =>
+        {
+            var window = TopLevel.GetTopLevel(this);
+            window?.Classes.Set("material-you", _material);
+            window?.Classes.Set("reduced-motion", _reduced);
+        };
     }
 
     private string _savedMode = "System";
@@ -216,8 +226,10 @@ internal sealed partial class CrystalShell : UserControl
     private void SetPage(int index)
     {
         if (index < 0 || index >= _pages.Length) return;
-        for (var i = 0; i < _pages.Length; i++)
-            _pages[i].IsVisible = i == index;
+        var host = Part<ContentControl>("PageHost");
+        if (ReferenceEquals(host.Content, _pages[index])) return;
+        _pages[index].IsVisible = true;
+        host.Content = _pages[index];
     }
 
     private void BuildSwatches()
@@ -269,6 +281,7 @@ internal sealed partial class CrystalShell : UserControl
         }
         Motion.Configure(_reduced, () => false);
         TopLevel.GetTopLevel(this)?.Classes.Set("material-you", _material);
+        TopLevel.GetTopLevel(this)?.Classes.Set("reduced-motion", _reduced);
         FileeDonutFactory.ApplyAccent(_wheel, ToDrawing(_accent));
         FileeDonutFactory.ApplyAccent(_themeWheel, ToDrawing(_accent));
         _wheel.SliceOpacity = _opacity / 100;
@@ -360,6 +373,7 @@ internal sealed partial class CrystalShell : UserControl
     {
         _collapsed = !_collapsed;
         Part<Border>("NavPane").Width = _collapsed ? 64 : 230;
+        Part<Border>("NavPane").Classes.Set("collapsed", _collapsed);
         Part<StackPanel>("BrandText").IsVisible = !_collapsed;
         Part<Grid>("NavFooterButtons").IsVisible = !_collapsed;
         Part<TextBlock>("VersionText").IsVisible = !_collapsed;
