@@ -29,14 +29,14 @@ internal sealed class CrystalAvaloniaApp : Avalonia.Application
     public override void Initialize()
     {
         Styles.Add(new FluentTheme());
-        var root = new Uri("avares://Filee.CrystalConverter/");
+        var root = new Uri("avares://DFTDesk/");
         Styles.Add(new StyleInclude(root)
         {
             Source = new Uri("avares://Avalonia.Controls.ColorPicker/Themes/Fluent/Fluent.xaml"),
         });
         Resources.MergedDictionaries.Add(new ResourceInclude(root)
         {
-            Source = new Uri("avares://Filee.CrystalConverter/Styles/Icons.axaml"),
+            Source = new Uri("avares://DFTDesk/Styles/Icons.axaml"),
         });
         Resources["AppFlowDirection"] = Avalonia.Media.FlowDirection.LeftToRight;
         Resources["common.on"] = "开";
@@ -47,11 +47,11 @@ internal sealed class CrystalAvaloniaApp : Avalonia.Application
         Resources["ColorViewTabBorderBrush"] = Brushes.Transparent;
         Styles.Add(new StyleInclude(root)
         {
-            Source = new Uri("avares://Filee.CrystalConverter/Styles/Soft.axaml"),
+            Source = new Uri("avares://DFTDesk/Styles/Soft.axaml"),
         });
         Styles.Add(new StyleInclude(root)
         {
-            Source = new Uri("avares://Filee.CrystalConverter/DonutStyles.axaml"),
+            Source = new Uri("avares://DFTDesk/DonutStyles.axaml"),
         });
         SoftPalette.ApplyAccent(Resources, Color.Parse("#7F77DD"));
         SoftPalette.ApplyCornerRadius(Resources, 16);
