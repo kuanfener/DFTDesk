@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace Filee.CrystalConverter;
@@ -15,6 +16,7 @@ internal sealed class ConversionWheel : Control
     private Color _accent = Color.FromArgb(127, 119, 221);
 
     public event Action<ExportFormat>? FormatChosen;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color AccentColor
     {
         get => _accent;
@@ -159,6 +161,7 @@ internal sealed class WheelPopup : Form
 
     public event Action<ExportFormat>? FormatChosen;
     public event Action<ExportFormat, string[]>? FilesDropped;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color AccentColor { get => _wheel.AccentColor; set => _wheel.AccentColor = value; }
 
     public WheelPopup()

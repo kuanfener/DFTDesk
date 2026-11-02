@@ -1,5 +1,6 @@
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace Filee.CrystalConverter;
@@ -613,9 +614,13 @@ internal sealed partial class MainForm
 /// <summary>Soft filled cards, matching the rounded surfaces in Filee's Home and Theme pages.</summary>
 internal sealed class RoundedSurface : Panel
 {
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public int Radius { get; set; } = 16;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color FillColor { get; set; } = Color.White;
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public Color StrokeColor { get; set; } = Color.FromArgb(226, 223, 220);
+    [DesignerSerializationVisibility(DesignerSerializationVisibility.Hidden)]
     public float BorderWidth { get; set; } = 1;
 
     public RoundedSurface()
