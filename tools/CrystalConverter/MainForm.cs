@@ -148,6 +148,7 @@ internal sealed partial class MainForm : Form
         _files.Items.Clear();
         foreach (var path in _paths) _files.Items.Add(path);
         _files.EndUpdate();
+        _shell.SetFiles(_paths);
         if (_selectedCount is not null)
             _selectedCount.Text = $"已选择 {_paths.Count} 个结构文件";
         UpdateStatus();
@@ -239,6 +240,7 @@ internal sealed partial class MainForm : Form
                     Log($"✕ {Path.GetFileName(input)}：{ex.Message}");
                 }
                 _progress.Value = Math.Min(inputs.Length, success + failed);
+                _shell.SetProgress((double)(success + failed) / inputs.Length);
             }
         }
         finally
@@ -256,6 +258,7 @@ internal sealed partial class MainForm : Form
     private void Log(string message)
     {
         _log.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
+        _shell.AppendRecord($"[{DateTime.Now:HH:mm:ss}] {message}");
         if (_log.Items.Count > 300) _log.Items.RemoveAt(0);
         _log.TopIndex = _log.Items.Count - 1;
         _log.Visible = true;
@@ -272,5 +275,9 @@ internal sealed partial class MainForm : Form
         }
     }
 
-    private void UpdateStatus() => _status.Text = _busy ? "正在转换…" : $"已选择 {_paths.Count} 个文件";
+    private void UpdateStatus()
+    {
+        _status.Text = _busy ? "正在转换…" : $"已选择 {_paths.Count} 个文件";
+        _shell.SetStatus(_status.Text);
+    }
 }
