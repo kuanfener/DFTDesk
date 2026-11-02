@@ -777,7 +777,8 @@ public static class BuiltInData
     /// <summary>Separate crystal donut: mesh and atomic structure formats are not interchangeable.</summary>
     public static ToolbarProfile CrystalProfile() => new()
     {
-        Id = "crystal", Name = "CIF / POSCAR",
+        Id = "crystal",
+        Name = "CIF / POSCAR",
         Extensions = ["cif", "vasp", "poscar"],
         PresetIds = ["to-cif", "to-poscar"],
         BackPresetIds = ["zip-all"],

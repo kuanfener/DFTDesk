@@ -128,7 +128,7 @@ public class CrystalTests(EngineFixture fx) : IClassFixture<EngineFixture>
     {
         var folder = fx.NewFolder();
         var input = Path.Combine(folder, "POSCAR");
-        await File.WriteAllTextAsync(input, Poscar);
+        await File.WriteAllTextAsync(input, Poscar, TestContext.Current.CancellationToken);
         var cifJob = await fx.ConvertAsync([input], new Preset { TargetFormat = "cif" });
         Assert.True(cifJob.State == JobState.Completed,
             string.Join("; ", cifJob.Files.Select(f => $"{f.ErrorKey}: {f.ErrorDetail}")));
