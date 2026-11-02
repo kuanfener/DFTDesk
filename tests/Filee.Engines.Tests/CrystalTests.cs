@@ -46,6 +46,10 @@ public class CrystalTests(EngineFixture fx) : IClassFixture<EngineFixture>
         """;
 
     [Fact]
+    public void Crystal_engine_reports_a_version_for_the_engines_page() =>
+        Assert.False(string.IsNullOrWhiteSpace(new CrystalConverter().GetStatus().Version));
+
+    [Fact]
     public void Extensionless_POSCAR_and_CONTCAR_are_recognised_without_truncating_names()
     {
         foreach (var name in new[] { "POSCAR", "CONTCAR", "poscar" })
@@ -119,7 +123,7 @@ public class CrystalTests(EngineFixture fx) : IClassFixture<EngineFixture>
     [Fact]
     public void Missing_nontrivial_symmetry_is_not_silently_dropped()
     {
-        var cif = InversionCif.Replace("loop_\n_space_group_symop_operation_xyz\n'x, y, z'\n'-x, -y, -z'\n", "");
+        var cif = InversionCif.Replace("\r\n", "\n").Replace("loop_\n_space_group_symop_operation_xyz\n'x, y, z'\n'-x, -y, -z'\n", "");
         Assert.Throws<FormatException>(() => CrystalFormat.ReadCif(cif));
     }
 

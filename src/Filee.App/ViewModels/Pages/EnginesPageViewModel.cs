@@ -39,7 +39,8 @@ public sealed partial class EngineItemViewModel(IConverter converter, EngineStat
     public string? Version { get; } = status.Version;
 
     /// <summary>What the engine converts (engine.&lt;id&gt;.description), or null when there is no text for it.</summary>
-    public string? Description { get; } = Describe(loc, converter.Id);
+    public string? Description { get; } = Describe(loc, converter.Id)
+        ?? (converter.Id == "crystal" ? status.Detail : null);
 
     public string Conversions { get; } = loc.Format("engines.conversions", converter.Edges.Count);
 

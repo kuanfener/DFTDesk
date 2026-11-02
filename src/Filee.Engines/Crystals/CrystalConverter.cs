@@ -2,13 +2,14 @@
 // No external executables or Python installation are needed.
 
 using Filee.Core.Conversion;
+using Filee.Engines.Infrastructure;
 
 namespace Filee.Engines.Crystals;
 
 public sealed class CrystalConverter : IConverter
 {
     public string Id => "crystal";
-    public string DisplayName => "Crystal structures (built-in)";
+    public string DisplayName => "Crystal structures";
     public int MaxParallelism => 0;
     public IReadOnlyList<ConversionEdge> Edges { get; } =
     [
@@ -16,7 +17,7 @@ public sealed class CrystalConverter : IConverter
         new("cif", "poscar"),
     ];
 
-    public EngineStatus GetStatus() => EngineStatus.Available("VASP POSCAR / CONTCAR ↔ CIF; full-occupancy sites");
+    public EngineStatus GetStatus() => EngineStatus.Available("VASP POSCAR / CONTCAR ↔ CIF; full-occupancy sites", EngineVersions.BuiltIn);
 
     public Task<IReadOnlyList<string>> ConvertAsync(ConversionStep step, IProgress<double>? progress,
         CancellationToken cancellationToken) => Task.Run<IReadOnlyList<string>>(() =>
