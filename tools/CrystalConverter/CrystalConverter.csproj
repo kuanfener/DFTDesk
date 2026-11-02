@@ -4,6 +4,9 @@
     <TargetFramework>net10.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- WinForms SDK otherwise imports System.Drawing and System.Windows.Forms globally,
+         making the original Avalonia DonutMenu types (Point, Control, Pen) ambiguous. -->
+    <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>Filee.CrystalConverter</AssemblyName>
     <RootNamespace>Filee.CrystalConverter</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
