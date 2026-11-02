@@ -202,8 +202,6 @@
   "engine.model3d.description": "Model 3D: GLB, glTF, STL, OBJ, 3MF, dan PLY saling konversi, FBX ke format mana pun, serta pratinjau gambar PNG.",
   "engine.geo.name": "Data vektor geospasial (bawaan)",
   "engine.geo.description": "Data vektor geospasial: GeoJSON, KML, KMZ, GPX, Shapefile, dan CSV (garis bujur/lintang atau WKT) saling konversi.\nHasilnya adalah garis bujur/lintang WGS 84; Shapefile terproyeksi (UTM, Web Mercator, Lambert, Albers) otomatis dikonversi.",
-  "engine.crystal.name": "Struktur kristal (bawaan)",
-  "engine.crystal.description": "Konversi struktur kristal antara VASP POSCAR / CONTCAR dan CIF. Hanya situs atom dengan okupansi penuh yang didukung.",
   "engine.archive.name": "Arsip (7-Zip)",
   "engine.archive.description": "Mengekstrak ZIP, 7Z, RAR, TAR, ISO, dan lainnya, serta mengemas ZIP, 7Z, atau TAR.GZ (7-Zip).",
   "engine.ebook.name": "E-book (bawaan)",

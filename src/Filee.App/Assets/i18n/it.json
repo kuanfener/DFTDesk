@@ -202,8 +202,6 @@
 "engine.model3d.description": "Modelli 3D: GLB, glTF, STL, OBJ, 3MF e PLY convertibili tra loro, FBX in uno qualsiasi di essi, e un'anteprima PNG.",
 "engine.geo.name": "Dati vettoriali geospaziali (integrato)",
 "engine.geo.description": "Dati vettoriali geospaziali: GeoJSON, KML, KMZ, GPX, Shapefile e CSV (longitudine/latitudine o WKT) convertibili tra loro.\nI risultati sono in longitudine/latitudine WGS 84; gli Shapefile proiettati (UTM, Web Mercator, Lambert, Albers) vengono convertiti.",
-"engine.crystal.name": "Strutture cristalline (integrato)",
-"engine.crystal.description": "Converte strutture cristalline tra VASP POSCAR / CONTCAR e CIF. Supporta solo siti atomici con occupazione completa.",
 "engine.archive.name": "Archivi (7-Zip)",
 "engine.archive.description": "Estrae ZIP, 7Z, RAR, TAR, ISO e altri, e crea ZIP, 7Z o TAR.GZ (7-Zip).",
 "engine.ebook.name": "E-book (integrato)",
