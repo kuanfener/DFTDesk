@@ -7,7 +7,13 @@
     <!-- WinForms SDK otherwise imports System.Drawing and System.Windows.Forms globally,
          making the original Avalonia DonutMenu types (Point, Control, Pen) ambiguous. -->
     <ImplicitUsings>disable</ImplicitUsings>
-    <AssemblyName>Filee.CrystalConverter</AssemblyName>
+    <AssemblyName>DFTDesk</AssemblyName>
+    <AssemblyTitle>DFTDesk</AssemblyTitle>
+    <Product>DFTDesk</Product>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
     <RootNamespace>Filee.CrystalConverter</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
