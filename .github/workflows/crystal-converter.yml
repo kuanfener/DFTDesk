@@ -24,6 +24,24 @@ jobs:
       - name: Test POSCAR and CIF conversion
         run: dotnet test tools/CrystalConverter.Tests/CrystalConverter.Tests.csproj -c Release
 
+      - name: Prepare private donation QR resources (optional)
+        shell: pwsh
+        env:
+          DFTDESK_WECHAT_QR_BASE64: ${{ secrets.DFTDESK_WECHAT_QR_BASE64 }}
+          DFTDESK_ALIPAY_QR_BASE64: ${{ secrets.DFTDESK_ALIPAY_QR_BASE64 }}
+        run: |
+          $wechat = $env:DFTDESK_WECHAT_QR_BASE64
+          $alipay = $env:DFTDESK_ALIPAY_QR_BASE64
+          if (-not [string]::IsNullOrWhiteSpace($wechat) -and -not [string]::IsNullOrWhiteSpace($alipay)) {
+            $dir = Join-Path $env:LOCALAPPDATA 'DFTDesk\Donation'
+            New-Item -ItemType Directory -Force -Path $dir | Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $dir 'wechat.png'), [Convert]::FromBase64String($wechat))
+            [IO.File]::WriteAllBytes((Join-Path $dir 'alipay.png'), [Convert]::FromBase64String($alipay))
+            Write-Host 'Private donation QR resources prepared for embedding.'
+          } else {
+            Write-Host 'Donation QR secrets are not configured; the sponsor dialog will show local setup instructions.'
+          }
+
       - name: Publish standalone Windows x64 EXE
         run: dotnet publish tools/CrystalConverter/CrystalConverter.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 
