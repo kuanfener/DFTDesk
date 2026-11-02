@@ -21,6 +21,26 @@
 
 > 独立程序的转换功能仍限定为晶体格式；原版 Filee 侧边栏中的预设、自动转换文件夹等位置在这里显示晶体转换相关的设置/入口，不代表把原版图片、PDF 等所有转换引擎也打包进来。界面源码共享不意味着在所有 Windows DPI 及资源管理器版本上已完成像素级验收，建议结合截图核对。
 
+## DFTDesk 赞助码（本地配置）
+
+- 赞助窗口只显示黑白微信 / 支付宝二维码，不提供下载、保存或复制按钮。
+- **个人支付二维码和支付链接不提交到公开源码仓库。** 本地运行时，将二维码图片放在：
+  - `%LOCALAPPDATA%\\DFTDesk\\Donation\\wechat.png`
+  - `%LOCALAPPDATA%\\DFTDesk\\Donation\\alipay.png`
+- 本机执行 `dotnet publish` 时，项目会自动把上述本地图片嵌入 EXE；也可以仅放在该目录，由运行中的程序读取。
+- 若要让 GitHub Actions 生成带有赞助码的发布包，请在仓库 **Settings → Secrets and variables → Actions** 中添加两个 Repository secrets：`DFTDESK_WECHAT_QR_BASE64` 和 `DFTDESK_ALIPAY_QR_BASE64`。值为对应 PNG 文件的 Base64 内容。工作流只在构建时读取 secrets，不会把支付链接或图片写入源码。
+- Windows PowerShell（已安装 GitHub CLI 并登录）可用以下命令设置 secrets：
+
+```powershell
+$dir = Join-Path $env:LOCALAPPDATA 'DFTDesk\\Donation'
+$wechat = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $dir 'wechat.png')))
+$alipay = [Convert]::ToBase64String([IO.File]::ReadAllBytes((Join-Path $dir 'alipay.png')))
+gh secret set DFTDESK_WECHAT_QR_BASE64 --body $wechat
+gh secret set DFTDESK_ALIPAY_QR_BASE64 --body $alipay
+```
+
+- 二维码只在窗口中显示，不提供应用内导出入口。但屏幕上可见的二维码仍可能被截图、拍照或从 EXE 中提取，不能承诺技术上阻止传播。若不配置 secrets，CI 生成的公开构建不会包含你的个人收款码。
+
 ## 格式支持范围
 
 - POSCAR：VASP 5 的元素行、Direct / Cartesian、常见缩放因子；原子坐标和晶胞完整转换。
