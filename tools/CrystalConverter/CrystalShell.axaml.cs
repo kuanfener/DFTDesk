@@ -390,7 +390,7 @@ internal sealed partial class CrystalShell : UserControl
         catch (System.ComponentModel.Win32Exception) { }
     }
     private void OnGitHub(object? sender, RoutedEventArgs e) => OpenUrl("https://github.com/kuanfener/Filee");
-    private void OnSponsor(object? sender, RoutedEventArgs e) => OpenUrl("https://github.com/kuanfener/Filee");
+    private void OnSponsor(object? sender, RoutedEventArgs e) { /* Enabled after the owner supplies a personal sponsor URL. */ }
     private void OnBrowseFiles(object? sender, RoutedEventArgs e) => BrowseFilesRequested?.Invoke();
     private void OnBrowseFolder(object? sender, RoutedEventArgs e) => BrowseFolderRequested?.Invoke();
     private void OnClearFiles(object? sender, RoutedEventArgs e) => ClearFilesRequested?.Invoke();
