@@ -167,6 +167,10 @@ internal sealed class FileeDonutPopup : IDisposable
             CanResize = false,
             SizeToContent = SizeToContent.WidthAndHeight,
         };
+        // Register the transparent top-level HWND as an OLE drop target, not
+        // only its child donut. Explorer otherwise shows a forbidden cursor
+        // while it is crossing the transparent window frame.
+        DragDrop.SetAllowDrop(_window, true);
         _donut.SegmentInvoked += (_, index) =>
         {
             if (index is 0 or 1)
