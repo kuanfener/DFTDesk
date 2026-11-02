@@ -1,6 +1,6 @@
-# Filee Crystal · 独立 POSCAR / CIF 转换器
+# DFTDesk 1.0.0 · DFT 文件与数据处理工作台
 
-这是一个 **Windows 独立小程序**，与 Filee 主程序分开运行、设置和打包；不会替换或改动主程序的格式分类、轮盘、预设、引擎优先级。
+这是 DFTDesk 的首个正式版本（1.0.0），面向 DFT 与计算材料研究的 Windows 桌面工具平台。当前首批功能是 POSCAR / CONTCAR ⇄ CIF 转换；后续可扩展结构处理、VASP/Gaussian 输出解析和计算数据分析。界面与部分轮盘组件复用 Filee 开源项目的代码，保留其 MIT 许可与版权声明。
 
 ## 功能与操作
 
@@ -15,7 +15,7 @@
 - 数值输出参考 VESTA Export：晶格矢量与 CIF 晶胞参数固定 **10 位小数**，原子坐标固定 **8 位小数**，小量统一写为 `0.0000000000` 而非 `E-16`；内部运算仍保留双精度。固定小数位会舍入极小差别，因此与原始输入不保证逐位相同。
 - 全部转换都在本机完成，不上传结构。
 
-> Filee 主程序的默认手势也是 **Ctrl + 左键拖动**，而不是只按一下 Ctrl。如果同时运行两个程序，它们可能响应同一个全局手势；建议只启用其中一个程序的轮盘。
+> 原版 Filee 的默认手势也是 **Ctrl + 左键拖动**，而不是只按一下 Ctrl。如果同时运行两个程序，它们可能响应同一个全局手势；建议只启用其中一个程序的轮盘。
 
 > Windows 若以管理员身份运行本程序，而资源管理器以普通权限运行，系统可能因权限隔离阻止文件拖放；请使用同一权限级别（通常都用普通权限）启动。
 
@@ -30,13 +30,18 @@
 
 ## 下载与构建
 
-GitHub Actions 的 **Crystal Converter (standalone)** 工作流完成后，在构建结果的 Artifacts 中下载 `Filee-CrystalConverter-win-x64`，解压运行 `Filee.CrystalConverter.exe`。它使用 .NET 自包含单文件发布，运行电脑不需要额外安装 .NET。
+GitHub Actions 的 **DFTDesk (standalone)** 工作流完成后，在构建结果的 Artifacts 中下载 `DFTDesk-win-x64`，解压运行 `DFTDesk.exe`。压缩包同时附带 Filee 的 MIT 许可文本。它使用 .NET 自包含单文件发布，运行电脑不需要额外安装 .NET。
 
 也可以在安装 .NET 10 SDK 的 Windows 电脑上执行：
 
 ```powershell
 dotnet test tools/CrystalConverter.Tests/CrystalConverter.Tests.csproj -c Release
-dotnet publish tools/CrystalConverter/CrystalConverter.csproj -c Release -r win-x64 --self-contained true -o dist/CrystalConverter
+dotnet publish tools/CrystalConverter/CrystalConverter.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 
 这是未签名的开发构建，Windows 可能显示 SmartScreen 提示。请从可信的仓库 Actions 下载并核对来源。
+
+
+## 许可与致谢
+
+DFTDesk 的晶体结构转换代码由本项目维护。界面样式、图标资源及 DonutMenu 的部分实现复用了 Filee 项目（作者 Myeonggu Kim / KnifeLemon 与贡献者），遵循 MIT License。发布包附带 `LICENSE-Filee.txt`；请保留该许可和版权声明。
