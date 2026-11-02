@@ -17,8 +17,8 @@ internal sealed partial class MainForm : Form
     private readonly Label _status = new();
     private readonly ProgressBar _progress = new();
     private readonly Button _cancel = new();
-    private readonly ConversionWheel _wheel = new();
-    private readonly WheelPopup _popup = new();
+    private readonly FileeDonutHost _wheel = new();
+    private readonly FileeDonutPopup _popup = new();
     private readonly GlobalTriggerHost _global = new();
     private readonly System.Windows.Forms.Timer _dragGraceTimer = new() { Interval = 350 };
     private readonly List<string> _paths = [];
@@ -174,7 +174,7 @@ internal sealed partial class MainForm : Form
         if (!selection.Any(path => ConversionBatch.Detect(path) is not null)) return;
         AddFiles(selection, replace: true);
         _popupFromDrag = dragMode;
-        _popup.OpenAt(at);
+        _popup.OpenAt(at, activate: !dragMode);
     }
 
     private void EndExplorerDrag(Point at)

@@ -16,10 +16,17 @@
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Win32.Interoperability" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
     <PackageReference Include="SharpHook" />
     <ProjectReference Include="../../src/Filee.Platform.Windows/Filee.Platform.Windows.csproj" />
     <Compile Include="../../src/Filee.App/Services/Triggers/GestureDetector.cs" Link="GestureDetector.cs" />
     <Compile Include="../../src/Filee.App/Services/Triggers/QueuedGlobalHook.cs" Link="QueuedGlobalHook.cs" />
+    <!-- Link the original Filee donut; don't fork its rendering, hit-testing or animations. -->
+    <Compile Include="../../src/Filee.App/Controls/DonutMenu*.cs" LinkBase="OriginalFileeDonut" />
+    <Compile Include="../../src/Filee.App/Controls/DonutGeometry.cs" Link="OriginalFileeDonut/DonutGeometry.cs" />
+    <Compile Include="../../src/Filee.App/Services/Motion.cs" Link="OriginalFileeDonut/Motion.cs" />
     <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="Filee.CrystalConverter.FileeIcon.png" />
   </ItemGroup>
 </Project>

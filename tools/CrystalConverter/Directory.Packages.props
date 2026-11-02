@@ -1,0 +1,8 @@
+<!-- Local addition: retain the repository's central dependency versions without
+     changing dependency declarations for Filee's main application. -->
+<Project>
+  <Import Project="../../Directory.Packages.props" />
+  <ItemGroup>
+    <PackageVersion Include="Avalonia.Win32.Interoperability" Version="$(AvaloniaVersion)" />
+  </ItemGroup>
+</Project>

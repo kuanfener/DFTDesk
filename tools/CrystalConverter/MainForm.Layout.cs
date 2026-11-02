@@ -19,7 +19,7 @@ internal sealed partial class MainForm
     private readonly Dictionary<string, Control> _pages = new();
     private Panel? _pageHost;
     private Label? _pageHint;
-    private ConversionWheel? _themePreviewWheel;
+    private FileeDonutHost? _themePreviewWheel;
     private bool _stableEventsWired;
 
     private void BuildLayout()
@@ -64,13 +64,8 @@ internal sealed partial class MainForm
         {
             _stableEventsWired = true;
             _wheel.FormatChosen += target => _ = StartBatchAsync(target);
-            _wheel.AllowDrop = true;
-            _wheel.DragEnter += WheelDragOver;
-            _wheel.DragOver += WheelDragOver;
-            _wheel.DragDrop += (_, e) =>
+            _wheel.FilesDropped += (format, paths) =>
             {
-                var target = _wheel.HitTest(_wheel.PointToClient(new Point(e.X, e.Y)));
-                if (target is not { } format || e.Data?.GetData(DataFormats.FileDrop) is not string[] paths) return;
                 AddFiles(paths, replace: true);
                 _ = StartBatchAsync(format);
             };
@@ -500,7 +495,7 @@ internal sealed partial class MainForm
             FillColor = Color.FromArgb(221, 217, 249),
             StrokeColor = Color.FromArgb(221, 217, 249),
         };
-        var previewWheel = new ConversionWheel
+        var previewWheel = new FileeDonutHost
         {
             Size = new Size(255, 255), Anchor = AnchorStyles.None,
             BackColor = previewArea.FillColor,
@@ -559,14 +554,6 @@ internal sealed partial class MainForm
         card.Controls.Add(PageLabel("Filee 晶体转换器\n\nWindows 独立程序 · POSCAR / CONTCAR ⇄ CIF\n支持批量导出、Filee 风格轮盘、Direct / Cartesian 与 VESTA 风格的数值排版。\n\n不会修改原版 Filee 主程序。", 11));
         page.Controls.Add(card, 0, 1);
         return page;
-    }
-
-    private void WheelDragOver(object? sender, DragEventArgs e)
-    {
-        var target = _wheel.HitTest(_wheel.PointToClient(new Point(e.X, e.Y)));
-        _wheel.SetHighlight(target);
-        e.Effect = target is not null && e.Data?.GetDataPresent(DataFormats.FileDrop) == true
-            ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
     private static void AcceptFileDrops(Control control)
