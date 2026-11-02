@@ -94,12 +94,6 @@ internal sealed partial class CrystalShell : UserControl
             OuterRadius = 121,
             HoleRatio = .33,
             SliceOpacity = .96,
-            CornerRadius = new CornerRadius(16),
-            SliceBrush = Brushes.White,
-            SliceBorderBrush = new SolidColorBrush(AvColor.Parse("#DEDBEE")),
-            CenterBrush = Brushes.White,
-            Foreground = new SolidColorBrush(AvColor.Parse("#1F1E1D")),
-            SecondaryForeground = new SolidColorBrush(AvColor.Parse("#6B6A66")),
         };
         Part<ContentControl>("ThemePreviewHost").Content = _themeWheel;
 
@@ -145,6 +139,14 @@ internal sealed partial class CrystalShell : UserControl
         {
             if (e.Property == ToggleButton.IsCheckedProperty)
                 CartesianChanged?.Invoke(Part<CheckBox>("CartesianOption").IsChecked == true);
+        };
+        Part<ColorPicker>("AccentPicker").PropertyChanged += (_, e) =>
+        {
+            if (_initializing || e.Property != ColorPicker.ColorProperty) return;
+            var color = Part<ColorPicker>("AccentPicker").Color;
+            if (color == _accent) return;
+            _accent = color;
+            ApplyTheme();
         };
 
         var body = (Control)Content!;
@@ -266,6 +268,8 @@ internal sealed partial class CrystalShell : UserControl
         Part<TextBlock>("CornerValue").Text = _radius.ToString("0");
         Part<TextBlock>("OpacityValue").Text = _opacity.ToString("0") + "%";
         Part<TextBox>("AccentHex").Text = $"#{_accent.R:X2}{_accent.G:X2}{_accent.B:X2}";
+        if (Part<ColorPicker>("AccentPicker").Color != _accent)
+            Part<ColorPicker>("AccentPicker").Color = _accent;
         Part<Button>("SoftStyleButton").Classes.Set("selected", !_material);
         Part<Button>("MaterialStyleButton").Classes.Set("selected", _material);
         Part<Border>("ThemePreviewBackdrop").Background = new LinearGradientBrush
