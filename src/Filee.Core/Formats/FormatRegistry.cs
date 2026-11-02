@@ -339,6 +339,9 @@ public static class FormatRegistry
         new("3mf", "3MF", FormatCategory.Model3D, ["3mf"]),
         new("ply", "PLY", FormatCategory.Model3D, ["ply"]),
         new("fbx", "FBX", FormatCategory.Model3D, ["fbx"], Writable: false),
+        // Periodic atomic structures: VASP's POSCAR (also commonly named CONTCAR) and IUCr CIF.
+        new("poscar", "POSCAR (VASP)", FormatCategory.Model3D, ["vasp", "poscar"]),
+        new("cif", "CIF (crystal)", FormatCategory.Model3D, ["cif"]),
 
         // Geospatial vector data (CSV with coordinates is a Data format and reaches these through the geo engine)
         new("geojson", "GeoJSON", FormatCategory.Geo, ["geojson"]),
@@ -382,6 +385,9 @@ public static class FormatRegistry
     public static string ExtensionOf(string path)
     {
         var name = Path.GetFileName(path);
+        if (name.Equals("POSCAR", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("CONTCAR", StringComparison.OrdinalIgnoreCase))
+            return "vasp";
         foreach (var compound in CompoundExtensions)
         {
             if (name.Length > compound.Length + 1
@@ -395,6 +401,9 @@ public static class FormatRegistry
     public static string NameWithoutExtension(string path)
     {
         var name = Path.GetFileName(path);
+        if (name.Equals("POSCAR", StringComparison.OrdinalIgnoreCase)
+            || name.Equals("CONTCAR", StringComparison.OrdinalIgnoreCase))
+            return name;
         var extension = ExtensionOf(name);
         return extension.Length == 0 ? name : name[..^(extension.Length + 1)];
     }

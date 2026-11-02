@@ -81,7 +81,7 @@ public static class FormatFields
             "h265", "h264", "ac3", "caf", "mp2", "dss", "wv", "tta", "w64", "eac3", "ape", "tak", "dsf", "dff",
             "dts", "tar", "tgz", "tbz2", "txz", "tar7z", "tlz", "gz", "bz2", "xz", "lz", "lzma", "jar", "cab",
             "cpio", "deb", "rpm", "dwg", "ttf", "otf", "woff", "woff2", "ass", "ssa", "ttml", "scc", "glb", "gltf",
-            "stl", "obj", "3mf", "ply", "fbx", "geojson", "kml", "kmz", "gpx", "shp", "fit"
+            "stl", "obj", "3mf", "ply", "fbx", "cif", "poscar", "geojson", "kml", "kmz", "gpx", "shp", "fit"
         ]),
         (FormatGrade.Legacy,
         [
@@ -101,6 +101,8 @@ public static class FormatFields
         (["dds", "usm", "bik"], ["game"]),
         // Medical imaging and astronomy.
         (["dcm", "fits"], ["science"]),
+        // Atomistic simulation and crystallography (rather than surface meshes).
+        (["cif", "poscar"], ["science"]),
         // Software work: raw image formats of graphics tools, app icons and cursors, config and data files, flat XML
         // ODF for version control, man pages, streaming segments, packages and compressed archives.
         ([

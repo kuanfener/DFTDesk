@@ -139,6 +139,7 @@ public static class BuiltInData
         .. DataPresets(),
         .. CodecAndSubtitlePresets(),
         .. ModelPresets(),
+        .. CrystalPresets(),
         .. GeoPresets(),
         .. TracePresets(),
     ];
@@ -427,6 +428,13 @@ public static class BuiltInData
         new() { Id = "to-gltf", Name = "glTF", TargetFormat = "gltf" },
     ];
 
+    /// <summary>Periodic atomic structures (CIF and VASP POSCAR / CONTCAR).</summary>
+    public static List<Preset> CrystalPresets() =>
+    [
+        new() { Id = "to-cif", Name = "CIF", TargetFormat = "cif" },
+        new() { Id = "to-poscar", Name = "POSCAR", TargetFormat = "poscar" },
+    ];
+
     /// <summary>
     /// Geospatial vector targets (added in settings schema 25, see SettingsMigrations). CSV, the sixth slice of the
     /// donut, is the spreadsheet preset. KMZ is a KML in a ZIP and is on no donut.
@@ -618,6 +626,7 @@ public static class BuiltInData
         .. WithSubtitleProfile(CatalogProfiles()),
         DataProfile(),
         ModelProfile(),
+        CrystalProfile(),
         GeoProfile(),
         new()
         {
@@ -760,9 +769,18 @@ public static class BuiltInData
     {
         Id = "models",
         NameKey = "profile.models",
-        Extensions = ExtensionsOf(FormatCategory.Model3D),
+        Extensions = ExtensionsOf(FormatCategory.Model3D).Where(e => e is not ("cif" or "vasp" or "poscar")).ToList(),
         PresetIds = ["to-glb", "to-stl", "to-obj", "to-3mf", "to-ply", "to-png"],
         BackPresetIds = ["to-gltf", "to-jpg", "to-webp", "zip-all"],
+    };
+
+    /// <summary>Separate crystal donut: mesh and atomic structure formats are not interchangeable.</summary>
+    public static ToolbarProfile CrystalProfile() => new()
+    {
+        Id = "crystal", Name = "CIF / POSCAR",
+        Extensions = ["cif", "vasp", "poscar"],
+        PresetIds = ["to-cif", "to-poscar"],
+        BackPresetIds = ["zip-all"],
     };
 
     /// <summary>Geospatial vector data: Shapefile, GeoJSON, KML, KMZ, GPX (added in settings schema 25, after "models").</summary>

@@ -3,6 +3,7 @@
 using Filee.Core.Conversion;
 using Filee.Engines.Archives;
 using Filee.Engines.Cad;
+using Filee.Engines.Crystals;
 using Filee.Engines.Data;
 using Filee.Engines.Ebooks;
 using Filee.Engines.Email;
@@ -66,6 +67,7 @@ public static class EngineRegistry
         new FfmpegConverter(loggers?.CreateLogger<FfmpegConverter>()),
         new CadConverter(),
         new ModelConverter(),
+        new CrystalConverter(),
         new GeoConverter(),
         new EbookConverter(),
         new PandocConverter(),

@@ -445,6 +445,10 @@ internal static class SettingsMigrations
         if (settings.SchemaVersion < 21)
             InsertBefore(settings.EnginePriority, "wic", settings.EnginePriority.Contains("ffmpeg") ? "ffmpeg" : "pandoc");
 
+        // v59: the built-in scientific crystal structure converter.
+        if (settings.SchemaVersion < 59)
+            InsertBefore(settings.EnginePriority, "crystal", settings.EnginePriority.Contains("geo") ? "geo" : "pandoc");
+
 
         if (settings.Triggers.Count == 0)
             settings.Triggers = TriggerGesture.Defaults();
@@ -955,7 +959,40 @@ internal static class SettingsMigrations
         //      renumbered if another change takes it first.)
         if (from < 58)
             changed |= LearnExtensions(profiles, out _, ["c", "h", "cpp", "cc", "cxx", "hpp", "hh", "hxx", "cs"]);
+        // v59: atomistic structures get their own donut rather than the surface-mesh donut.
+        if (from < 59)
+            changed |= AddCrystal(presets, profiles);
         return changed;
+    }
+
+    private static bool AddCrystal(List<Preset> presets, List<ToolbarProfile> profiles)
+    {
+        var changed = false;
+        foreach (var preset in BuiltInData.CrystalPresets().Where(p => presets.All(existing => existing.Id != p.Id)))
+        {
+            presets.Add(preset);
+            changed = true;
+        }
+        if (profiles.Any(p => p.Id == "crystal"))
+            return changed;
+
+        var crystal = BuiltInData.CrystalProfile();
+        var claimed = profiles.Where(p => !p.IsFallback && p.Id != "models")
+            .SelectMany(p => p.Extensions).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        crystal.Extensions = crystal.Extensions.Where(e => !claimed.Contains(e)).ToList();
+        if (crystal.Extensions.Count == 0)
+            return changed;
+        if (profiles.FirstOrDefault(p => p.Id == "models") is { } models)
+        {
+            // An older upgrade can already have claimed these extensions as generic 3D models.
+            changed |= models.Extensions.RemoveAll(e => crystal.Extensions.Contains(e, StringComparer.OrdinalIgnoreCase)) > 0;
+        }
+        crystal.PresetIds = crystal.PresetIds.Where(id => presets.Any(p => p.Id == id)).ToList();
+        var after = profiles.FindIndex(p => p.Id == "models");
+        var insertAt = after >= 0 ? after + 1 : profiles.FindIndex(p => p.Id == "geo");
+        if (insertAt < 0) insertAt = profiles.FindIndex(p => p.IsFallback);
+        profiles.Insert(insertAt < 0 ? profiles.Count : insertAt, crystal);
+        return true;
     }
 
     private static bool AddCaptionPreset(List<Preset> presets, List<ToolbarProfile> profiles)

@@ -1046,6 +1046,24 @@ and writes the files; Filee's own renderer draws them with SkiaSharp (one drawin
   segments in total; beyond that the drawing is cut short with a warning in the log. Damaged or truncated files fail
   with "The file is not a valid DWG/DXF drawing or is damaged: …".
 
+## Crystal structures (CIF ↔ VASP POSCAR)
+
+`Filee.Engines/Crystals` is a built-in, offline converter for periodic atomic structures. It recognises
+extensionless `POSCAR` and `CONTCAR` in addition to `.vasp`, `.poscar` and `.cif`. Output in VASP format uses the
+`.vasp` extension so multiple structures can be saved side by side; rename it to `POSCAR` for a VASP run.
+
+- POSCAR: VASP 5 element names, one or three scale factors (including negative target volume for one factor),
+  Direct or Cartesian coordinates, and optional Selective dynamics flags on input.
+- CIF: unit-cell lengths and angles, fractional or Cartesian atom-site coordinates, and explicit symmetry operations
+  are read. Symmetry-equivalent atoms are expanded, including non-orthogonal unit cells, with duplicates removed.
+  Cell numbers with uncertainty suffixes such as `5.431(2)` are accepted.
+- CIF output always uses **P 1** with an explicit full set of fractional coordinates. Atomic positions and the unit
+  cell are preserved, but an original non-P1 space group is not reconstructed. POSCAR's Selective dynamics flags
+  and CIF's space-group metadata cannot be carried through this pair.
+- Partial occupancy and unknown occupancy are rejected: POSCAR cannot faithfully encode statistical disorder.
+  A CIF that names a non-P1 space group without explicit symmetry operations is also rejected rather than silently
+  missing atoms. VASP 4 POSCAR without element names is rejected rather than guessing atom types.
+
 ## 3D models
 
 `Filee.Engines/Models3D` converts GLB, glTF, STL, OBJ, 3MF and PLY into each other, and FBX into any of them, in
