@@ -42,7 +42,7 @@
     <Compile Include="../../src/Filee.App/Services/SoftPalette.cs" Link="OriginalFileeThemes/SoftPalette.cs" />
     <Compile Include="../../src/Filee.App/Services/MaterialYouPalette.cs" Link="OriginalFileeThemes/MaterialYouPalette.cs" />
     <Compile Include="../../src/Filee.App/Services/AppLanguages.cs" Link="OriginalFileeThemes/AppLanguages.cs" />
-    <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="Filee.CrystalConverter.FileeIcon.png" />
+    <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="DFTDesk.FileeIcon.png" />
     <!-- The standalone shell uses the exact original Filee styles and icon paths. -->
     <AvaloniaResource Include="../../src/Filee.App/Styles/Soft.axaml" Link="Styles/Soft.axaml" />
     <AvaloniaResource Include="../../src/Filee.App/Styles/Icons.axaml" Link="Styles/Icons.axaml" />
