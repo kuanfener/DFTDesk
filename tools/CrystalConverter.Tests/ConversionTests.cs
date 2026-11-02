@@ -100,7 +100,7 @@ public class ConversionTests
         Assert.Equal(0.88, structure.Sites[1].Fractional.X, 10);
         var partial = InversionCif.Replace("0.34 1", "0.34 0.5");
         Assert.Throws<FormatException>(() => CrystalFormat.ReadCif(partial));
-        var missingOperators = InversionCif.Replace(
+        var missingOperators = InversionCif.Replace("\r\n", "\n").Replace(
             "loop_\n_space_group_symop_operation_xyz\n'x, y, z'\n'-x, -y, -z'\n", "");
         Assert.Throws<FormatException>(() => CrystalFormat.ReadCif(missingOperators));
     }
