@@ -140,6 +140,14 @@ internal sealed partial class CrystalShell : UserControl
             if (e.Property == ToggleButton.IsCheckedProperty)
                 CartesianChanged?.Invoke(Part<CheckBox>("CartesianOption").IsChecked == true);
         };
+        Part<CheckBox>("ReduceMotionOption").PropertyChanged += (_, e) =>
+        {
+            if (e.Property == ToggleButton.IsCheckedProperty && !_initializing)
+            {
+                _reduced = Part<CheckBox>("ReduceMotionOption").IsChecked == true;
+                ApplyTheme();
+            }
+        };
         Part<ColorPicker>("AccentPicker").PropertyChanged += (_, e) =>
         {
             if (_initializing || e.Property != ColorPicker.ColorProperty) return;
@@ -177,13 +185,13 @@ internal sealed partial class CrystalShell : UserControl
         Part<ListBox>("FileList").ItemsSource = files.ToArray();
     }
 
-    public void SetStatus(string status) { /* Original home page has no status bar. */ }
+    public void SetStatus(string status) => Part<TextBlock>("BatchStatus").Text = status;
 
     public void SetProgress(double fraction)
     {
-        // Recent activity follows the original Filee history cards; no second
-        // incompatible Windows Forms progress bar is painted over the shell.
+        Part<ProgressBar>("BatchProgress").Value = Math.Clamp(fraction * 100, 0, 100);
     }
+    public void SetBusy(bool busy) => Part<Button>("CancelConversionButton").IsEnabled = busy;
 
     public void AppendRecord(string entry)
     {
@@ -380,6 +388,7 @@ internal sealed partial class CrystalShell : UserControl
     }
     private void OnExportCif(object? sender, RoutedEventArgs e) => FormatChosen?.Invoke(ExportFormat.Cif);
     private void OnExportPoscar(object? sender, RoutedEventArgs e) => FormatChosen?.Invoke(ExportFormat.Poscar);
+    private void OnCancelConversion(object? sender, RoutedEventArgs e) => CancelRequested?.Invoke();
     private void OnStyleSoft(object? sender, RoutedEventArgs e) { _material = false; ApplyTheme(); }
     private void OnStyleMaterial(object? sender, RoutedEventArgs e) { _material = true; ApplyTheme(); }
     private void OnAppearanceChanged(object? sender, SelectionChangedEventArgs e)
