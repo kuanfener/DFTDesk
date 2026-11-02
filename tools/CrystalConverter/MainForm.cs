@@ -116,7 +116,7 @@ internal sealed partial class MainForm : Form
             Multiselect = true,
             CheckFileExists = true,
         };
-        if (dialog.ShowDialog(this) == DialogResult.OK)
+        if (dialog.ShowDialog() == DialogResult.OK)
         {
             AddFiles(dialog.FileNames);
             if (_paths.Count > 0) ShowConversionWheelAtCursor();
@@ -126,7 +126,7 @@ internal sealed partial class MainForm : Form
     private void BrowseFolder()
     {
         using var dialog = new FolderBrowserDialog { Description = "选择批量转换结果的保存文件夹" };
-        if (dialog.ShowDialog(this) == DialogResult.OK) _output.Text = dialog.SelectedPath;
+        if (dialog.ShowDialog() == DialogResult.OK) _output.Text = dialog.SelectedPath;
     }
 
     private void AddFiles(IEnumerable<string> paths, bool replace = false)
@@ -200,7 +200,7 @@ internal sealed partial class MainForm : Form
         var inputs = _paths.Where(File.Exists).Where(path => ConversionBatch.Detect(path) != target).ToArray();
         if (inputs.Length == 0)
         {
-            MessageBox.Show(this, "请先添加需要转换的文件；已是目标格式的文件会自动跳过。",
+            MessageBox.Show("请先添加需要转换的文件；已是目标格式的文件会自动跳过。",
                 "没有待转换的文件", MessageBoxButtons.OK, MessageBoxIcon.Information);
             return;
         }
@@ -209,7 +209,7 @@ internal sealed partial class MainForm : Form
         var cartesian = _cartesian.Checked;
         if (directory is not null && !Directory.Exists(directory))
         {
-            MessageBox.Show(this, "输出文件夹不存在，请重新选择。", "输出目录错误",
+            MessageBox.Show("输出文件夹不存在，请重新选择。", "输出目录错误",
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
