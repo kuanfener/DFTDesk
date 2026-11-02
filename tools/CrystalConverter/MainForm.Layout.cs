@@ -1,6 +1,7 @@
 using System.Drawing;
 using System.Windows.Forms;
-using Avalonia.Win32.Interoperability;
+using Avalonia.Controls;
+using Avalonia.Platform;
 
 namespace Filee.CrystalConverter;
 
@@ -12,24 +13,44 @@ namespace Filee.CrystalConverter;
 internal sealed partial class MainForm
 {
     private CrystalShell _shell = null!;
+    private Avalonia.Controls.Window _avaloniaWindow = null!;
 
     private void BuildLayout()
     {
         SuspendLayout();
-        Text = "Filee";
-        StartPosition = FormStartPosition.CenterScreen;
-        ClientSize = new Size(1080, 760);
-        MinimumSize = new Size(820, 560);
+        Text = "Filee Crystal background bridge";
+        ShowInTaskbar = false;
+        Opacity = 0;
+        ClientSize = new System.Drawing.Size(1, 1);
         AutoScaleMode = AutoScaleMode.Dpi;
         KeyPreview = true;
-        AllowDrop = true;
+        AllowDrop = false;
 
         _shell = new CrystalShell();
-        Controls.Add(new WinFormsAvaloniaControlHost
+        _avaloniaWindow = new Avalonia.Controls.Window
         {
-            Dock = DockStyle.Fill,
+            Title = "Filee",
+            Width = 1080,
+            Height = 760,
+            MinWidth = 820,
+            MinHeight = 560,
+            WindowStartupLocation = WindowStartupLocation.CenterScreen,
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://Filee.CrystalConverter/Assets/Icons/filee.ico"))),
             Content = _shell,
-        });
+        };
+        _avaloniaWindow.Closing += (_, e) =>
+        {
+            if (!_busy) return;
+            _cancellation?.Cancel();
+            e.Cancel = true;
+            Log("正在取消转换，请等待任务结束后关闭窗口。");
+        };
+        _avaloniaWindow.Closed += (_, _) => Close();
+        Shown += (_, _) =>
+        {
+            _avaloniaWindow.Show();
+            Hide();
+        };
 
         _shell.BrowseFilesRequested += BrowseFiles;
         _shell.BrowseFolderRequested += BrowseFolder;
