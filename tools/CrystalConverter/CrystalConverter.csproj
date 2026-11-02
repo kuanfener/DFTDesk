@@ -30,6 +30,7 @@
     <Compile Include="../../src/Filee.App/Controls/DonutMenu*.cs" LinkBase="OriginalFileeDonut" />
     <Compile Include="../../src/Filee.App/Controls/DonutGeometry.cs" Link="OriginalFileeDonut/DonutGeometry.cs" />
     <Compile Include="../../src/Filee.App/Services/Motion.cs" Link="OriginalFileeDonut/Motion.cs" />
+    <Compile Include="../../src/Filee.App/Services/KeyNames.cs" Link="OriginalFileeDonut/KeyNames.cs" />
     <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="Filee.CrystalConverter.FileeIcon.png" />
   </ItemGroup>
 </Project>
