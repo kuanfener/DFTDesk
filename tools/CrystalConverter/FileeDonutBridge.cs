@@ -128,6 +128,12 @@ internal sealed class FileeDonutHost : WinFormsAvaloniaControlHost
         }
     }
 
+    public double SliceOpacity
+    {
+        get => _donut.SliceOpacity;
+        set => _donut.SliceOpacity = Math.Clamp(value, .3, 1);
+    }
+
     public ExportFormat? HitTest(DrawingPoint point)
     {
         if (Width <= 0 || Height <= 0 || _donut.Bounds.Width <= 0 || _donut.Bounds.Height <= 0)
@@ -185,6 +191,12 @@ internal sealed class FileeDonutPopup : IDisposable
             _accent = value;
             FileeDonutFactory.ApplyAccent(_donut, value);
         }
+    }
+
+    public double SliceOpacity
+    {
+        get => _donut.SliceOpacity;
+        set => _donut.SliceOpacity = Math.Clamp(value, .3, 1);
     }
 
     public void OpenAt(DrawingPoint point, bool activate = true)
