@@ -156,7 +156,7 @@ internal sealed class FileeDonutPopup : IDisposable
         _donut = FileeDonutFactory.Create(125, _accent);
         _window = new Avalonia.Controls.Window
         {
-            Title = "Filee Crystal Donut",
+            Title = "DFTDesk Donut",
             Content = _donut,
             WindowDecorations = WindowDecorations.None,
             Background = Brushes.Transparent,
