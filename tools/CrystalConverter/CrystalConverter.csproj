@@ -24,6 +24,17 @@
     <PublishTrimmed>false</PublishTrimmed>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
   </PropertyGroup>
+  <PropertyGroup>
+    <!-- Optional private QR images are read from the owner's local profile at build time.
+         They are never committed to the public source tree. -->
+    <DftDeskDonationDir Condition="'$(DftDeskDonationDir)' == '' and '$(LOCALAPPDATA)' != ''">$(LOCALAPPDATA)\DFTDesk\Donation</DftDeskDonationDir>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(DftDeskDonationDir)\wechat.png')">
+    <EmbeddedResource Include="$(DftDeskDonationDir)\wechat.png" LogicalName="DFTDesk.Donation.wechat.png" />
+  </ItemGroup>
+  <ItemGroup Condition="Exists('$(DftDeskDonationDir)\alipay.png')">
+    <EmbeddedResource Include="$(DftDeskDonationDir)\alipay.png" LogicalName="DFTDesk.Donation.alipay.png" />
+  </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
     <PackageReference Include="Avalonia.Win32.Interoperability" />
