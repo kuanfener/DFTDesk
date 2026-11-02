@@ -18,7 +18,7 @@ internal sealed partial class MainForm
     private void BuildLayout()
     {
         SuspendLayout();
-        Text = "Filee Crystal background bridge";
+        Text = "DFTDesk background bridge";
         ShowInTaskbar = false;
         Opacity = 0;
         ClientSize = new System.Drawing.Size(1, 1);
@@ -29,13 +29,13 @@ internal sealed partial class MainForm
         _shell = new CrystalShell();
         _avaloniaWindow = new Avalonia.Controls.Window
         {
-            Title = "Filee",
+            Title = "DFTDesk",
             Width = 1080,
             Height = 760,
             MinWidth = 820,
             MinHeight = 560,
             WindowStartupLocation = WindowStartupLocation.CenterScreen,
-            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://Filee.CrystalConverter/Assets/Icons/filee.ico"))),
+            Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://DFTDesk/Assets/Icons/filee.ico"))),
             Content = _shell,
         };
         _avaloniaWindow.Closing += (_, e) =>
