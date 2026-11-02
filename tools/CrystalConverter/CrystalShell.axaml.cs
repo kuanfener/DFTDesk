@@ -25,7 +25,7 @@ internal sealed partial class CrystalShell : UserControl
 {
     private static readonly string SettingsFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "FileeCrystal", "theme.json");
+        "DFTDesk", "theme.json");
     private static readonly string[] Swatches =
         ["#7F77DD", "#1D9E75", "#D85A30", "#378ADD", "#D4537E", "#BA7517", "#639922", "#5F5E5A"];
 
