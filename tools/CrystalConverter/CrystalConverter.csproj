@@ -20,5 +20,6 @@
     <ProjectReference Include="../../src/Filee.Platform.Windows/Filee.Platform.Windows.csproj" />
     <Compile Include="../../src/Filee.App/Services/Triggers/GestureDetector.cs" Link="GestureDetector.cs" />
     <Compile Include="../../src/Filee.App/Services/Triggers/QueuedGlobalHook.cs" Link="QueuedGlobalHook.cs" />
+    <EmbeddedResource Include="../../src/Filee.App/Assets/Icons/filee.png" LogicalName="Filee.CrystalConverter.FileeIcon.png" />
   </ItemGroup>
 </Project>

@@ -8,13 +8,23 @@ namespace Filee.CrystalConverter;
 /// <summary>A Filee-style two-target donut, with exact annular hit-testing.</summary>
 internal sealed class ConversionWheel : Control
 {
-    private static readonly Color Surface = Color.FromArgb(38, 38, 36);
-    private static readonly Color Slice = Color.FromArgb(60, 59, 66);
-    private static readonly Color Highlight = Color.FromArgb(127, 119, 221);
-    private static readonly Color TextPrimary = Color.FromArgb(241, 239, 232);
+    private static readonly Color Surface = Color.FromArgb(239, 236, 248);
+    private static readonly Color Slice = Color.White;
+    private static readonly Color TextPrimary = Color.FromArgb(35, 34, 39);
     private ExportFormat? _hovered;
+    private Color _accent = Color.FromArgb(127, 119, 221);
 
     public event Action<ExportFormat>? FormatChosen;
+    public Color AccentColor
+    {
+        get => _accent;
+        set { _accent = value; Invalidate(); }
+    }
+
+    private Color Highlight => Color.FromArgb(
+        (int)(.27 * _accent.R + .73 * 255),
+        (int)(.27 * _accent.G + .73 * 255),
+        (int)(.27 * _accent.B + .73 * 255));
 
     public ConversionWheel()
     {
@@ -84,7 +94,7 @@ internal sealed class ConversionWheel : Control
             g.FillPath(brush, lower);
         using (var holeBrush = new SolidBrush(Surface))
             g.FillEllipse(holeBrush, inner);
-        using (var outline = new Pen(Color.FromArgb(97, 94, 110), 1.15f))
+        using (var outline = new Pen(Color.FromArgb(209, 205, 230), 1.15f))
         {
             g.DrawEllipse(outline, outer);
             g.DrawEllipse(outline, inner);
@@ -96,7 +106,7 @@ internal sealed class ConversionWheel : Control
         using var secondary = new Font("Microsoft YaHei UI", 8 * factor);
         using var centreFont = new Font("Microsoft YaHei UI", 10 * factor, FontStyle.Bold);
         using var primary = new SolidBrush(TextPrimary);
-        using var active = new SolidBrush(Color.White);
+        using var active = new SolidBrush(AccentColor);
         var upperText = _hovered == ExportFormat.Cif ? active : primary;
         var lowerText = _hovered == ExportFormat.Poscar ? active : primary;
         CenterText(g, "导出为", secondary, upperText, new PointF(center.X, center.Y - outerRadius * .77f));
@@ -107,7 +117,7 @@ internal sealed class ConversionWheel : Control
         CenterText(g, "转换", centreFont, primary, new PointF(center.X, center.Y + 10 * factor));
         if (_hovered is not null)
         {
-            using var border = new Pen(Color.FromArgb(200, 177, 168, 255), 2 * factor);
+            using var border = new Pen(AccentColor, 2 * factor);
             g.DrawArc(border, outer, _hovered == ExportFormat.Cif ? 183 : 3, 174);
         }
     }
@@ -149,6 +159,7 @@ internal sealed class WheelPopup : Form
 
     public event Action<ExportFormat>? FormatChosen;
     public event Action<ExportFormat, string[]>? FilesDropped;
+    public Color AccentColor { get => _wheel.AccentColor; set => _wheel.AccentColor = value; }
 
     public WheelPopup()
     {

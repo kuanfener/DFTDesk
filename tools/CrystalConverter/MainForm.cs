@@ -5,10 +5,10 @@ namespace Filee.CrystalConverter;
 
 internal sealed partial class MainForm : Form
 {
-    private static readonly Color Background = Color.FromArgb(24, 24, 23);
-    private static readonly Color PanelColor = Color.FromArgb(38, 38, 36);
-    private static readonly Color TextColor = Color.FromArgb(241, 239, 232);
-    private static readonly Color Accent = Color.FromArgb(127, 119, 221);
+    private static readonly Color Background = Color.FromArgb(249, 248, 245);
+    private static readonly Color PanelColor = Color.White;
+    private static readonly Color TextColor = Color.FromArgb(31, 30, 29);
+    private static Color Accent = Color.FromArgb(127, 119, 221);
 
     private readonly ListBox _files = new();
     private readonly ListBox _log = new();
@@ -25,6 +25,8 @@ internal sealed partial class MainForm : Form
     private CancellationTokenSource? _cancellation;
     private bool _busy;
     private bool _popupFromDrag;
+    private Label? _recentEmpty;
+    private Label? _selectedCount;
 
     public MainForm()
     {
@@ -114,7 +116,11 @@ internal sealed partial class MainForm : Form
             Multiselect = true,
             CheckFileExists = true,
         };
-        if (dialog.ShowDialog(this) == DialogResult.OK) AddFiles(dialog.FileNames);
+        if (dialog.ShowDialog(this) == DialogResult.OK)
+        {
+            AddFiles(dialog.FileNames);
+            if (_paths.Count > 0) ShowConversionWheelAtCursor();
+        }
     }
 
     private void BrowseFolder()
@@ -142,6 +148,8 @@ internal sealed partial class MainForm : Form
         _files.Items.Clear();
         foreach (var path in _paths) _files.Items.Add(path);
         _files.EndUpdate();
+        if (_selectedCount is not null)
+            _selectedCount.Text = $"已选择 {_paths.Count} 个结构文件";
         UpdateStatus();
     }
 
@@ -250,6 +258,18 @@ internal sealed partial class MainForm : Form
         _log.Items.Add($"[{DateTime.Now:HH:mm:ss}] {message}");
         if (_log.Items.Count > 300) _log.Items.RemoveAt(0);
         _log.TopIndex = _log.Items.Count - 1;
+        _log.Visible = true;
+        if (_recentEmpty is not null)
+            _recentEmpty.Visible = false;
+    }
+
+    private void ShowConversionWheelAtCursor()
+    {
+        if (!_busy && _paths.Count > 0 && !_popup.Visible)
+        {
+            _popupFromDrag = false;
+            _popup.OpenAt(Cursor.Position);
+        }
     }
 
     private void UpdateStatus() => _status.Text = _busy ? "正在转换…" : $"已选择 {_paths.Count} 个文件";
