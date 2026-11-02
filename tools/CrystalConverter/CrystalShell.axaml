@@ -67,7 +67,7 @@
                 <TextBlock Text="DFTDesk"/>
               </StackPanel>
             </Button>
-            <Button Grid.Column="2" Classes="navlink" Click="OnSponsor" HorizontalAlignment="Stretch">
+            <Button Grid.Column="2" Classes="navlink" Click="OnSponsor" IsEnabled="False" ToolTip.Tip="等待配置个人赞助信息" HorizontalAlignment="Stretch">
               <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
                 <PathIcon Data="{StaticResource Icon.Heart}" Width="13" Height="13" Foreground="#D4537E"/>
                 <TextBlock Text="赞助"/>
@@ -80,7 +80,7 @@
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
             <PathIcon Data="{StaticResource Icon.GitHub}" Width="13" Height="13"/>
           </Button>
-          <Button Classes="navlink" Click="OnSponsor" ToolTip.Tip="赞助" Padding="8,6">
+          <Button Classes="navlink" Click="OnSponsor" IsEnabled="False" ToolTip.Tip="等待配置个人赞助信息" Padding="8,6">
             <PathIcon Data="{StaticResource Icon.Heart}" Width="13" Height="13" Foreground="#D4537E"/>
           </Button>
         </StackPanel>
