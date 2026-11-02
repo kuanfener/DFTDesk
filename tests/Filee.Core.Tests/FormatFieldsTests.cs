@@ -26,12 +26,12 @@ public class FormatFieldsTests
     private static readonly string[] HiddenWithEverythingOff =
     [
         "3g2", "3gp", "3mf", "602", "ac3", "adoc", "ai", "amr", "ape", "arj", "ass", "au", "azw", "azw4", "bik",
-        "bz2", "cab", "caf", "cavs", "cdr", "cgm", "chm", "cpio", "cur", "cwk", "dav", "dbk", "dcm", "dds", "deb",
+        "bz2", "cab", "caf", "cavs", "cdr", "cgm", "chm", "cif", "cpio", "cur", "cwk", "dav", "dbk", "dcm", "dds", "deb",
         "dff", "dot", "dsf", "dss", "dst", "dts", "dv", "dwg", "eac3", "eot", "eps", "exr", "fbx", "fit", "fits",
         "flv", "fodg", "fodp", "fods", "fodt", "fon", "geojson", "glb", "gltf", "gpx", "gz", "h264", "h265", "har",
         "hdr", "htmlz", "icns", "ipynb", "jar", "jp2", "jsonl", "kml", "kmz", "lha", "lit", "lrf", "lwp", "lz",
         "lzma", "m4s", "man", "mcw", "mediawiki", "miff", "mng", "mobi", "mod", "mp2", "mpc", "mxf", "obj", "oeb",
-        "org", "otf", "pam", "pcd", "pcx", "pdb", "pfm", "plt", "ply", "pml", "ppm", "prc", "ps", "psb", "psd",
+        "org", "otf", "pam", "pcd", "pcx", "pdb", "pfm", "plt", "ply", "pml", "poscar", "ppm", "prc", "ps", "psb", "psd",
         "psw", "qoi", "ras", "raw", "rb", "rm", "rpm", "rst", "scc", "sda", "sdc", "sdw", "sgi", "shp", "snb", "spx",
         "ssa", "stl", "sub", "swf", "tak", "tar", "tar7z", "tbz2", "tcr", "tex", "textile", "tgz", "tlz", "toml",
         "tta", "ttf", "ttml", "txtz", "txz", "typ", "tz", "usm", "vob", "voc", "w64", "wbmp", "wmf", "woff", "woff2",
@@ -46,7 +46,7 @@ public class FormatFieldsTests
         { "font", ["otf", "ttf", "woff", "woff2"] },
         { "game", ["bik", "dds", "usm"] },
         { "design", ["ai", "cdr", "dst", "eps", "exr", "hdr", "plt", "ps", "psb", "psd", "raw", "xcf"] },
-        { "science", ["dcm", "fits"] },
+        { "science", ["cif", "dcm", "fits", "poscar"] },
         { "developer", [
                 "bz2", "cab", "cpio", "cur", "deb", "fodg", "fodp", "fods", "fodt", "gz", "har", "icns", "jar",
                 "jsonl", "lz", "lzma", "m4s", "man", "miff", "pam", "pfm", "ppm", "qoi", "rpm", "tar", "tar7z",
@@ -73,7 +73,7 @@ public class FormatFieldsTests
         { "font", ["eot", "fon", "otf", "ttf", "woff", "woff2"] },
         { "game", ["bik", "dds", "tga", "usm"] },
         { "design", ["ai", "cdr", "dst", "eps", "exr", "hdr", "jp2", "pcd", "plt", "ps", "psb", "psd", "raw", "xcf"] },
-        { "science", ["dcm", "fits", "ipynb", "jp2"] },
+        { "science", ["cif", "dcm", "fits", "ipynb", "jp2", "poscar"] },
         { "developer", [
                 "bz2", "cab", "caf", "chm", "cpio", "cur", "deb", "fodg", "fodp", "fods", "fodt", "gz", "har",
                 "icns", "ipynb", "jar", "jsonl", "lz", "lzma", "m4s", "man", "miff", "pam", "pfm", "ppm", "qoi",
@@ -144,7 +144,7 @@ public class FormatFieldsTests
             {
                 [FormatGrade.Everyday] = 19,
                 [FormatGrade.General] = 94,
-                [FormatGrade.Specialist] = 107,
+                [FormatGrade.Specialist] = 109,
                 [FormatGrade.Legacy] = 50,
             },
             counts);

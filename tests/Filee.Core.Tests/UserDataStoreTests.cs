@@ -536,7 +536,7 @@ public class UserDataStoreTests
         var store = new UserDataStore(dir.Path);
         store.Load();
 
-        Assert.Equal(["magick", "markdown", "spreadsheet", "ooxml", "hwpx-writer", "docx-writer", "pdf-text", "pdf-slides", "email", "data", "vector", "icns", "font", "cad", "model3d", "geo", "archive", "ebook", "subtitle", "wic", "ffmpeg", "pandoc", "ghostscript", "calibre", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "markdown", "spreadsheet", "ooxml", "hwpx-writer", "docx-writer", "pdf-text", "pdf-slides", "email", "data", "vector", "icns", "font", "cad", "model3d", "crystal", "geo", "archive", "ebook", "subtitle", "wic", "ffmpeg", "pandoc", "ghostscript", "calibre", "libreoffice"], store.Settings.EnginePriority);
         Assert.Equal(AppSettings.CurrentSchemaVersion, store.Settings.SchemaVersion);
     }
 
@@ -588,7 +588,7 @@ public class UserDataStoreTests
         var store = new UserDataStore(dir.Path);
         store.Load();
 
-        Assert.Equal(["magick", "markdown", "spreadsheet", "ooxml", "hwpx-writer", "docx-writer", "pdf-text", "pdf-slides", "email", "data", "vector", "icns", "font", "cad", "model3d", "geo", "archive", "ebook", "subtitle", "wic", "ffmpeg", "pandoc", "ghostscript", "calibre", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "markdown", "spreadsheet", "ooxml", "hwpx-writer", "docx-writer", "pdf-text", "pdf-slides", "email", "data", "vector", "icns", "font", "cad", "model3d", "crystal", "geo", "archive", "ebook", "subtitle", "wic", "ffmpeg", "pandoc", "ghostscript", "calibre", "libreoffice"], store.Settings.EnginePriority);
         var ids = store.Profiles.Select(p => p.Id).ToList();
         Assert.Equal(ids.IndexOf("office") + 1, ids.IndexOf("spreadsheets"));
         Assert.Equal(ids.IndexOf("office") + 2, ids.IndexOf("presentations"));
@@ -603,8 +603,8 @@ public class UserDataStoreTests
     {
         // As written by 1.0.x with schema 5: no catalog presets, donuts or extensions.
         var presets = BuiltInData.CreatePresets()
-            .Where(p => BuiltInData.CatalogPresets().Concat(BuiltInData.CodecAndSubtitlePresets()).Concat(BuiltInData.ModelPresets()).Concat(BuiltInData.GeoPresets()).All(c => c.Id != p.Id)).ToList();
-        var catalogIds = BuiltInData.CatalogProfiles().Select(p => p.Id).Append("subtitles").Append("models").Append("geo").ToHashSet();
+            .Where(p => BuiltInData.CatalogPresets().Concat(BuiltInData.CodecAndSubtitlePresets()).Concat(BuiltInData.ModelPresets()).Concat(BuiltInData.CrystalPresets()).Concat(BuiltInData.GeoPresets()).All(c => c.Id != p.Id)).ToList();
+        var catalogIds = BuiltInData.CatalogProfiles().Select(p => p.Id).Append("subtitles").Append("models").Append("crystal").Append("geo").ToHashSet();
         var profiles = BuiltInData.CreateProfiles().Where(p => !catalogIds.Contains(p.Id)).ToList();
         profiles.Single(p => p.Id == "images").Extensions = ["png", "jpg"];
         profiles.Single(p => p.Id == "pdf").PresetIds.Remove("to-docx");
@@ -618,7 +618,8 @@ public class UserDataStoreTests
         Assert.Equal(ids.IndexOf("text") + 1, ids.IndexOf("ebooks"));
         Assert.Equal(ids.IndexOf("fonts") + 1, ids.IndexOf("data")); // schema 14
         Assert.Equal(ids.IndexOf("data") + 1, ids.IndexOf("models")); // schema 15
-        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("geo")); // schema 25
+        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("crystal")); // schema 59
+        Assert.Equal(ids.IndexOf("crystal") + 1, ids.IndexOf("geo")); // schema 25
         Assert.Equal(ids.IndexOf("mixed") - 1, ids.IndexOf("geo"));
         Assert.Equal(ids.IndexOf("audio") + 1, ids.IndexOf("subtitles"));
         Assert.Contains("cr2", profiles.Single(p => p.Id == "images").Extensions);
@@ -764,7 +765,7 @@ public class UserDataStoreTests
         // ... and, from schema 15, the 3D model engine before Pandoc (no CAD or archive engine in this list), from
         // schema 18 the PDF slides engine there too (no PDF text engine), from schema 21 the WIC engine (no FFmpeg),
         // from schema 25 the geospatial engine after the 3D models engine.
-        Assert.Equal(["magick", "email", "data", "vector", "model3d", "geo", "pdf-slides", "wic", "pandoc", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "email", "data", "vector", "model3d", "crystal", "geo", "pdf-slides", "wic", "pandoc", "libreoffice"], store.Settings.EnginePriority);
     }
 
     [Fact]
@@ -859,15 +860,17 @@ public class UserDataStoreTests
         // As written with schema 14: no 3D formats.
         var modelIds = BuiltInData.ModelPresets().Select(p => p.Id).ToHashSet();
         var geoIds = BuiltInData.GeoPresets().Select(p => p.Id).ToHashSet();
-        var presets = BuiltInData.CreatePresets().Where(p => !modelIds.Contains(p.Id) && !geoIds.Contains(p.Id)).ToList();
-        var profiles = BuiltInData.CreateProfiles().Where(p => p.Id is not ("models" or "geo")).ToList();
+        var crystalIds = BuiltInData.CrystalPresets().Select(p => p.Id).ToHashSet();
+        var presets = BuiltInData.CreatePresets().Where(p => !modelIds.Contains(p.Id) && !geoIds.Contains(p.Id) && !crystalIds.Contains(p.Id)).ToList();
+        var profiles = BuiltInData.CreateProfiles().Where(p => p.Id is not ("models" or "crystal" or "geo")).ToList();
 
         Assert.True(SettingsMigrations.ApplyToLibrary(14, presets, profiles));
 
         Assert.Equal(["to-glb", "to-stl", "to-obj", "to-3mf", "to-ply", "to-gltf"], presets.Where(p => modelIds.Contains(p.Id)).Select(p => p.Id));
         var ids = profiles.Select(p => p.Id).ToList();
         Assert.Equal(ids.IndexOf("data") + 1, ids.IndexOf("models"));
-        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("geo")); // and, from schema 25, the geospatial donut
+        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("crystal")); // and, from schema 59, the crystal donut
+        Assert.Equal(ids.IndexOf("crystal") + 1, ids.IndexOf("geo")); // and, from schema 25, the geospatial donut
         Assert.Equal(ids.IndexOf("mixed") - 1, ids.IndexOf("geo"));
         var models = profiles.Single(p => p.Id == "models");
         Assert.Equal(["glb", "gltf", "stl", "obj", "3mf", "ply", "fbx"], models.Extensions);
@@ -984,15 +987,17 @@ public class UserDataStoreTests
     {
         // As written with schema 24: no geospatial formats.
         var geoIds = BuiltInData.GeoPresets().Select(p => p.Id).ToHashSet();
-        var presets = BuiltInData.CreatePresets().Where(p => !geoIds.Contains(p.Id)).ToList();
-        var profiles = BuiltInData.CreateProfiles().Where(p => p.Id != "geo").ToList();
+        var crystalIds = BuiltInData.CrystalPresets().Select(p => p.Id).ToHashSet();
+        var presets = BuiltInData.CreatePresets().Where(p => !geoIds.Contains(p.Id) && !crystalIds.Contains(p.Id)).ToList();
+        var profiles = BuiltInData.CreateProfiles().Where(p => p.Id is not ("crystal" or "geo")).ToList();
 
         Assert.True(SettingsMigrations.ApplyToLibrary(24, presets, profiles));
 
         Assert.Equal(["to-geojson", "to-shp", "to-kml", "to-gpx", "to-kmz"], presets.Where(p => geoIds.Contains(p.Id)).Select(p => p.Id));
         Assert.Equal(["geojson", "shp", "kml", "gpx"], presets.Where(p => geoIds.Contains(p.Id)).Select(p => p.TargetFormat).Take(4));
         var ids = profiles.Select(p => p.Id).ToList();
-        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("geo"));
+        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("crystal"));
+        Assert.Equal(ids.IndexOf("crystal") + 1, ids.IndexOf("geo"));
         Assert.Equal(ids.IndexOf("mixed") - 1, ids.IndexOf("geo"));
         var geo = profiles.Single(p => p.Id == "geo");
         Assert.Equal(["geojson", "kml", "kmz", "gpx", "shp", "fit"], geo.Extensions);
@@ -1048,7 +1053,7 @@ public class UserDataStoreTests
         var store = new UserDataStore(dir.Path);
         store.Load();
 
-        Assert.Equal(["magick", "cad", "model3d", "geo", "archive", "pandoc", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "cad", "model3d", "crystal", "geo", "archive", "pandoc", "libreoffice"], store.Settings.EnginePriority);
         Assert.Equal(AppSettings.CurrentSchemaVersion, store.Settings.SchemaVersion);
     }
 
@@ -1060,7 +1065,8 @@ public class UserDataStoreTests
         store.Load();
 
         var ids = store.Profiles.Select(p => p.Id).ToList();
-        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("geo"));
+        Assert.Equal(ids.IndexOf("models") + 1, ids.IndexOf("crystal"));
+        Assert.Equal(ids.IndexOf("crystal") + 1, ids.IndexOf("geo"));
         var geo = store.Profiles.Single(p => p.Id == "geo");
         Assert.All(geo.PresetIds, id => Assert.NotNull(store.FindPreset(id)));
         Assert.Equal("shp", store.FindPreset("to-shp")!.TargetFormat);
@@ -1373,7 +1379,7 @@ public class UserDataStoreTests
         var store = new UserDataStore(dir.Path);
         store.Load();
 
-        Assert.Equal(["magick", "pdfium", "docx-writer", "pdf-text", "pdf-slides", "email", "geo", "wic", "pandoc", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "pdfium", "docx-writer", "pdf-text", "pdf-slides", "email", "crystal", "geo", "wic", "pandoc", "libreoffice"], store.Settings.EnginePriority);
         Assert.Equal(AppSettings.CurrentSchemaVersion, store.Settings.SchemaVersion);
     }
 
@@ -1388,7 +1394,7 @@ public class UserDataStoreTests
         store.Load();
 
         // Not near the top: the HWPX writer stays among the ranks that win ties (see EbookTests).
-        Assert.Equal(["magick", "pdfium", "hwpx-writer", "subtitle", "wic", "ffmpeg", "geo", "pandoc", "libreoffice"], store.Settings.EnginePriority);
+        Assert.Equal(["magick", "pdfium", "hwpx-writer", "subtitle", "wic", "ffmpeg", "crystal", "geo", "pandoc", "libreoffice"], store.Settings.EnginePriority);
         Assert.Equal(AppSettings.CurrentSchemaVersion, store.Settings.SchemaVersion);
     }
 
