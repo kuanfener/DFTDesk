@@ -285,7 +285,7 @@ def main():
         if not args.outdir:
             parser.error("--outdir is required")
         result = _analyze(data, args)
-    print(json.dumps(result, ensure_ascii=False, allow_nan=False))
+    print(json.dumps(result, ensure_ascii=True, allow_nan=False))
 
 
 if __name__ == "__main__":
