@@ -151,10 +151,6 @@
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构文件转换 · ASE 团簇生成 · VASP 建模辅助。所有结构文件在本机处理。"/>
-                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,9,0,0">
-                  <Button Content="结构文件格式转换" Click="OnGoConversion"/>
-                  <Button Content="生成团簇" Click="OnGoCluster"/>
-                </StackPanel>
               </StackPanel>
             </Border>
             <TextBlock Classes="h2" Text="开始使用"/>
