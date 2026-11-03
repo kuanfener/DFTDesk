@@ -10,7 +10,9 @@ using Avalonia.Styling;
 using Filee.App.Controls;
 using Filee.App.Services;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.Json;
+using Avalonia.Media.Imaging;
 using DrawingColor = System.Drawing.Color;
 using AvColor = Avalonia.Media.Color;
 
@@ -59,6 +61,11 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<bool>? CartesianChanged;
     public event Action<DrawingColor, double>? ThemeChanged;
     public event Action? AseCheckRequested;
+    public event Action? DosEngineCheckRequested;
+    public event Action? DosBrowseRequested;
+    public event Action? DosAnalyzeRequested;
+    public event Action? DosExportRequested;
+    public event Action? DosCancelRequested;
     public event Action? ClusterBrowseRequested;
     public event Action? ClusterGenerateRequested;
     public event Action? ClusterCancelRequested;
@@ -70,8 +77,9 @@ internal sealed partial class CrystalShell : UserControl
         _pages =
         [
             Part<Control>("HomePage"), Part<Control>("ConversionPage"),
-            Part<Control>("ClusterPage"), Part<Control>("ThemePage"),
-            Part<Control>("WorkEnginePage"), Part<Control>("AboutPage")
+            Part<Control>("ClusterPage"), Part<Control>("DosPage"),
+            Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
+            Part<Control>("AboutPage")
         ];
         var pageContainer = Part<Grid>("PageContainer");
         foreach (var page in _pages)
@@ -168,6 +176,97 @@ internal sealed partial class CrystalShell : UserControl
     {
         Part<TextBlock>("AseHealthText").Text = text;
         Part<TextBlock>("HomeAseStatus").Text = text;
+    }
+
+    public void SetDosEngineStatus(string text) =>
+        Part<TextBlock>("DosEngineHealthText").Text = text;
+
+    public void SetDosInput(string path)
+    {
+        Part<TextBlock>("DosInputFile").Text = path;
+        ClearDosPreview();
+        Part<ListBox>("DosElementList").ItemsSource = Array.Empty<string>();
+        Part<TextBlock>("DosMetadataStatus").Text = "正在读取 DOS 元数据…";
+    }
+
+    public void SetDosMetadata(DosData data)
+    {
+        var list = Part<ListBox>("DosElementList");
+        list.ItemsSource = data.Elements;
+        var preferred = new[] { "Pt", "Fe", "Co", "Ni" };
+        var chosen = data.Elements.Where(preferred.Contains).ToArray();
+        if (chosen.Length == 0 && data.Elements.Length > 0)
+            chosen = [data.Elements[0]];
+        foreach (var element in chosen)
+            list.SelectedItems?.Add(element);
+        var spin = data.SpinPolarized ? "自旋极化" : "非自旋极化";
+        Part<TextBlock>("DosMetadataStatus").Text =
+            $"{data.Info}；{spin}；Ef = {data.Fermi:0.0000} eV；可用能量 [{data.EnergyMin:0.00}, {data.EnergyMax:0.00}] eV。" +
+            (data.HasPdos ? $"可用元素：{string.Join(", ", data.Elements)}。" :
+                "当前只能绘制 TDOS；若是 DOSCAR，请将同次计算的 POSCAR 放在其目录内。");
+    }
+
+    public DosRequest ReadDosRequest(string source)
+    {
+        static double Parse(string? value, string label)
+        {
+            if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsed) ||
+                !double.IsFinite(parsed))
+                throw new ArgumentException($"{label}需输入有效数字，例如 -8 或 4。");
+            return parsed;
+        }
+        var orbitals = new List<string>();
+        if (Part<CheckBox>("DosOrbitalS").IsChecked == true) orbitals.Add("s");
+        if (Part<CheckBox>("DosOrbitalP").IsChecked == true) orbitals.Add("p");
+        if (Part<CheckBox>("DosOrbitalD").IsChecked == true) orbitals.Add("d");
+        var spin = Part<ComboBox>("DosSpinMode").SelectedIndex switch
+        {
+            1 => "up",
+            2 => "down",
+            _ => "both",
+        };
+        return new DosRequest(source,
+            Part<ListBox>("DosElementList").SelectedItems?.OfType<string>().ToArray() ?? [],
+            orbitals.ToArray(), spin,
+            Parse(Part<TextBox>("DosEnergyMin").Text, "能量下限"),
+            Parse(Part<TextBox>("DosEnergyMax").Text, "能量上限"));
+    }
+
+    public void SetDosBusy(bool busy)
+    {
+        Part<Button>("DosAnalyzeButton").IsEnabled = !busy;
+        Part<Button>("DosCancelButton").IsEnabled = busy;
+        if (busy) Part<Button>("DosExportButton").IsEnabled = false;
+    }
+
+    public void SetDosExportReady(bool ready) =>
+        Part<Button>("DosExportButton").IsEnabled = ready;
+
+    public void SetDosStatus(string text) =>
+        Part<TextBlock>("DosStatus").Text = text;
+
+    public void SetDosPreview(DosData result)
+    {
+        var image = Part<Image>("DosPlotImage");
+        var bitmap = new Bitmap(result.Png);
+        var old = image.Source as Bitmap;
+        image.Source = bitmap;
+        old?.Dispose();
+        image.IsVisible = true;
+        Part<TextBlock>("DosPlotPlaceholder").IsVisible = false;
+        Part<TextBox>("DosSummary").Text = result.Summary;
+    }
+
+    public void ClearDosPreview()
+    {
+        var image = Part<Image>("DosPlotImage");
+        var old = image.Source as Bitmap;
+        image.Source = null;
+        old?.Dispose();
+        image.IsVisible = false;
+        Part<TextBlock>("DosPlotPlaceholder").IsVisible = true;
+        Part<TextBox>("DosSummary").Text = "选择元素、轨道与能量窗口后，点击分析并绘图。";
+        SetDosExportReady(false);
     }
 
     public ClusterRequest ReadClusterRequest() => new(
@@ -346,6 +445,12 @@ internal sealed partial class CrystalShell : UserControl
         SaveEngineSettings();
     }
 
+    private void OnCheckDosEngine(object? sender, RoutedEventArgs e) => DosEngineCheckRequested?.Invoke();
+    private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
+    private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
+    private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
+    private void OnDosCancel(object? sender, RoutedEventArgs e) => DosCancelRequested?.Invoke();
+
     private void OnCheckAse(object? sender, RoutedEventArgs e)
     {
         SaveEngineSettings();
@@ -451,8 +556,10 @@ internal sealed partial class CrystalShell : UserControl
         Part<ListBox>("Navigation").SelectedIndex = 1;
     private void OnGoCluster(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 2;
+    private void OnGoDos(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 3;
     private void OnGoEngine(object? sender, RoutedEventArgs e) =>
-        Part<ListBox>("Navigation").SelectedIndex = 4;
+        Part<ListBox>("Navigation").SelectedIndex = 5;
 
     private void OnClusterModeChanged(object? sender, SelectionChangedEventArgs e)
     {

@@ -68,7 +68,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 1.1.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 1.2.0"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -111,6 +111,14 @@
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Tune}" Width="17" Height="17"/>
+                <TextBlock Text="DOS 分析" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
                 <PathIcon Classes="navicon" Data="{StaticResource Icon.Palette}" Width="17" Height="17"/>
                 <TextBlock Text="主题" VerticalAlignment="Center"/>
               </StackPanel>
@@ -147,10 +155,10 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 1.1" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 1.2" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="晶体结构文件转换 · ASE 团簇生成 · VASP 建模辅助。所有结构文件在本机处理。"/>
+                           Text="晶体结构转换 · ASE 团簇生成 · VASP DOS 分析。输入文件均在本机处理。"/>
               </StackPanel>
             </Border>
             <TextBlock Classes="h2" Text="开始使用"/>
@@ -181,7 +189,7 @@
               </StackPanel>
             </Border>
             <TextBlock Classes="caption" TextWrapping="Wrap"
-                       Text="使用提醒：团簇结果为几何初始猜测，需经过 VASP 几何优化；结构转换后请核对原子顺序、坐标与约束。首页将为后续 VASP / Gaussian 分析功能保留扩展空间。"/>
+                       Text="使用提醒：团簇结果为几何初猜，需经过 VASP 优化；结构转换后请核对原子顺序与约束。DOS/PDOS 推荐使用收敛后的静态计算结果。"/>
           </StackPanel>
 
           <StackPanel x:Name="ConversionPage" Spacing="16" IsVisible="False">
@@ -339,7 +347,69 @@
                        Text="注意：输出仅为初始构型，需要进行 VASP 结构弛豫和真空层收敛测试；小团簇的晶面仅指局部几何取向。"/>
           </StackPanel>
 
-          <!-- DFTDesk compact theme settings, without theme variants or preview. -->
+          <StackPanel x:Name="DosPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="DOS / PDOS 分析"/>
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="读取 VASP DOSCAR 或 vasprun.xml，按元素和 s/p/d 轨道筛选，自旋分辨绘图并计算 d 带中心。"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="导入 VASP 电子态密度"/>
+                <Button Classes="accent" HorizontalAlignment="Left" Content="选择 DOSCAR / vasprun.xml" Click="OnDosBrowse"/>
+                <TextBlock x:Name="DosInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 DOS 数据"/>
+                <TextBlock x:Name="DosMetadataStatus" Classes="caption" TextWrapping="Wrap"
+                           Text="DOSCAR 按元素分辨 PDOS 需要同目录 POSCAR 或 CONTCAR；优先推荐 vasprun.xml。"/>
+                <TextBlock Classes="label" Text="选择元素（Ctrl / Shift 可多选；默认选 Pt、Fe、Co、Ni）"/>
+                <ListBox x:Name="DosElementList" SelectionMode="Multiple" MinHeight="65" MaxHeight="145"/>
+                <TextBlock Classes="label" Text="轨道投影"/>
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                  <CheckBox x:Name="DosOrbitalS" Content="s" IsChecked="True"/>
+                  <CheckBox x:Name="DosOrbitalP" Content="p" IsChecked="True"/>
+                  <CheckBox x:Name="DosOrbitalD" Content="d" IsChecked="True"/>
+                </StackPanel>
+                <Grid ColumnDefinitions="*,12,*,12,*">
+                  <StackPanel Spacing="5">
+                    <TextBlock Classes="label" Text="自旋通道"/>
+                    <ComboBox x:Name="DosSpinMode" SelectedIndex="0">
+                      <ComboBoxItem Content="↑ + ↓（下自旋镜像）"/>
+                      <ComboBoxItem Content="仅 ↑"/>
+                      <ComboBoxItem Content="仅 ↓"/>
+                    </ComboBox>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="5">
+                    <TextBlock Classes="label" Text="能量下限（eV，相对 Ef）"/>
+                    <TextBox x:Name="DosEnergyMin" Text="-8"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="4" Spacing="5">
+                    <TextBlock Classes="label" Text="能量上限（eV，相对 Ef）"/>
+                    <TextBox x:Name="DosEnergyMax" Text="4"/>
+                  </StackPanel>
+                </Grid>
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                  <Button x:Name="DosAnalyzeButton" Classes="accent" Content="分析并绘图" Click="OnDosAnalyze"/>
+                  <Button x:Name="DosExportButton" Content="导出 CSV / PNG / SVG" Click="OnDosExport" IsEnabled="False"/>
+                  <Button x:Name="DosCancelButton" Content="取消分析" Click="OnDosCancel" IsEnabled="False"/>
+                </StackPanel>
+                <TextBlock x:Name="DosStatus" Classes="muted" TextWrapping="Wrap"
+                           Text="请先选择 DOS 数据文件。"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="DOS 曲线预览"/>
+                <TextBlock x:Name="DosPlotPlaceholder" Classes="caption"
+                           Text="分析完成后在此显示 TDOS / PDOS 曲线。"/>
+                <Image x:Name="DosPlotImage" Height="480" Stretch="Uniform" IsVisible="False"/>
+                <TextBlock Classes="h2" Text="积分与 d 带中心"/>
+                <TextBox x:Name="DosSummary" AcceptsReturn="True" IsReadOnly="True"
+                         TextWrapping="Wrap" MinHeight="105" MaxHeight="230"
+                         Text="d 带中心按选定能量区间计算，以费米能级为 0 eV；自旋上下分开统计。"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="曲线按元素汇总所有对应原子；CSV 中 DOS 保留物理正值，图中 spin-down 为方便比较显示为负值。"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- DFTDesk compact theme settings. -->
           <StackPanel x:Name="ThemePage" IsVisible="False" Spacing="16">
             <TextBlock Classes="h1" Text="主题"/>
             <TextBlock Classes="muted" Text="自定义外观、颜色、圆角、透明度、动画和窗口大小。"/>
@@ -451,18 +521,23 @@
             <TextBlock Classes="h1" Text="工作引擎"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="Python / ASE 环境（必需）"/>
+                <TextBlock Classes="h2" Text="Python 工作引擎：ASE + pymatgen"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="DFTDesk.exe 不包含 Python 或 ASE。请先在本机安装：python -m pip install ase，再填写已安装 ASE 的 python.exe 完整路径，点击检测。"/>
+                           Text="结构处理依赖 ASE；DOS / PDOS 分析依赖 pymatgen、NumPy、Matplotlib。请在同一 Python 环境安装：python -m pip install ase pymatgen numpy matplotlib"/>
                 <TextBlock Classes="label" Text="Python 可执行文件"/>
                 <TextBox x:Name="AsePythonExecutable" Text="python"
                          PlaceholderText="python 或 C:\Python311\python.exe"
                          LostFocus="OnAsePathLostFocus"/>
-                <Button Classes="accent" HorizontalAlignment="Left" Content="检测 ASE" Click="OnCheckAse"/>
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                  <Button Classes="accent" Content="检测 ASE" Click="OnCheckAse"/>
+                  <Button Content="检测 DOS 引擎" Click="OnCheckDosEngine"/>
+                </StackPanel>
                 <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
-                           Text="尚未检测 ASE 环境。每次开始批量或轮盘转换前都会检查。"/>
+                           Text="ASE：尚未检测。结构转换前会自动检查。"/>
+                <TextBlock x:Name="DosEngineHealthText" Classes="caption" TextWrapping="Wrap"
+                           Text="pymatgen / NumPy / Matplotlib：尚未检测。"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="ASE 使用 LGPL-2.1-or-later 许可，版权归 ASE 贡献者；DFTDesk 仅调用独立 Python 环境，不捆绑 ASE 库。"/>
+                           Text="DFTDesk 仅调用用户配置的外部 Python 环境，不捆绑这些 Python 包。ASE 使用 LGPL-2.1-or-later 许可。"/>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -471,13 +546,13 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="DFTDesk"/>
-                <TextBlock Text="DFT 计算文件与数据处理工作台 · 结构转换与 ASE 团簇生成"/>
+                <TextBlock Text="DFT 计算工作台 · 结构转换、团簇生成与 VASP DOS 分析"/>
                 <TextBlock Classes="caption" Text="DFTDesk 使用 MIT 许可；部分界面、轮盘及 Windows 文件组件源自上游开源项目，许可与原作者版权信息请见随附 LICENSE.txt 和源码中的第三方声明。"/>
                 <TextBlock Classes="h2" Text="第三方开源组件"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="开源界面及轮盘源项目：Filee (KnifeLemon) — MIT License；原作者版权保留。"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="ASE — Atomic Simulation Environment（DFTDesk 唯一结构转换引擎，外部 Python 环境）— LGPL-2.1-or-later；版权归 ASE contributors。ASE 不包含在 DFTDesk 的下载包中。"/>
+                           Text="ASE — Atomic Simulation Environment（结构引擎，LGPL-2.1-or-later）；pymatgen、NumPy、Matplotlib — VASP DOS 后处理（外部 Python 环境）。相关包不随 DFTDesk.exe 打包。"/>
                 <Button Content="ASE 官方网站" HorizontalAlignment="Left" Click="OnOpenAseWebsite"/>
                 <Button Content="DFTDesk" HorizontalAlignment="Left" Click="OnGitHub"/>
               </StackPanel>
