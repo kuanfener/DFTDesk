@@ -392,7 +392,7 @@
                   <StackPanel Spacing="4" VerticalAlignment="Center">
                     <TextBlock Classes="h2" Text="轮盘不透明度"/>
                     <TextBlock Classes="caption" TextWrapping="Wrap"
-                               Text="拖动滑块实时预览资源管理器 Ctrl + 左键拖动时的轮盘效果。"/>
+                               Text="拖动滑块调整透明度；将鼠标移到右侧轮盘上可预览扇区高亮效果。"/>
                   </StackPanel>
                   <Grid Grid.Column="1" ColumnDefinitions="*,56" ColumnSpacing="8"
                         VerticalAlignment="Center">
@@ -401,7 +401,7 @@
                     <TextBlock Grid.Column="1" x:Name="OpacityValue" Text="96%"
                                VerticalAlignment="Center" FontWeight="SemiBold"/>
                   </Grid>
-                  <Border Grid.Column="2" Width="180" Height="180" Padding="7"
+                  <Border x:Name="ThemeDonutPreviewSurface" Grid.Column="2" Width="180" Height="180" Padding="7"
                           Background="{DynamicResource AccentFaintBrush}"
                           BorderBrush="{DynamicResource SubtleBorderBrush}" BorderThickness="1"
                           CornerRadius="{DynamicResource SoftRadius}" HorizontalAlignment="Center">

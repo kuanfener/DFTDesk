@@ -80,6 +80,14 @@ internal sealed partial class CrystalShell : UserControl
 
         _themeWheel = DftDonutFactory.Create(60, ToDrawing(_accent));
         Part<ContentControl>("ThemeDonutPreviewHost").Content = _themeWheel;
+        // The preview surface handles hover while the embedded donut stays non-interactive.
+        var previewSurface = Part<Border>("ThemeDonutPreviewSurface");
+        previewSurface.PointerMoved += (_, e) =>
+        {
+            var hit = _themeWheel.HitTest(e.GetPosition(_themeWheel));
+            _themeWheel.SetExternalHighlight(hit.Kind == DonutHitKind.Segment ? hit.Index : -1);
+        };
+        previewSurface.PointerExited += (_, _) => _themeWheel.SetExternalHighlight(-1);
 
         var zone = Part<Border>("DropZone");
         DragDrop.SetAllowDrop(zone, true);
