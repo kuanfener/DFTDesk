@@ -67,14 +67,16 @@ internal sealed partial class MainForm : Form
         Shown += (_, _) => _global.Start();
         FormClosing += (_, e) =>
         {
-            if (!_busy) return;
+            if (!_busy && !_clusterBusy) return;
             _cancellation?.Cancel();
+            _clusterCancellation?.Cancel();
             e.Cancel = true;
-            Log("正在取消转换，请完成后再关闭窗口。");
+            Log("正在取消任务，请等待任务完成后再关闭窗口。");
         };
         FormClosed += (_, _) =>
         {
             _cancellation?.Cancel();
+            _clusterCancellation?.Cancel();
             _dragGraceTimer.Dispose();
             _global.Dispose();
             _popup.Dispose();
@@ -211,7 +213,7 @@ internal sealed partial class MainForm : Form
 
     private async Task StartBatchAsync(ExportFormat target)
     {
-        if (_busy) return;
+        if (_busy || _clusterBusy) return;
         var inputs = _paths.Where(File.Exists).Where(path => CrystalFiles.Detect(path) != target).ToArray();
         if (inputs.Length == 0)
         {
