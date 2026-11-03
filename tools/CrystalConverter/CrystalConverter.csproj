@@ -18,11 +18,16 @@
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
     <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <!-- Bundle managed and native dependencies into one self-contained Windows EXE.
+         The CI release stage excludes optional sidecar XML/PDB files. -->
     <PublishSingleFile>true</PublishSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <SelfContained>true</SelfContained>
     <PublishTrimmed>false</PublishTrimmed>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
   </PropertyGroup>
   <PropertyGroup>
     <!-- Optional private QR images are read from the owner's local profile at build time.
