@@ -26,6 +26,9 @@ internal sealed partial class CrystalShell : UserControl
     private static readonly string SettingsFile = Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
         "DFTDesk", "theme.json");
+    private static readonly string EngineSettingsFile = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+        "DFTDesk", "engine.json");
     private static readonly string[] Swatches =
         ["#7F77DD", "#1D9E75", "#D85A30", "#378ADD", "#D4537E", "#BA7517", "#639922", "#5F5E5A"];
 
@@ -53,6 +56,7 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<string>? OutputDirectoryChanged;
     public event Action<bool>? CartesianChanged;
     public event Action<DrawingColor, double>? ThemeChanged;
+    public event Action? AseCheckRequested;
 
     public CrystalShell()
     {
@@ -168,6 +172,7 @@ internal sealed partial class CrystalShell : UserControl
 
         BuildSwatches();
         LoadSettings();
+        LoadEngineSettings();
         Part<ComboBox>("AppearanceMode").SelectedIndex =
             (_savedMode is "Light") ? 1 : (_savedMode is "Dark") ? 2 : 0;
         _initializing = false;
@@ -189,6 +194,11 @@ internal sealed partial class CrystalShell : UserControl
     public bool Cartesian => Part<CheckBox>("CartesianOption").IsChecked == true;
     public DrawingColor CurrentAccent => ToDrawing(_accent);
     public double CurrentOpacity => _opacity / 100;
+    public CrystalEngine SelectedEngine => Part<ComboBox>("CrystalEngineChoice").SelectedIndex == 1
+        ? CrystalEngine.Ase : CrystalEngine.Native;
+    public string AsePythonExecutable => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
+        ? executable : "python";
+    public void SetAseStatus(string text) => Part<TextBlock>("AseHealthText").Text = text;
 
     public void SetFiles(IEnumerable<string> files)
     {
@@ -311,6 +321,63 @@ internal sealed partial class CrystalShell : UserControl
 
     private static DrawingColor ToDrawing(AvColor color) =>
         DrawingColor.FromArgb(color.R, color.G, color.B);
+
+    private sealed class EngineOptions
+    {
+        public string Name { get; set; } = "Native";
+        public string PythonExecutable { get; set; } = "python";
+    }
+
+    private void LoadEngineSettings()
+    {
+        try
+        {
+            if (!File.Exists(EngineSettingsFile)) return;
+            var settings = JsonSerializer.Deserialize<EngineOptions>(File.ReadAllText(EngineSettingsFile));
+            if (settings is null) return;
+            Part<ComboBox>("CrystalEngineChoice").SelectedIndex =
+                settings.Name.Equals("ASE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+            Part<TextBox>("AsePythonExecutable").Text =
+                string.IsNullOrWhiteSpace(settings.PythonExecutable) ? "python" : settings.PythonExecutable;
+        }
+        catch (Exception) { /* A malformed optional setting falls back to the native engine. */ }
+    }
+
+    private void SaveEngineSettings()
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(EngineSettingsFile)!);
+            File.WriteAllText(EngineSettingsFile, JsonSerializer.Serialize(new EngineOptions
+            {
+                Name = SelectedEngine == CrystalEngine.Ase ? "ASE" : "Native",
+                PythonExecutable = AsePythonExecutable,
+            }, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private void OnEngineSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_initializing) return;
+        SaveEngineSettings();
+        SetAseStatus(SelectedEngine == CrystalEngine.Native
+            ? "当前使用无需 Python 的原生转换引擎。"
+            : "已选择 ASE。请点击检测 ASE，或直接开始转换以自动检测。");
+    }
+
+    private void OnAsePathLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (_initializing) return;
+        SaveEngineSettings();
+    }
+
+    private void OnCheckAse(object? sender, RoutedEventArgs e)
+    {
+        SaveEngineSettings();
+        AseCheckRequested?.Invoke();
+    }
 
     private sealed class ThemeOptions
     {
