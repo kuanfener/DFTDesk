@@ -70,7 +70,9 @@ internal sealed partial class MainForm
             foreach (var path in removed) _paths.Remove(path);
             RefreshFiles();
         };
-        _shell.HomeFilesDropped += paths => AddFiles(paths, replace: true);
+        // Dropping more files into the unified import/list card adds to its batch;
+        // only the Explorer wheel intentionally replaces the selected batch.
+        _shell.HomeFilesDropped += paths => AddFiles(paths);
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.ClusterBrowseRequested += BrowseClusterFolder;
