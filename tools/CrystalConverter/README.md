@@ -25,6 +25,23 @@ DFTDesk 使用原版 Filee 的导航参数，而不是额外放大：展开/收�
 
 > 独立程序的转换功能仍限定为晶体格式；原版 Filee 侧边栏中的预设、自动转换文件夹等位置在这里显示晶体转换相关的设置/入口，不代表把原版图片、PDF 等所有转换引擎也打包进来。界面源码共享不意味着在所有 Windows DPI 及资源管理器版本上已完成像素级验收，建议结合截图核对。
 
+## 可选 ASE 结构转换引擎
+
+DFTDesk 现在提供两种可切换的 POSCAR / CONTCAR ⇄ CIF 引擎：
+
+- **DFTDesk 原生引擎（默认）**：纯 C#，无需 Python；保留现有 VESTA 风格固定小数精度与 CIF P1 处理规则。
+- **ASE — Atomic Simulation Environment（可选）**：使用用户本机的 Python + ASE 进行格式转换，适合需要 ASE 晶体结构读写行为的研究场景。ASE 结果可能与原生引擎在数值位数、元素排序和对称结构展开方面有所不同；请在计算前核对晶胞和原子数。
+
+在终端中为你要使用的 Python 环境安装 ASE：
+
+```powershell
+python -m pip install ase
+```
+
+然后进入 **DFTDesk → 转换引擎**，选择 ASE，填写 `python` 或你的 Conda / venv 环境中 `python.exe` 的**完整路径**，点击 **检测 ASE**。选择会保存在 `%LOCALAPPDATA%\\DFTDesk\\engine.json`；主窗口批量转换和 Ctrl 拖放轮盘都使用选中的引擎。ASE 无法启动或未安装时会显示错误，不会静默切回其他引擎。输出会先写入临时文件，成功后再原子重命名；自动避让已有同名文件，失败则清理临时输出。
+
+**许可证**：ASE 是独立的第三方项目，版权归 ASE contributors，采用 [LGPL-2.1-or-later](https://gitlab.com/ase/ase) 许可证。DFTDesk 通过外部 Python 进程使用 ASE，**不会在 DFTDesk.exe 或 GitHub Actions 发布包中捆绑 ASE、Python 或 NumPy**。如果以后更改为打包分发 ASE，需要按 LGPL 要求附带相应许可和源代码获取／替换机制。
+
 ## DFTDesk 赞助码（本地配置）
 
 - 赞助窗口只显示黑白微信 / 支付宝二维码，不提供下载、保存或复制按钮。
