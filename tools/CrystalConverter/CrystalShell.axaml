@@ -270,9 +270,9 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="VESTA 风格导出"/>
-                <TextBlock Classes="muted" Text="POSCAR 晶格保留 10 位小数，分数坐标保留 8 位，列对齐。"/>
-                <CheckBox x:Name="CartesianOption" Content="POSCAR 输出 Cartesian 坐标（默认 Direct）"/>
-                <TextBlock Classes="caption" Text="此选项只影响 CIF 转 POSCAR；CIF 输出为 P1。"/>
+                <TextBlock Classes="muted" Text="POSCAR 晶格保留 10 位小数，原子坐标保留 8 位，列对齐。"/>
+                <CheckBox x:Name="CartesianOption" IsChecked="True" Content="POSCAR 输出 Cartesian 坐标（原生引擎默认；不勾选则为 Direct）"/>
+                <TextBlock Classes="caption" Text="坐标模式仅影响 POSCAR 输出，默认：原生引擎 Cartesian、ASE 引擎 Direct；两种模式可独立设置。CIF 输出不受影响。 "/>
               </StackPanel>
             </Border>
           </StackPanel>
