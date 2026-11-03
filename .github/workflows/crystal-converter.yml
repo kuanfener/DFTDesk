@@ -45,14 +45,47 @@ jobs:
       - name: Publish standalone Windows x64 EXE
         run: dotnet publish tools/CrystalConverter/CrystalConverter.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 
-      - name: Include license and README
+      - name: Package minimal single-file release
+        shell: pwsh
         run: |
-          Copy-Item LICENSE dist/DFTDesk/LICENSE-Filee.txt
-          Copy-Item tools/CrystalConverter/README.md dist/DFTDesk/README.txt
+          $exe = 'dist/DFTDesk/DFTDesk.exe'
+          if (-not (Test-Path $exe -PathType Leaf)) {
+            throw 'Single-file DFTDesk.exe was not created.'
+          }
+          $release = 'dist/DFTDesk-Release'
+          New-Item -ItemType Directory -Force -Path $release | Out-Null
+          Copy-Item $exe (Join-Path $release 'DFTDesk.exe')
+          Copy-Item LICENSE (Join-Path $release 'LICENSE-Filee.txt')
+          Copy-Item tools/CrystalConverter/README.md (Join-Path $release 'README.txt')
+          $actual = @(Get-ChildItem -Path $release -File | Select-Object -ExpandProperty Name | Sort-Object)
+          $expected = @('DFTDesk.exe', 'LICENSE-Filee.txt', 'README.txt')
+          if (@(Compare-Object $actual $expected).Count -ne 0) {
+            throw "Unexpected release content: $($actual -join ', ')"
+          }
+          Get-ChildItem -Path $release | Format-Table Name,Length
+
+      - name: Smoke-test isolated release EXE
+        shell: pwsh
+        run: |
+          $exe = (Resolve-Path 'dist/DFTDesk-Release/DFTDesk.exe').Path
+          $process = Start-Process -FilePath $exe -PassThru -ErrorAction Stop
+          try {
+            Start-Sleep -Seconds 6
+            $process.Refresh()
+            if ($process.HasExited) {
+              throw "DFTDesk.exe exited during startup (code $($process.ExitCode))."
+            }
+            Write-Host 'Standalone GUI process is running from the minimal release directory.'
+          }
+          finally {
+            if (-not $process.HasExited) {
+              Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+            }
+          }
 
       - name: Upload portable EXE
         uses: actions/upload-artifact@v7
         with:
           name: DFTDesk-win-x64
-          path: dist/DFTDesk/
+          path: dist/DFTDesk-Release/
           if-no-files-found: error
