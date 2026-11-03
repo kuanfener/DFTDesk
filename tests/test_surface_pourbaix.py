@@ -42,9 +42,12 @@ class SurfacePourbaixTests(unittest.TestCase):
             for ext in ("png", "svg", "csv", "xlsx", "dat"):
                 self.assertGreater(Path(output[ext.title() if ext != "xlsx" else "Xlsx"]).stat().st_size, 0)
             from openpyxl import load_workbook
-            with load_workbook(output["Xlsx"], read_only=True) as result:
+            result = load_workbook(output["Xlsx"], read_only=True)
+            try:
                 self.assertIn("SurfacePourbaixGrid", result.sheetnames)
                 self.assertEqual(result["Adsorbates"].max_row, 3)
+            finally:
+                result.close()
 
     def test_legacy_repeated_five_row_template(self):
         with tempfile.TemporaryDirectory() as folder:

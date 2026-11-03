@@ -105,9 +105,8 @@ def render_maps(catalysts, ph_values, she_values, png_path, svg_path):
 def export_grid(catalysts, ph_values, she_values, csv_path, dat_path, excel_path):
     headers = ("Material", "pH", "U_SHE_V", "U_RHE_V", "StableState",
                "PhaseID", *ENERGY_COLUMNS)
-    workbook = Workbook()
-    summary = workbook.active
-    summary.title = "Adsorbates"
+    workbook = Workbook(write_only=True)
+    summary = workbook.create_sheet("Adsorbates")
     summary.append(("Material", "DG_OH_eV", "DG_O_eV", "DG_OOH_eV",
                     "n_e(OH)", "n_e(O)", "n_e(OOH)"))
     grid_sheet = workbook.create_sheet("SurfacePourbaixGrid")
@@ -156,8 +155,8 @@ def analyze(input_path, outdir, phmin=0, phmax=14, umin=-1.0, umax=2.0, resoluti
     if resolution < 40 or resolution > 201:
         raise ValueError("网格精度必须为 40–201。")
     catalysts = read_adsorbates(input_path)
-    if len(catalysts) > 24:
-        raise ValueError("一次最多绘制 24 个催化剂，请拆分工作簿。")
+    if len(catalysts) > 12:
+        raise ValueError("一次最多绘制 12 个催化剂，请拆分工作簿。")
     destination = Path(outdir)
     destination.mkdir(parents=True, exist_ok=True)
     output = {ext: str(destination / ("surface_pourbaix." + ext))
