@@ -1,71 +1,76 @@
-# DFTDesk
+# DFTDesk 1.1.0
 
-**面向 DFT / 计算材料研究的 Windows 科研文件与数据处理工作台。**
+**面向 DFT / 计算材料研究的 Windows 科研结构工作台。**
 
-DFTDesk 目前专注于 VASP 结构文件 **POSCAR / CONTCAR ⇄ CIF** 的转换、批处理和文件拖放，后续可扩展 VASP / Gaussian 数据处理。**结构转换只使用 ASE（Atomic Simulation Environment）；原生 C# POSCAR/CIF 转换器已移除。**
+DFTDesk 目前提供两项基于 [ASE — Atomic Simulation Environment](https://ase-lib.org/) 的主要功能：**POSCAR / CONTCAR ⇄ CIF 结构转换**与**单元素团簇初始构型生成**。Windows 主程序为自包含单文件 EXE；结构计算调用用户本机已安装的 Python + ASE。
 
 ![DFTDesk](src/DFTDesk/Assets/Icons/dftdesk.png)
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## 下载
+## 下载与配置
 
-1. 前往 [DFTDesk Windows 构建](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)，打开成功的工作流运行。
-2. 在 **Artifacts** 下载 `DFTDesk-win-x64`，解压后双击 `DFTDesk.exe`。
-3. 程序为 Windows x64 自包含单文件 EXE，**无需额外安装 .NET，但转换功能需要另行安装 Python + ASE**。
-
-发布包包含 `DFTDesk.exe`、`README.txt` 与 `LICENSE.txt`。
-
-## 首次使用：配置 ASE（必需）
-
-DFTDesk 使用已安装的 Python 环境调用 ASE，不随 EXE 捆绑 Python、ASE 或 NumPy。
-
-在 PowerShell、Miniconda Prompt 或 PyCharm 的 Python 环境中运行：
+1. 打开 [DFTDesk Windows 构建](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)，选择成功运行，在 **Artifacts** 下载 `DFTDesk-win-x64`。
+2. 解压后运行 `DFTDesk.exe`，不需要另外安装 .NET。
+3. 安装或使用已有的 Python 环境，在该环境执行：
 
 ```powershell
 python -m pip install ase
-python -c "import ase,sys; print('ASE:', ase.__version__); print('Python:', sys.executable)"
+python -c "import ase,sys; print('ASE', ase.__version__); print(sys.executable)"
 ```
 
-将输出的 `python.exe` 完整路径填入 **DFTDesk → 工作引擎 → Python 可执行文件**，点击 **检测 ASE**。检测成功即可使用轮盘和批量转换。已安装 Miniconda 的用户应填写对应环境下的 `python.exe`，不必重复安装 Python。
+4. 在软件 **「工作引擎」** 页面粘贴输出的 `python.exe` 完整路径，点击「检测 ASE」。结构转换和团簇生成共用这一环境。
 
-## 当前功能
+## 六个工作区
 
-| 功能 | 说明 |
+| 页面 | 内容 |
 | --- | --- |
-| 晶体结构转换 | 使用 ASE 读写 POSCAR / CONTCAR ⇄ CIF |
-| 工作引擎 | **仅 ASE**；可设置 Python 路径并检测环境 |
-| POSCAR 坐标 | 默认为 **Direct**，可在「预设」勾选 **Cartesian** |
-| 批量与拖放 | 多选文件、拖放、环形工具栏、Ctrl + 鼠标左键拖动 |
-| 文件安全 | 自动避让同名文件，不覆盖源文件；失败清理临时文件 |
-| 外观 | DFTDesk 主题、Soft / Material You、浅色 / 深色模式 |
-| 赞助 | 微信和支付宝二维码可在本地配置或构建时通过 GitHub Secrets 注入 |
+| 首页 | DFTDesk 工作台、两项功能快捷入口、ASE 状态与使用提示 |
+| 结构文件格式转换 | 文件拖放与列表、POSCAR/CIF 互转、批量输出、环形工具栏、历史与进度 |
+| 团簇生成 | 输入元素、原子数、普通或 FCC 晶面取向，批量输出 POSCAR 和 CIF |
+| 主题 | Soft / Material You、外观、强调色、缩放、圆角和轮盘透明度 |
+| 工作引擎 | Python / ASE 路径设置、安装检测 |
+| 关于 | 项目版本、开源许可证、相关链接 |
 
-**注意：** ASE 写出的 POSCAR 在本项目中使用 `sort=True` 按元素排序。CIF 的部分占位、空间群、POSCAR 的 Selective Dynamics 等信息无法保证完整往返；重要 VASP 输入文件需核对晶胞、元素顺序、原子数和约束。ASE 使用其自身输出精度，不保证与 VESTA 的固定小数格式完全相同。
+### 结构转换
 
-## 构建
+接受 `POSCAR`、`CONTCAR`、`.vasp`、`.poscar` 和 `.cif`。输出 POSCAR **默认 Cartesian（Å）**，可取消勾选改为 Direct。支持从资源管理器按 Ctrl + 左键拖动或 Ctrl + Alt + Space 打开轮盘，或在软件的同一页面多选文件后按按钮批量转换。同名文件自动避让，不覆盖原始文件。
 
-Windows 开发需要 .NET 10 SDK：
+### 团簇生成
+
+基于仓库中用户提供的两个 ASE 脚本改编实现，支持：
+
+- **元素**：如 Pt、Fe、Co、Ni、Au，按 ASE 元素符号识别。
+- **原子数**：输入 `4,5,6,13`、`4:12`、`4:12:2`，支持批量生成。
+- **普通团簇**：三原子三角形、四原子四面体、五原子三角双锥、六原子八面体、十三原子二十面体，其他数量使用参考体相截取初猜。
+- **晶面取向团簇**：FCC(111)、FCC(100)、FCC(110)，支持 `all` 批量或 `111,100` 自选；`ico` 支持完整壳层魔数 13/55/147/309/561/923。
+- **参数与输出**：ASE 参考晶格常数/近邻距离自动估算；晶面模式可手动覆盖 FCC 晶格常数；每侧真空默认 12 Å；POSCAR **默认 Cartesian**、可选 Direct；每个结构同时生成 POSCAR + CIF。
+- 每次生成都在所选根目录创建独立结果文件夹，不覆盖已有结果；支持取消和输出日志。
+
+**科学边界：** 生成结果仅为有限团簇的几何初始猜测，不能直接代表最低能量结构；应通过 VASP 弛豫和真空、晶格参数收敛性检查确认。非 FCC 元素的 FCC 晶面是*假设晶型*的初猜，小团簇不具有严格宏观晶面定义。
+
+## 源码构建
+
+需要 .NET 10 SDK；在 Windows x64 中执行：
 
 ```powershell
 dotnet test tests/DFTDesk.Tests/DFTDesk.Tests.csproj -c Release
 dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 
-GitHub CI 会在测试机中安装 ASE 并执行真实转换测试；这些 Python 依赖不会进入最终下载的 EXE。
+CI 运行真实 ASE 结构转换和团簇生成测试。外部 Python、NumPy 和 ASE 不随发布的 EXE 分发。
 
 ## 仓库结构
 
 ```text
-src/DFTDesk/                   DFTDesk UI、ASE 桥接、格式检测、批处理
-tests/DFTDesk.Tests/           ASE 往返转换及安全测试
-third_party/Filee/            复用的 Filee MIT 组件（轮盘、界面、Windows 交互）
+src/DFTDesk/                   Avalonia 界面、ASE 转换、团簇生成与 Python 桥接
+  ClusterScripts/             改编后的 ASE 团簇生成算法（嵌入 EXE）
+tests/DFTDesk.Tests/           转换与团簇生成测试
+third_party/Filee/            复用的 MIT UI、轮盘与 Windows 组件
 .github/workflows/            Windows 构建
 THIRD-PARTY-NOTICES.md        第三方版权及许可
 ```
 
-## 许可证
+## 版权
 
-DFTDesk 采用 **MIT License**。部分 UI、环形轮盘和 Windows 交互组件基于 [KnifeLemon/Filee](https://github.com/KnifeLemon/Filee) 的 MIT 开源代码，原作者版权与许可在 [LICENSE](LICENSE)、[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 中保留。第三方源码在 [third_party/Filee](third_party/Filee) 中单独维护。
-
-**ASE** 由 ASE contributors 开发，采用 LGPL-2.1-or-later 许可，作为外部 Python 软件运行，不随 DFTDesk 分发。本仓库的 GitHub fork 关系仅用于保留上游来源。
+DFTDesk 采用 MIT License。部分 UI、轮盘和 Windows 交互组件基于 [KnifeLemon/Filee](https://github.com/KnifeLemon/Filee) 的 MIT 代码，版权和许可在 [LICENSE](LICENSE)、[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 中保留。ASE 采用 LGPL-2.1-or-later，作为用户独立安装的外部 Python 库调用。个人赞助二维码通过本地文件或 Actions Secrets 注入，不上传公开源码。
