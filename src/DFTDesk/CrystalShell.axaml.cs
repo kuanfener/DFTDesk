@@ -69,6 +69,11 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<string>? DosFileDropped;
     public event Action<string>? CohpFileDropped;
     public event Action<string>? StepFileDropped;
+    public event Action<string>? SurfaceFileDropped;
+    public event Action? SurfaceBrowseRequested;
+    public event Action? SurfaceAnalyzeRequested;
+    public event Action? SurfaceExportRequested;
+    public event Action? SurfaceCancelRequested;
     public event Action? StepBrowseRequested;
     public event Action? StepAnalyzeRequested;
     public event Action? StepExportRequested;
@@ -92,7 +97,7 @@ internal sealed partial class CrystalShell : UserControl
         _pages =
         [
             Part<Control>("HomePage"), Part<Control>("ConversionPage"),
-            Part<Control>("ClusterPage"), Part<Control>("StepPage"), Part<Control>("DosPage"),
+            Part<Control>("ClusterPage"), Part<Control>("StepPage"), Part<Control>("SurfacePage"), Part<Control>("DosPage"),
             Part<Control>("CohpPage"), Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
             Part<Control>("AboutPage")
         ];
@@ -129,6 +134,11 @@ internal sealed partial class CrystalShell : UserControl
                 Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
                 ?? files[0]), "StepCloudButton");
+        ConfigureFileDrop("SurfaceDropZone", files =>
+            SurfaceFileDropped?.Invoke(files.FirstOrDefault(path =>
+                Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
+                ?? files[0]), "SurfaceCloudButton");
         Part<TextBox>("OutputDirectory").PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -309,6 +319,59 @@ internal sealed partial class CrystalShell : UserControl
         Part<TextBlock>("StepPlotPlaceholder").IsVisible = true;
         Part<TextBlock>("StepSummary").Text = "";
         Part<Button>("StepExportButton").IsEnabled = false;
+    }
+
+    public SurfacePourbaixRequest ReadSurfaceRequest(string inputPath)
+    {
+        var phMin = ParseSetting(Part<TextBox>("SurfacePhMin").Text, "pH 下限");
+        var phMax = ParseSetting(Part<TextBox>("SurfacePhMax").Text, "pH 上限");
+        var uMin = ParseSetting(Part<TextBox>("SurfaceUMin").Text, "电位下限");
+        var uMax = ParseSetting(Part<TextBox>("SurfaceUMax").Text, "电位上限");
+        if (phMin < 0 || phMax > 14 || phMin >= phMax)
+            throw new ArgumentException("pH 必须在 0–14 之间，且上限大于下限。");
+        if (uMin < -3 || uMax > 3 || uMin >= uMax)
+            throw new ArgumentException("SHE 电位必须在 -3–3 V 之间，且上限大于下限。");
+        return new SurfacePourbaixRequest(inputPath, phMin, phMax, uMin, uMax);
+    }
+
+    public void SetSurfaceInput(string path)
+    {
+        Part<TextBlock>("SurfaceInputFile").Text = path;
+        ClearSurfacePreview();
+    }
+
+    public void SetSurfaceBusy(bool busy)
+    {
+        Part<Button>("SurfaceAnalyzeButton").IsEnabled = !busy;
+        Part<Button>("SurfaceCancelButton").IsEnabled = busy;
+        if (busy) Part<Button>("SurfaceExportButton").IsEnabled = false;
+    }
+
+    public void SetSurfaceStatus(string message) =>
+        Part<TextBlock>("SurfaceStatus").Text = message;
+
+    public void SetSurfacePreview(SurfacePourbaixData data)
+    {
+        var image = Part<Image>("SurfacePlotImage");
+        var previous = image.Source as Bitmap;
+        image.Source = new Bitmap(data.Png);
+        previous?.Dispose();
+        image.IsVisible = true;
+        Part<TextBlock>("SurfacePlotPlaceholder").IsVisible = false;
+        Part<TextBlock>("SurfaceSummary").Text = data.Summary;
+        Part<Button>("SurfaceExportButton").IsEnabled = true;
+    }
+
+    public void ClearSurfacePreview()
+    {
+        var image = Part<Image>("SurfacePlotImage");
+        var previous = image.Source as Bitmap;
+        image.Source = null;
+        previous?.Dispose();
+        image.IsVisible = false;
+        Part<TextBlock>("SurfacePlotPlaceholder").IsVisible = true;
+        Part<TextBlock>("SurfaceSummary").Text = "";
+        Part<Button>("SurfaceExportButton").IsEnabled = false;
     }
 
     public void SetDosInput(string path)
@@ -494,7 +557,7 @@ internal sealed partial class CrystalShell : UserControl
 
     public string[] ReadSelectedExportExtensions(string page)
     {
-        if (page is not ("Step" or "Dos" or "Cohp"))
+        if (page is not ("Step" or "Surface" or "Dos" or "Cohp"))
             throw new ArgumentException("未知的导出工作区：" + page);
         var formats = new[]
         {
@@ -697,6 +760,10 @@ internal sealed partial class CrystalShell : UserControl
     private void OnStepAnalyze(object? sender, RoutedEventArgs e) => StepAnalyzeRequested?.Invoke();
     private void OnStepExport(object? sender, RoutedEventArgs e) => StepExportRequested?.Invoke();
     private void OnStepCancel(object? sender, RoutedEventArgs e) => StepCancelRequested?.Invoke();
+    private void OnSurfaceBrowse(object? sender, RoutedEventArgs e) => SurfaceBrowseRequested?.Invoke();
+    private void OnSurfaceAnalyze(object? sender, RoutedEventArgs e) => SurfaceAnalyzeRequested?.Invoke();
+    private void OnSurfaceExport(object? sender, RoutedEventArgs e) => SurfaceExportRequested?.Invoke();
+    private void OnSurfaceCancel(object? sender, RoutedEventArgs e) => SurfaceCancelRequested?.Invoke();
     private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
     private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
     private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
@@ -813,12 +880,14 @@ internal sealed partial class CrystalShell : UserControl
         Part<ListBox>("Navigation").SelectedIndex = 2;
     private void OnGoStep(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 3;
-    private void OnGoDos(object? sender, RoutedEventArgs e) =>
+    private void OnGoSurface(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 4;
-    private void OnGoCohp(object? sender, RoutedEventArgs e) =>
+    private void OnGoDos(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 5;
+    private void OnGoCohp(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 6;
     private void OnGoEngine(object? sender, RoutedEventArgs e) =>
-        Part<ListBox>("Navigation").SelectedIndex = 7;
+        Part<ListBox>("Navigation").SelectedIndex = 8;
 
     private void OnClusterModeChanged(object? sender, SelectionChangedEventArgs e)
     {

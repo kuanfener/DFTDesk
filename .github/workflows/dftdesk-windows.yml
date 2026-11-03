@@ -40,7 +40,10 @@ jobs:
       - name: Test HER and repeated-layout ORR/OER reaction step plotting
         run: python -m unittest discover -s tests -p test_step_diagram.py
 
-      - name: Build DFTDesk 2.2.1 CHE analysis UI
+      - name: Test pymatgen surface-adsorbate Pourbaix mapping and exports
+        run: python -m unittest discover -s tests -p test_surface_pourbaix.py
+
+      - name: Build DFTDesk 2.3.0 surface Pourbaix UI
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

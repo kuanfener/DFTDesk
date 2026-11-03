@@ -48,12 +48,13 @@ internal sealed partial class MainForm
         };
         _avaloniaWindow.Closing += (_, e) =>
         {
-            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy && !_stepBusy) return;
+            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy && !_stepBusy && !_surfaceBusy) return;
             _cancellation?.Cancel();
             _clusterCancellation?.Cancel();
             _dosCancellation?.Cancel();
             _cohpCancellation?.Cancel();
             _stepCancellation?.Cancel();
+            _surfaceCancellation?.Cancel();
             e.Cancel = true;
             Log("正在取消任务，请等待运行结束后关闭窗口。");
         };
@@ -83,6 +84,11 @@ internal sealed partial class MainForm
         _shell.StepAnalyzeRequested += () => _ = AnalyzeStepAsync();
         _shell.StepExportRequested += ExportStep;
         _shell.StepCancelRequested += () => _stepCancellation?.Cancel();
+        _shell.SurfaceBrowseRequested += BrowseSurfaceFile;
+        _shell.SurfaceFileDropped += SetSurfaceFile;
+        _shell.SurfaceAnalyzeRequested += () => _ = AnalyzeSurfaceAsync();
+        _shell.SurfaceExportRequested += ExportSurface;
+        _shell.SurfaceCancelRequested += () => _surfaceCancellation?.Cancel();
         _shell.DosFileDropped += SetDosFile;
         _shell.CohpFileDropped += SetCohpFile;
         _shell.DosBrowseRequested += BrowseDosFile;

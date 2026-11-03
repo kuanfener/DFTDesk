@@ -1,8 +1,8 @@
-# DFTDesk 2.2.1
+# DFTDesk 2.3.0
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
-DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、VASP DOS/PDOS、LOBSTER COHP/ICOHP 后处理集中在一个本地软件中，并支持导出可在 **Excel** 和 **Origin** 中继续分析的数据。
+DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面吸附态 Pourbaix 图、VASP DOS/PDOS、LOBSTER COHP/ICOHP 后处理集中在一个本地软件中，并支持导出可在 **Excel** 和 **Origin** 中继续分析的数据。
 
 ![DFTDesk](src/DFTDesk/Assets/Icons/dftdesk.png)
 
@@ -23,21 +23,22 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 
 > EXE 不捆绑 Python 或科学计算库；本地计算输入不会上传至服务器。
 
-## 九个工作区
+## 十个工作区
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.2.1 总览，结构转换、团簇生成、台阶图、DOS、COHP 五个功能入口 |
+| 首页 | DFTDesk 2.3.0 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT |
+| 表面 Pourbaix 图 | 用 pymatgen 解析 * / *OH / *O / *OOH 组成，并用四电子 CHE 绘制 pH–SHE 电位稳定区；支持同 Excel 多催化剂与可编辑数据导出 |
 | DOS 分析 | VASP DOSCAR、vasprun.xml：TDOS/PDOS、元素 s/p/d、自旋、DOS 积分、d 带中心 |
 | COHP / ICOHP 分析 | LOBSTER COHPCAR、ICOHPLIST：多键曲线、自旋分辨、ICOHP(Ef) 键强度 |
 | 主题 | 明暗模式、强调色、圆角、窗口尺寸、环形轮盘不透明度与实时预览 |
 | 工作引擎 | **ASE、pymatgen、NumPy、Matplotlib、openpyxl 五个独立状态卡片，逐个检测** |
 | 关于 | 软件版本、许可与开源链接 |
 
-首页将五个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
+首页将六个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
 
 ### 结构转换
 
@@ -81,9 +82,18 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 - 软件自动输出 `U_L`、`η`、电位决定步骤 PDS，以及每一步在 0 V 与所选电位下的自由能。在 Excel 的 **CHE Metrics**、**CHE Four Steps** 表格中保留数值，可与图片、CSV、Origin DAT 同时导出。
 - 所计算的为 **CHE 热力学理论过电位**；不包含电荷转移动力学、显式溶剂、覆盖度或其他条件的自动校正，最终结果取决于输入自由能的定义和精度。
 
+### 表面吸附态 Pourbaix 图（2.3.0 新增）
+
+- 左侧「**表面 Pourbaix 图**」位于「绘制台阶图」正下方，首页也有独立快捷卡片。
+- **复用台阶图 Excel 输入格式**：支持你提供的多组五行 ORR 原始表（催化剂 / *OOH / *O / *OH / 催化剂），或者每行一个催化剂的 `Material, DG_OH, DG_O, DG_OOH` 宽表；也支持台阶图既有的 G / E+Corr 形式。无需原生 Origin 工程文件。
+- **pymatgen 的 `Composition`** 解析吸附物中的 O、H 计量，得到每个吸附态对应的质子–电子转移数 `n_e = 2n_O - n_H`（*、*OH、*O、*OOH 为 0、1、2、3）。结合 298.15 K 的四电子 CHE，自由能按 `Ω_X = ΔG_X(0) − n_e·U_RHE` 修正，再在每个 pH–电位网格上选最低自由能表面态。
+- 横轴 pH，纵轴 **U vs SHE**；使用 `U_RHE = U_SHE + 0.05916×pH`，标出 `H₂/H₂O` 和 `O₂/H₂O` 理论水稳定边界。默认 pH 0–14、电位 −1–2 V vs SHE，范围可修改。多个催化剂自动排列在同一张图中。
+- 可分别勾选导出 **PNG、SVG、Excel XLSX、CSV、Origin DAT**。表格中包含每个网格的 pH、SHE/RHE 电位、稳定吸附态、PhaseID 以及四种表面态的自由能，可在 Excel/Origin 中继续处理；DAT **不是**原生 `.opju` 工程。
+- **科学边界**：这是表面吸附态的 **CHE 下包络稳定区图**，并不是 pymatgen `PourbaixDiagram` 所处理的体相/溶解物种相图；不包含金属溶解、离子浓度、显式溶剂、不同吸附覆盖度及动力学，不能直接用来推断催化剂的抗腐蚀稳定性。
+
 ### 统一云朵导入
 
-结构转换、DOS、COHP/ICOHP 和台阶图页面都使用已修复的「**点击或拖入添加文件**」云朵入口。按钮打开本地文件选择器，支持资源管理器拖放；DOSCAR/vasprun.xml、COHPCAR/ICOHPLIST 会自动匹配所需类型。
+结构转换、DOS、COHP/ICOHP、台阶图和表面 Pourbaix 页面都使用已修复的「**点击或拖入添加文件**」云朵入口。按钮打开本地文件选择器，支持资源管理器拖放；DOSCAR/vasprun.xml、COHPCAR/ICOHPLIST 会自动匹配所需类型。
 
 ### VASP DOS / PDOS
 
@@ -102,20 +112,20 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 
 Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲线工作表；**Origin DAT 是可直接导入 Origin 继续画图的制表符数据文件**，不是原生 `.opju` 工程文件。原始 COHP/ICOHP 符号保留在数值导出中，负的 ICOHP 通常代表成键贡献。
 
-## 导出格式选择（2.2.1）
+## 导出格式选择（2.3.0）
 
 - 结构转换：原有 CIF、POSCAR 两个格式入口保持独立。
 - 团簇生成：勾选 POSCAR、CIF 或两者，未勾选的格式不生成。
-- HER/ORR/OER 台阶图、DOS、COHP/ICOHP：在每个工作区勾选 PNG、SVG、Excel、Origin DAT、CSV 中需要的格式，再点「导出所选格式」；不再强制保存全部文件。纯 ICOHPLIST 数据无法导出不存在的曲线图像。
+- HER/ORR/OER 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：在每个工作区勾选 PNG、SVG、Excel、Origin DAT、CSV 中需要的格式，再点「导出所选格式」；不再强制保存全部文件。纯 ICOHPLIST 数据无法导出不存在的曲线图像。
 
 ## 工作引擎：五个独立检测项
 
 | Python 库 | 用途 | 检测方式 |
 | --- | --- | --- |
 | **ASE** | POSCAR/CIF、团簇与原子操作 | 单独检测 ASE |
-| **pymatgen** | VASP 与 LOBSTER 文件解析 | 单独检测 pymatgen |
+| **pymatgen** | VASP、LOBSTER 文件解析及表面吸附物组成计算 | 单独检测 pymatgen |
 | **NumPy** | 数组、积分和数值指标 | 单独检测 NumPy |
-| **Matplotlib** | DOS / COHP / 台阶图及 PNG / SVG 导出 | 单独检测 Matplotlib |
+| **Matplotlib** | DOS / COHP / 台阶图 / 表面 Pourbaix 及 PNG / SVG 导出 | 单独检测 Matplotlib |
 | **openpyxl** | Excel `.xlsx` 解析及工作簿写出 | 单独检测 openpyxl |
 
 五项共享用户选择的 Python 可执行文件，但 **状态与检测相互独立**。更改 Python 路径后，旧检测结果会被标记为需要重新检测。
@@ -129,6 +139,7 @@ dotnet test tests/DFTDesk.Tests/DFTDesk.Tests.csproj -c Release
 python -m unittest discover -s tests -p test_dos_analyzer.py
 python -m unittest discover -s tests -p test_cohp_analyzer.py
 python -m unittest discover -s tests -p test_step_diagram.py
+python -m unittest discover -s tests -p test_surface_pourbaix.py
 dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 

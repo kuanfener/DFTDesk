@@ -1,6 +1,6 @@
-# DFTDesk 2.2.1 — Windows 科研结构工作台
+# DFTDesk 2.3.0 — Windows 科研结构工作台
 
-**DFTDesk 2.2.1 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -8,7 +8,7 @@
 - 在结构转换、台阶图、DOS 与 COHP 分析页面点击云朵或拖放文件（提示统一为「点击或拖入添加文件」）；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 左键拖动呼出轮盘。已移除 Ctrl + Alt + Space。
 - 导出 POSCAR 默认 **Cartesian**，可在「结构文件格式转换」页面取消勾选切换 Direct。
 - 输出前先生成临时文件，成功后以不覆盖已有文件的方式命名；失败时清理临时输出文件。
-- 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」九个入口。
+- 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「表面 Pourbaix 图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」十个入口。
 - 「DOS 分析」支持导入 VASP DOSCAR 或 vasprun.xml，选择元素、s/p/d 轨道、自旋与能量区间，生成 TDOS/PDOS 曲线，计算 DOS 积分及 d 带中心，输出 CSV/Excel XLSX/Origin DAT/PNG/SVG。
 - 「团簇生成」支持普通团簇、FCC(111)/(100)/(110) 局部取向和完整二十面体壳层魔数；批量输出 POSCAR 和 CIF；输出 POSCAR 默认 Cartesian；保留可选 Direct、真空厚度与晶格常数覆盖。
 - 界面仅保留 DFTDesk Soft 风格；主题页统一管理浅色/深色、强调色、圆角、轮盘透明度、动画和实际窗口尺寸。**轮盘不透明度右侧显示实时轮盘预览**，滑块和强调色调整时立即刷新，与资源管理器实际轮盘使用同一渲染器。侧边栏展开/收起宽度为 230 / 64。保留上游 MIT 版权信息。
@@ -30,11 +30,17 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 工作引擎页有五张分开的状态卡片：**ASE、pymatgen、NumPy、Matplotlib、openpyxl**。每张卡片有各自的「单独检测」按钮和版本/错误状态；五项共用上方设置的 Python 路径，互相不合并。更改路径时旧状态会标记需要重新检查。
 
-首页「开始使用」提供结构转换、团簇生成、台阶图、DOS 与 COHP/ICOHP 五个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
+首页「开始使用」提供结构转换、团簇生成、台阶图、表面 Pourbaix、DOS 与 COHP/ICOHP 六个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
 ## 团簇生成
 
 在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，按勾选生成 POSCAR、CIF 或两者。所有团簇都只是初猜，需要 VASP 结构弛豫。
+
+## 表面吸附态 Pourbaix 图（2.3.0）
+
+在「绘制台阶图」下方点击「表面 Pourbaix 图」。软件使用你已有的 ORR/OER 自由能 Excel 数据（包含多组五行模板或 Material / DG_OH / DG_O / DG_OOH 宽表），通过 pymatgen `Composition` 得到吸附态 O/H 计量和电子转移数，再以四电子 CHE 求 *、*OH、*O、*OOH 的表面自由能最低态。输出 pH–SHE 电位二维相图，并标出理论水稳定边界。pH、电位范围可设置；可勾选 PNG、SVG、Excel、CSV、Origin DAT。
+
+Excel/CSV/DAT 包含每一网格的 pH、电位、稳定吸附态和各吸附态自由能，适合在 Origin 中修改绘图。此图只刻画理想化表面吸附态，**不包括固体溶解、溶液离子、覆盖度、显式溶剂及动力学**；不是固液相平衡的完整 PourbaixDiagram。原始 Excel 只读，DAT 不会自动生成原生 .opju。
 
 ## DOS / PDOS 分析
 
