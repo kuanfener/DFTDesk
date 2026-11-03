@@ -93,6 +93,12 @@ internal sealed partial class MainForm
     private void ExportStep()
     {
         if (_stepBusy || _stepResult is not { } data) return;
+        var selected = _shell.ReadSelectedExportExtensions("Step");
+        if (selected.Length == 0)
+        {
+            _shell.SetStepStatus("请至少勾选一种导出格式。");
+            return;
+        }
         using var dialog = new FolderBrowserDialog
         {
             Description = "选择台阶图及 Origin / Excel 数据的导出目录",
@@ -103,7 +109,7 @@ internal sealed partial class MainForm
         {
             (data.Png, ".png"), (data.Svg, ".svg"), (data.Csv, ".csv"),
             (data.Xlsx, ".xlsx"), (data.Dat, ".dat")
-        };
+        }.Where(item => selected.Contains(item.Item2)).ToArray();
         var stem = "DFTDesk_StepDiagram_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var count = 0;
         string[] destinations;

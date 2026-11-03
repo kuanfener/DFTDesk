@@ -63,6 +63,33 @@ public class ClusterGenerationTests
     }
 
     [Fact]
+    public async Task Generates_only_selected_cluster_formats()
+    {
+        var python = Environment.GetEnvironmentVariable("DFTDESK_TEST_ASE_PYTHON");
+        if (string.IsNullOrWhiteSpace(python)) return;
+        var root = Path.Combine(Path.GetTempPath(), "dftdesk-formats-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(root);
+        try
+        {
+            var poscarOnly = new ClusterRequest(false, "Pt", "4", "all", "", "12", root,
+                ExportPoscar: true, ExportCif: false);
+            var poscar = await ClusterGeneration.GenerateAsync(poscarOnly, python);
+            Assert.Single(Directory.GetFiles(poscar.Directory));
+            Assert.StartsWith("POSCAR_", Path.GetFileName(Directory.GetFiles(poscar.Directory)[0]));
+
+            var cifOnly = new ClusterRequest(false, "Pt", "4", "all", "", "12", root,
+                ExportPoscar: false, ExportCif: true);
+            var cif = await ClusterGeneration.GenerateAsync(cifOnly, python);
+            Assert.Single(Directory.GetFiles(cif.Directory));
+            Assert.EndsWith(".cif", Directory.GetFiles(cif.Directory)[0]);
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task Invalid_facet_does_not_publish_any_partial_result()
     {
         var python = Environment.GetEnvironmentVariable("DFTDESK_TEST_ASE_PYTHON");

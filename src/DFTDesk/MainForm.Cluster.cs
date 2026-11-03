@@ -28,6 +28,11 @@ internal sealed partial class MainForm
         }
 
         var request = _shell.ReadClusterRequest();
+        if (!request.ExportPoscar && !request.ExportCif)
+        {
+            _shell.SetClusterStatus("请至少勾选 POSCAR 或 CIF 一种输出格式。");
+            return;
+        }
         var python = _shell.PythonExecutablePath;
         _shell.SetClusterStatus("正在检查 Python / ASE 环境…");
         try
@@ -53,7 +58,7 @@ internal sealed partial class MainForm
         try
         {
             var result = await ClusterGeneration.GenerateAsync(request, python, _clusterCancellation.Token);
-            _shell.SetClusterStatus($"已生成 {result.StructureCount} 个团簇、{result.StructureCount * 2} 个文件。");
+            _shell.SetClusterStatus($"已生成 {result.StructureCount} 个团簇、{result.StructureCount * ((request.ExportPoscar ? 1 : 0) + (request.ExportCif ? 1 : 0))} 个文件。");
             _shell.SetClusterLog(result.Log + "\n输出目录：" + result.Directory);
         }
         catch (OperationCanceledException)

@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.2.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.2.1"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -176,7 +176,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.2" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.2.1" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自动绘制台阶图 · DOS / COHP / ICOHP 分析。输入文件均在本机处理。"/>
@@ -252,7 +252,7 @@
                     BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="16">
               <Grid>
                 <StackPanel x:Name="EmptyImportPanel" Spacing="8" HorizontalAlignment="Stretch">
-                  <Button x:Name="ImportCloudButton" Classes="ghost"
+                  <Button x:Name="ImportCloudButton" Classes="ghost" DragDrop.AllowDrop="True"
                           HorizontalAlignment="Stretch" HorizontalContentAlignment="Center"
                           MinHeight="150" Click="OnBrowseFiles"
                           ToolTip.Tip="点击添加 POSCAR、CONTCAR、CIF 文件，或直接拖放文件">
@@ -373,7 +373,11 @@
             <Border Classes="card">
               <StackPanel Spacing="10">
                 <TextBlock Classes="h2" Text="输出文件"/>
-                <TextBlock Classes="caption" Text="每个团簇生成 POSCAR 与 CIF 两个文件，保存于自动创建的独立文件夹，不覆盖已有结果。"/>
+                <TextBlock Classes="caption" Text="勾选需要的结构格式，保存于自动创建的独立文件夹，不覆盖已有结果。"/>
+                <StackPanel Orientation="Horizontal" Spacing="18">
+                  <CheckBox x:Name="ClusterExportPoscar" IsChecked="True" Content="POSCAR"/>
+                  <CheckBox x:Name="ClusterExportCif" IsChecked="True" Content="CIF"/>
+                </StackPanel>
                 <DockPanel>
                   <Button DockPanel.Dock="Right" Content="浏览…" Click="OnClusterBrowse" Margin="8,0,0,0"/>
                   <TextBox x:Name="ClusterOutputDirectory" Watermark="默认：文档文件夹"/>
@@ -425,14 +429,14 @@
                     </StackPanel>
                   </Grid>
                   <TextBlock Classes="caption" TextWrapping="Wrap"
-                             Text="ORR / OER Excel：一行一个催化剂，列名 Material、DG_OH、DG_O、DG_OOH（eV）。也支持六个 G 值或带六项 Corr 修正的 VASP 总能 E。采用 298.15 K、4.92 eV 的 CHE；多催化剂自动叠加绘图。"/>
+                             Text="ORR / OER 支持你的原始五行分块表（催化剂、*OOH、*O、*OH、催化剂，G 列 U=0V）；也支持 Material、DG_OH、DG_O、DG_OOH 宽表及已修正的 Gibbs 数据。多个结构自动叠加绘图。"/>
                   <TextBlock Classes="caption" TextWrapping="Wrap"
-                             Text="RHE 电位不再额外按 pH 修正；SHE 电位换算为 U(RHE) = U(SHE) + 0.05916 × pH。理论过电位不包含动力学及溶剂模型效应。"/>
+                             Text="ORR 按原始 Origin 模板使用 4.92→0 eV（U=0V）台阶，OER 为逆过程。RHE 电位不再额外修正 pH，SHE 电位换算为 U(RHE)=U(SHE)+0.05916×pH。采用 298.15 K 的四电子 CHE。"/>
                 </StackPanel>
                 <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button Classes="ghost" MinHeight="130" Click="OnStepBrowse"
+                  <Button x:Name="StepCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnStepBrowse"
                           HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
                     <StackPanel Spacing="6" HorizontalAlignment="Center">
                       <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
@@ -442,9 +446,17 @@
                   </Button>
                 </Border>
                 <TextBlock x:Name="StepInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 Excel 数据"/>
+                <TextBlock Classes="label" Text="选择导出格式（可多选）"/>
+                <WrapPanel Orientation="Horizontal">
+                  <CheckBox x:Name="StepExportPng" Content="PNG" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="StepExportSvg" Content="SVG" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="StepExportXlsx" Content="Excel" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="StepExportDat" Content="Origin DAT" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="StepExportCsv" Content="CSV" Margin="0,0,16,0"/>
+                </WrapPanel>
                 <StackPanel Orientation="Horizontal" Spacing="9">
                   <Button x:Name="StepAnalyzeButton" Classes="accent" Content="绘制台阶图" Click="OnStepAnalyze"/>
-                  <Button x:Name="StepExportButton" Content="导出 PNG / SVG / Excel / Origin DAT / CSV"
+                  <Button x:Name="StepExportButton" Content="导出所选格式"
                           Click="OnStepExport" IsEnabled="False"/>
                   <Button x:Name="StepCancelButton" Content="取消" Click="OnStepCancel" IsEnabled="False"/>
                 </StackPanel>
@@ -474,7 +486,7 @@
                 <Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button Classes="ghost" MinHeight="130" Click="OnDosBrowse"
+                  <Button x:Name="DosCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnDosBrowse"
                           HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
                     <StackPanel Spacing="6" HorizontalAlignment="Center">
                       <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
@@ -512,9 +524,17 @@
                     <TextBox x:Name="DosEnergyMax" Text="4"/>
                   </StackPanel>
                 </Grid>
+                <TextBlock Classes="label" Text="选择导出格式（可多选）"/>
+                <WrapPanel Orientation="Horizontal">
+                  <CheckBox x:Name="DosExportPng" Content="PNG" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="DosExportSvg" Content="SVG" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="DosExportXlsx" Content="Excel" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="DosExportDat" Content="Origin DAT" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="DosExportCsv" Content="CSV" Margin="0,0,16,0"/>
+                </WrapPanel>
                 <StackPanel Orientation="Horizontal" Spacing="9">
                   <Button x:Name="DosAnalyzeButton" Classes="accent" Content="分析并绘图" Click="OnDosAnalyze"/>
-                  <Button x:Name="DosExportButton" Content="导出 Excel / Origin DAT / CSV / PNG / SVG" Click="OnDosExport" IsEnabled="False"/>
+                  <Button x:Name="DosExportButton" Content="导出所选格式" Click="OnDosExport" IsEnabled="False"/>
                   <Button x:Name="DosCancelButton" Content="取消分析" Click="OnDosCancel" IsEnabled="False"/>
                 </StackPanel>
                 <TextBlock x:Name="DosStatus" Classes="muted" TextWrapping="Wrap"
@@ -548,7 +568,7 @@
                 <Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button Classes="ghost" MinHeight="130" Click="OnCohpBrowse"
+                  <Button x:Name="CohpCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnCohpBrowse"
                           HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
                     <StackPanel Spacing="6" HorizontalAlignment="Center">
                       <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
@@ -583,10 +603,18 @@
                 </Grid>
                 <CheckBox x:Name="CohpNegative" Content="绘图采用 -COHP / -ICOHP（成键显示为正，导出仍保留原始数值）"
                           IsChecked="True"/>
+                <TextBlock Classes="label" Text="选择导出格式（可多选）"/>
+                <WrapPanel Orientation="Horizontal">
+                  <CheckBox x:Name="CohpExportPng" Content="PNG" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="CohpExportSvg" Content="SVG" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="CohpExportXlsx" Content="Excel" IsChecked="True" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="CohpExportDat" Content="Origin DAT" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="CohpExportCsv" Content="CSV" Margin="0,0,16,0"/>
+                </WrapPanel>
                 <StackPanel Orientation="Horizontal" Spacing="9">
                   <Button x:Name="CohpAnalyzeButton" Classes="accent"
                           Content="分析并绘图" Click="OnCohpAnalyze"/>
-                  <Button x:Name="CohpExportButton" Content="导出 Excel / Origin DAT / CSV / 图片"
+                  <Button x:Name="CohpExportButton" Content="导出所选格式"
                           Click="OnCohpExport" IsEnabled="False"/>
                   <Button x:Name="CohpCancelButton" Content="取消" Click="OnCohpCancel"
                           IsEnabled="False"/>

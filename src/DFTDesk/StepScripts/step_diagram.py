@@ -132,6 +132,84 @@ def _key(header):
     return re.sub(r"[^a-z0-9\u4e00-\u9fff]", "", value)
 
 
+
+def _legacy_orr_records(sheet):
+    """Read repeated five-row ORR blocks, e.g. Pt4/*OOH/*O/*OH/Pt4.
+
+    The historical Excel template uses column G (U=0V) for cumulative Gibbs
+    levels, optionally column F for unshifted absolute Gibbs values. Each
+    block is an independent catalyst, and the same adsorption free energies
+    can be used to plot ORR or the reverse OER.
+    """
+    rows = list(sheet.iter_rows(values_only=True))
+    found = []
+    index = 0
+
+    def cell(row, col):
+        return row[col] if len(row) > col else None
+
+    def ref_energy(label, h2o, h2, o2):
+        key = str(label or "").lower().replace(" ", "").replace("₂", "2")
+        if key == "o2+2h2":
+            return o2 + 2 * h2
+        if key in ("3/2h2", "1.5h2"):
+            return 1.5 * h2
+        if key == "h2o+h2":
+            return h2o + h2
+        if key in ("h2o+1/2h2", "h2o+0.5h2"):
+            return h2o + 0.5 * h2
+        if key == "2h2o":
+            return 2 * h2o
+        return None
+
+    h2o = h2 = o2 = None
+    if len(rows) >= 4:
+        e_h2o, c_h2o = _number(cell(rows[1], 1)), _number(cell(rows[1], 4))
+        e_h2, c_h2 = _number(cell(rows[2], 1)), _number(cell(rows[2], 4))
+        if e_h2o is not None and e_h2 is not None:
+            h2o = e_h2o + (c_h2o or 0)
+            h2 = e_h2 + (c_h2 or 0)
+        o2 = _number(cell(rows[3], 5))
+
+    while index + 4 < len(rows):
+        block = rows[index:index + 5]
+        material = str(cell(block[0], 0) or "").strip()
+        last = str(cell(block[4], 0) or "").strip()
+        states = [str(cell(block[k], 0) or "").strip().upper().replace(" ", "")
+                  for k in (1, 2, 3)]
+        if (not material or material != last or material.startswith("*") or
+                states != ["*OOH", "*O", "*OH"]):
+            index += 1
+            continue
+
+        energies = [_number(cell(row, 6)) for row in block]
+        if any(value is None for value in energies):
+            absolute = [_number(cell(row, 5)) for row in block]
+            if any(value is None for value in absolute) and all(
+                    value is not None for value in (h2o, h2, o2)):
+                absolute = []
+                for row in block:
+                    slab = _number(cell(row, 3))
+                    gas = ref_energy(cell(row, 4), h2o, h2, o2)
+                    absolute.append(slab + gas if slab is not None and gas is not None else None)
+            if any(value is None for value in absolute):
+                raise ValueError(
+                    f"{sheet.title} 第 {index+1}–{index+5} 行 {material}："
+                    "缺少 G 列的 U=0V 自由能，且无法从 F 列或 D/E 列和气体参考恢复。"
+                    "若使用 Excel 公式，请先重新计算并保存。")
+            energies = [value - absolute[-1] for value in absolute]
+
+        zero = energies[4]
+        if abs((energies[0] - zero) - 4.92) > 0.25:
+            raise ValueError(f"{sheet.title} 第 {index+1} 行 {material}："
+                             "ORR 模板 U=0V 的首末态差值应接近 4.92 eV，"
+                             "请检查 G 列是否为四电子反应自由能。")
+        found.append((index + 1, (material, energies[3] - zero,
+                                   energies[2] - zero, energies[1] - zero)))
+        index += 5
+    return found
+
+
 def read_oxygen_profiles(path, mode, potential, ph, reference):
     """Build 4e ORR/OER CHE profiles from adsorption free energies or corrected G."""
     from openpyxl import load_workbook
@@ -178,6 +256,7 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
                            col(headers, "corrooh", "correctionooh"),
                            col(headers, "corrh2o", "correctionh2o"),
                            col(headers, "corrh2", "correctionh2")]
+            custom_rows = None
             if all(i is not None for i in adsorption):
                 source_type, columns = "adsorption", adsorption
             elif all(i is not None for i in corrected):
@@ -189,8 +268,14 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
                         "或直接提供 DG_OH、DG_O、DG_OOH。")
                 source_type, columns = "DFT+correction", raw
             else:
-                continue
-            for row_i, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+                legacy = _legacy_orr_records(sheet)
+                if not legacy:
+                    continue
+                source_type, columns, material_i = "legacy-ORR-template", [1, 2, 3], 0
+                custom_rows = [(row_i, record) for row_i, record in legacy]
+            row_source = (custom_rows if custom_rows is not None else
+                          enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2))
+            for row_i, row in row_source:
                 if all(value is None for value in row):
                     continue
                 if material_i is not None:
@@ -208,7 +293,7 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
                         raise ValueError(f"{sheet.title} 第 {row_i} 行 {material} 存在缺失/无效自由能。"
                                          "如果单元格为公式，请先在 Excel 中重新计算并保存。")
                     values.append(number)
-                if source_type == "adsorption":
+                if source_type in ("adsorption", "legacy-ORR-template"):
                     dgoh, dgo, dgooh = values
                 else:
                     if source_type == "DFT+correction":
@@ -238,11 +323,13 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
                     limiting = min(-value for value in changes_0)
                     eta = 1.23 - limiting
                     pds = changes_0.index(max(changes_0)) + 1
-                cumulative = [0.0]
+                # Match the supplied ORR Origin convention: at U=0, O₂ + *
+                # starts at +4.92 eV and the regenerated * ends at 0 eV.
+                cumulative = [4.92 if mode == "ORR" else 0.0]
                 for value in changes_u:
                     cumulative.append(cumulative[-1] + value)
                 # Never force the end to zero at U ≠ 1.23 V vs RHE.
-                expected = (4.92 - 4 * u_rhe) * (1 if mode == "OER" else -1)
+                expected = (4.92 - 4 * u_rhe) if mode == "OER" else 4 * u_rhe
                 if not math.isclose(cumulative[-1], expected, rel_tol=0, abs_tol=1e-8):
                     raise ValueError("四步反应自由能与 CHE 反应总能不守恒。")
                 profiles.append([(material, state, round(energy, 10))
@@ -262,7 +349,8 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
         book.close()
     if not profiles:
         raise ValueError(
-            "未识别 ORR/OER 数据。需要 Material, DG_OH, DG_O, DG_OOH；"
+            "未识别 ORR/OER 数据。支持五行一组的原始 ORR 模板（催化剂/*OOH/*O/*OH/催化剂，G 列 U=0V），" 
+            "或 Material, DG_OH, DG_O, DG_OOH；"
             "或六列 G_star/G_OH/G_O/G_OOH/G_H2O/G_H2；"
             "或六列 E_* 加六列 Corr_* 的完整数据。")
     return profiles, metrics

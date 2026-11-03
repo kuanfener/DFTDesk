@@ -52,10 +52,14 @@ internal static class DftDonutFactory
             _ => null,
         } : null;
 
-    public static string[] Files(IDataTransfer transfer) =>
+    // Cloud importers accept their own file types; the Explorer wheel accepts structures only.
+    public static string[] ImportedFiles(IDataTransfer transfer) =>
         (transfer.TryGetFiles() ?? []).Select(item => item.TryGetLocalPath())
-            .OfType<string>().Where(File.Exists).Where(path => CrystalFiles.Detect(path) is not null)
+            .OfType<string>().Where(File.Exists)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+    public static string[] Files(IDataTransfer transfer) =>
+        ImportedFiles(transfer).Where(path => CrystalFiles.Detect(path) is not null).ToArray();
 
     public static void AttachDrop(DonutMenu donut, Action<ExportFormat, string[]> onDrop)
     {

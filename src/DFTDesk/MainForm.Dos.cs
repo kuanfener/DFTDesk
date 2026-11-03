@@ -130,6 +130,12 @@ internal sealed partial class MainForm
     private void ExportDos()
     {
         if (_dosBusy || _dosResult is null) return;
+        var selected = _shell.ReadSelectedExportExtensions("Dos");
+        if (selected.Length == 0)
+        {
+            _shell.SetDosStatus("请至少勾选一种导出格式。");
+            return;
+        }
         using var dialog = new FolderBrowserDialog
         {
             Description = "选择 DOS 曲线、CSV 数据的保存目录",
@@ -137,8 +143,14 @@ internal sealed partial class MainForm
         };
         if (dialog.ShowDialog() != DialogResult.OK) return;
 
-        var sources = new[] { _dosResult.Csv, _dosResult.Xlsx, _dosResult.Dat, _dosResult.Png, _dosResult.Svg };
-        var extensions = new[] { ".csv", ".xlsx", ".dat", ".png", ".svg" };
+        var files = new[]
+        {
+            (Source: _dosResult.Csv, Extension: ".csv"),
+            (Source: _dosResult.Xlsx, Extension: ".xlsx"),
+            (Source: _dosResult.Dat, Extension: ".dat"),
+            (Source: _dosResult.Png, Extension: ".png"),
+            (Source: _dosResult.Svg, Extension: ".svg"),
+        }.Where(item => selected.Contains(item.Extension)).ToArray();
         var label = _dosInputPath is null ? "DOS" : Path.GetFileNameWithoutExtension(_dosInputPath);
         var prefix = "DFTDesk_" + label + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         string[] destinations;
@@ -146,16 +158,16 @@ internal sealed partial class MainForm
         do
         {
             var stem = prefix + (suffix == 0 ? "" : $"_{suffix}");
-            destinations = extensions.Select(extension => Path.Combine(dialog.SelectedPath, stem + extension)).ToArray();
+            destinations = files.Select(file => Path.Combine(dialog.SelectedPath, stem + file.Extension)).ToArray();
             suffix++;
         } while (destinations.Any(File.Exists));
 
         var completed = new List<string>();
         try
         {
-            for (var i = 0; i < sources.Length; i++)
+            for (var i = 0; i < files.Length; i++)
             {
-                File.Copy(sources[i], destinations[i], overwrite: false);
+                File.Copy(files[i].Source, destinations[i], overwrite: false);
                 completed.Add(destinations[i]);
             }
             _shell.SetDosStatus("已保存：" + string.Join("、", destinations.Select(Path.GetFileName)));

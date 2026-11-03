@@ -178,6 +178,7 @@ def main():
     parser.add_argument("--a", type=float)
     parser.add_argument("--vacuum", type=float, default=VACUUM)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--formats", choices=("poscar", "cif", "both"), default="both")
     parser.add_argument("--direct", action="store_true", help="输出 Direct 坐标，默认为 Cartesian")
     args = parser.parse_args()
 
@@ -219,22 +220,34 @@ def main():
                 stem = f"{element}{n}_{shape}"
                 poscar = directory / f"POSCAR_{stem}"
                 cif = directory / f"{stem}.cif"
-                # Never replace an existing result from this run.
-                if poscar.exists() or cif.exists():
+                selected = []
+                if args.formats in ("poscar", "both"):
+                    selected.append((poscar, "vasp"))
+                if args.formats in ("cif", "both"):
+                    selected.append((cif, "cif"))
+                if any(path.exists() for path, _ in selected):
                     raise FileExistsError("输出文件已存在：" + stem)
-                write(str(poscar), atoms, format="vasp", sort=True, direct=args.direct, vasp5=True)
+                created = []
                 try:
-                    write(str(cif), atoms, format="cif")
+                    for path, fmt in selected:
+                        if fmt == "vasp":
+                            write(str(path), atoms, format="vasp", sort=True,
+                                  direct=args.direct, vasp5=True)
+                        else:
+                            write(str(path), atoms, format="cif")
+                        created.append(path)
                 except Exception:
-                    poscar.unlink(missing_ok=True)
+                    for path, _ in selected:
+                        path.unlink(missing_ok=True)
                     raise
-                print(f"[OK] {stem}: {len(atoms)} 原子 → {poscar.name}, {cif.name}"
+                names = ", ".join(path.name for path in created)
+                print(f"[OK] {stem}: {len(atoms)} 原子 → {names}"
                       + (f" | 额外信息：{extra}" if extra is not None and extra != "" else ""), flush=True)
                 ok += 1
             except (ValueError, RuntimeError, OSError, TypeError) as ex:
                 print(f"[跳过] {element}{n} {facet or ''}: {ex}", flush=True)
                 skipped += 1
-    print(f"完成：{ok} 个结构、{ok*2} 个文件；跳过 {skipped} 个结构。", flush=True)
+    print(f"完成：{ok} 个结构、{ok * (2 if args.formats == 'both' else 1)} 个文件；跳过 {skipped} 个结构。", flush=True)
     print("注意：所有结构均为初始几何，必须做 VASP 弛豫；真空及晶格常数尚未收敛验证。", flush=True)
     if ok == 0:
         raise SystemExit(2)

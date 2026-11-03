@@ -131,6 +131,12 @@ internal sealed partial class MainForm
     private void ExportCohp()
     {
         if (_cohpBusy || _cohpResult is not { } result) return;
+        var selected = _shell.ReadSelectedExportExtensions("Cohp");
+        if (selected.Length == 0)
+        {
+            _shell.SetCohpStatus("请至少勾选一种导出格式。");
+            return;
+        }
         using var dialog = new FolderBrowserDialog
         {
             Description = "选择 COHP / ICOHP 表格与图像的输出目录",
@@ -148,6 +154,12 @@ internal sealed partial class MainForm
         {
             namedSources.Add((result.Png, ".png"));
             namedSources.Add((result.Svg, ".svg"));
+        }
+        namedSources = namedSources.Where(item => selected.Contains(item.Extension)).ToList();
+        if (namedSources.Count == 0)
+        {
+            _shell.SetCohpStatus("当前仅有 ICOHP 表格，无法导出图片。请勾选 Excel、CSV 或 Origin DAT。");
+            return;
         }
         var prefix = "DFTDesk_COHP_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var suffix = 0;

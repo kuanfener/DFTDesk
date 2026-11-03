@@ -151,13 +151,14 @@ class TestStepDiagram(unittest.TestCase):
             values = list(book["Reaction Profiles"].values)
             self.assertEqual("O₂ + *", values[1][2])
             self.assertEqual("2H₂O + *", values[-1][2])
-            self.assertAlmostEqual(-4.92, values[-1][3], places=9)
+            self.assertAlmostEqual(4.92, values[1][3], places=9)
+            self.assertAlmostEqual(0, values[-1][3], places=9)
             book.close()
 
             at_eq = run_script(source, root / "equilibrium",
                                extra=["--mode", "ORR", "--potential", "1.23"])
             book = load_workbook(at_eq["Xlsx"], read_only=True, data_only=True)
-            self.assertAlmostEqual(0, list(book["Reaction Profiles"].values)[-1][3], places=9)
+            self.assertAlmostEqual(4.92, list(book["Reaction Profiles"].values)[-1][3], places=9)
             book.close()
 
     def test_she_pH_conversion_and_gibbs_input(self):
@@ -197,6 +198,75 @@ class TestStepDiagram(unittest.TestCase):
                 sheet.cell(1, column, name)
             for column in range(8, 14):
                 sheet.cell(2, column, 0.)
+            book.save(source)
+            result = run_script(source, extra=["--mode", "ORR"])
+            self.assertEqual(1, result["SeriesCount"])
+
+
+    def test_repeated_five_row_orr_template_and_reversed_oer(self):
+        """Matches the user's repeated-block layout without adding DG columns."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "repeated_ORR.xlsx"
+            book = Workbook()
+            s = book.active
+            s.append(["", "E(DFT)/eV", "Pressure/bar", "Temperature/K", "△G/eV", "G/eV"])
+            s.append(["H2O", -14.22, .035, 298.15, .002, -14.22])
+            s.append(["H2", -6.77, 1, 298.15, -.044, -6.81])
+            s.append(["O2", None, None, None, None, -9.89])
+            s.append([])
+            s.append(["oh3"])
+            s.append(["", "E(DFT)/eV", "△G/eV", "G/eV", "", "", "U=0V"])
+            for name, levels in [
+                ("Pt4", [4.92, 3.108, 1.415, .160, 0]),
+                ("Pt3Co", [4.92, 4.149, 2.708, 1.299, 0]),
+                ("Pt3Co-CF3", [4.92, 4.193, 2.628, 1.084, 0]),
+            ]:
+                if name != "Pt4":
+                    s.append([])
+                    s.append(["", "E(DFT)/eV", "△G/eV", "G/eV", "", "", "U=0V"])
+                for state, value in zip(
+                        [name, "*OOH", "*O", "*OH", name], levels):
+                    s.append([state, None, None, None, None, None, value])
+            book.save(source)
+
+            o = run_script(source, root / "orr", extra=["--mode", "ORR"])
+            self.assertEqual(3, o["SeriesCount"])
+            book = load_workbook(o["Xlsx"], read_only=True, data_only=True)
+            profile = [r for r in list(book["Reaction Profiles"].values)[1:] if r[0] == "Pt3Co"]
+            self.assertEqual(["O₂ + *", "*OOH", "*O", "*OH", "2H₂O + *"],
+                             [r[2] for r in profile])
+            self.assertEqual([4.92, 4.149, 2.708, 1.299, 0],
+                             [r[3] for r in profile])
+            metrics = [r for r in list(book["CHE Metrics"].values)[1:] if r[0] == "Pt3Co"][0]
+            self.assertEqual("legacy-ORR-template", metrics[2])
+            self.assertAlmostEqual(.771, metrics[10], places=3)
+            self.assertAlmostEqual(.459, metrics[12], places=3)
+            book.close()
+
+            e = run_script(source, root / "oer", extra=["--mode", "OER"])
+            book = load_workbook(e["Xlsx"], read_only=True, data_only=True)
+            profile = [r for r in list(book["Reaction Profiles"].values)[1:] if r[0] == "Pt3Co"]
+            self.assertEqual(["*", "*OH", "*O", "*OOH", "O₂ + *"],
+                             [r[2] for r in profile])
+            self.assertEqual([0, 1.299, 2.708, 4.149, 4.92],
+                             [r[3] for r in profile])
+            book.close()
+
+    def test_five_row_block_recovers_from_absolute_gibbs_when_g_missing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "uncached_relative.xlsx"
+            book = Workbook()
+            s = book.active
+            s.append(["", "E(DFT)/eV"])
+            for _ in range(3):
+                s.append([])
+            s.append(["Pt4", None, None, 10, "O2+2H2", 4.92])
+            s.append(["*OOH", None, None, 9, "3/2H2", 3.108])
+            s.append(["*O", None, None, 8, "H2O+H2", 1.415])
+            s.append(["*OH", None, None, 7, "H2O+1/2H2", .160])
+            s.append(["Pt4", None, None, 6, "2H2O", 0])
             book.save(source)
             result = run_script(source, extra=["--mode", "ORR"])
             self.assertEqual(1, result["SeriesCount"])

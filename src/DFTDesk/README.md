@@ -1,6 +1,6 @@
-# DFTDesk 2.2.0 — Windows 科研结构工作台
+# DFTDesk 2.2.1 — Windows 科研结构工作台
 
-**DFTDesk 2.2.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.2.1 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -34,7 +34,7 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 ## 团簇生成
 
-在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，且每个构型同时输出 POSCAR 和 CIF。所有团簇都只是初猜，需要 VASP 结构弛豫。
+在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，按勾选生成 POSCAR、CIF 或两者。所有团簇都只是初猜，需要 VASP 结构弛豫。
 
 ## DOS / PDOS 分析
 
@@ -84,6 +84,16 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 - OER 前进步骤（0 V）：`ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH`，`U_L = max(ΔG_i)`，`η = U_L−1.23`；ORR 为逆序还原反应，`U_L = min(−ΔG_i)`，`η = 1.23−U_L`。
 - 在 U 下逐个一电子步骤修正 `−U_RHE`（OER）、`+U_RHE`（ORR）。ORR/OER 终态能量随电位变动，不应自动重置零点。
 - 多催化剂按相同中间态叠加绘图；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步。
+
+### ORR 原始多结构模板（2.2.1 修复）
+
+支持单张 Excel 中多组重复的五行结构块，A 列是「催化剂、*OOH、*O、*OH、催化剂」，G 列 U=0V 的自由能台阶；G 列为空时尝试读取 F 列或依据 D 列和气相参照恢复。每组独立产生 ORR 曲线，OER 反转中间态顺序；同样兼容原有 DG_OH/DG_O/DG_OOH 宽表和修正后 Gibbs 数据。
+
+绘图统一与所提供的 Origin 模板零点对应：ORR 0V 为 4.92→0 eV，OER 0V 为 0→4.92 eV；不同电位下四个单电子反应步分别按 ±U(RHE) 调整，首末状态不会被错误强制归零。Excel、Origin DAT 和图片均保留完整反应能量。
+
+### 拖放与按需导出
+
+云朵导入对不同分析类型分别处理，避免结构格式过滤器丢弃 DOSCAR、COHPCAR 和 Excel；同时在云朵内部的按钮上注册拖放事件。分析页面可多选 PNG、SVG、Excel、CSV 和 Origin DAT，只有勾选的格式才被保存到输出目录。团簇生成可选择 POSCAR 或 CIF。
 
 ## DOS 新增 Excel 与 Origin 导出
 

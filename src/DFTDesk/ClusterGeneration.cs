@@ -12,7 +12,8 @@ namespace DFTDesk;
 
 internal sealed record ClusterRequest(
     bool Faceted, string Element, string Numbers, string Facets,
-    string LatticeConstant, string Vacuum, string OutputDirectory, bool Cartesian = true);
+    string LatticeConstant, string Vacuum, string OutputDirectory, bool Cartesian = true,
+    bool ExportPoscar = true, bool ExportCif = true);
 
 internal sealed record ClusterResult(string Directory, string Log, int StructureCount);
 
@@ -29,6 +30,8 @@ internal static class ClusterGeneration
         ClusterRequest request, string pythonExecutable, CancellationToken cancellationToken = default)
     {
         if (request is null) throw new ArgumentNullException(nameof(request));
+        if (!request.ExportPoscar && !request.ExportCif)
+            throw new ArgumentException("请至少勾选 POSCAR 或 CIF 一种输出格式。");
         var element = request.Element.Trim();
         if (!Regex.IsMatch(element, @"^[A-Za-z]{1,2}$", RegexOptions.CultureInvariant))
             throw new ArgumentException("请填写有效元素符号，例如 Pt、Fe、Au。");
@@ -92,6 +95,9 @@ internal static class ClusterGeneration
             start.ArgumentList.Add(string.IsNullOrWhiteSpace(request.Vacuum)
                 ? "12" : request.Vacuum.Trim());
             if (!request.Cartesian) start.ArgumentList.Add("--direct");
+            start.ArgumentList.Add("--formats");
+            start.ArgumentList.Add(request.ExportPoscar && request.ExportCif ? "both" :
+                request.ExportPoscar ? "poscar" : "cif");
             using var process = new Process { StartInfo = start };
             try
             {

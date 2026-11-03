@@ -112,49 +112,23 @@ internal sealed partial class CrystalShell : UserControl
         };
         previewSurface.PointerExited += (_, _) => _themeWheel.SetExternalHighlight(-1);
 
-        var zone = Part<Border>("DropZone");
-        DragDrop.SetAllowDrop(zone, true);
-        DragDrop.AddDragEnterHandler(zone, (_, e) =>
-        {
-            var files = DftDonutFactory.Files(e.DataTransfer);
-            e.DragEffects = files.Length > 0 ? DragDropEffects.Copy : DragDropEffects.None;
-            zone.Classes.Set("over", files.Length > 0);
-            e.Handled = true;
-        });
-        DragDrop.AddDragOverHandler(zone, (_, e) =>
-        {
-            e.DragEffects = DftDonutFactory.Files(e.DataTransfer).Length > 0
-                ? DragDropEffects.Copy : DragDropEffects.None;
-            e.Handled = true;
-        });
-        DragDrop.AddDragLeaveHandler(zone, (_, _) => zone.Classes.Set("over", false));
-        DragDrop.AddDropHandler(zone, (_, e) =>
-        {
-            zone.Classes.Set("over", false);
-            var files = DftDonutFactory.Files(e.DataTransfer);
-            if (files.Length > 0)
-            {
-                e.DragEffects = DragDropEffects.Copy;
-                HomeFilesDropped?.Invoke(files);
-            }
-            e.Handled = true;
-        });
+        ConfigureFileDrop("DropZone", files => HomeFilesDropped?.Invoke(files), "ImportCloudButton");
         ConfigureFileDrop("DosDropZone", files =>
             DosFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetFileName(path).StartsWith("DOSCAR", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetFileName(path).StartsWith("vasprun.xml", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xml", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]));
+                ?? files[0]), "DosCloudButton");
         ConfigureFileDrop("CohpDropZone", files =>
             CohpFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetFileName(path).StartsWith("COHPCAR", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetFileName(path).StartsWith("ICOHPLIST", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]));
+                ?? files[0]), "CohpCloudButton");
         ConfigureFileDrop("StepDropZone", files =>
             StepFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]));
+                ?? files[0]), "StepCloudButton");
         Part<TextBox>("OutputDirectory").PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -192,35 +166,46 @@ internal sealed partial class CrystalShell : UserControl
         };
     }
 
-    private void ConfigureFileDrop(string name, Action<string[]> onFiles)
+    private void ConfigureFileDrop(string name, Action<string[]> onFiles, string? cloudButton = null)
     {
         var zone = Part<Border>(name);
-        DragDrop.SetAllowDrop(zone, true);
-        DragDrop.AddDragEnterHandler(zone, (_, e) =>
+        void Attach(Control target)
         {
-            var files = DftDonutFactory.Files(e.DataTransfer);
-            e.DragEffects = files.Length > 0 ? DragDropEffects.Copy : DragDropEffects.None;
-            zone.Classes.Set("over", files.Length > 0);
-            e.Handled = true;
-        });
-        DragDrop.AddDragOverHandler(zone, (_, e) =>
-        {
-            e.DragEffects = DftDonutFactory.Files(e.DataTransfer).Length > 0
-                ? DragDropEffects.Copy : DragDropEffects.None;
-            e.Handled = true;
-        });
-        DragDrop.AddDragLeaveHandler(zone, (_, _) => zone.Classes.Set("over", false));
-        DragDrop.AddDropHandler(zone, (_, e) =>
-        {
-            zone.Classes.Set("over", false);
-            var files = DftDonutFactory.Files(e.DataTransfer);
-            if (files.Length > 0)
+            DragDrop.SetAllowDrop(target, true);
+            DragDrop.AddDragEnterHandler(target, (_, e) =>
             {
-                e.DragEffects = DragDropEffects.Copy;
-                onFiles(files);
-            }
-            e.Handled = true;
-        });
+                var files = DftDonutFactory.ImportedFiles(e.DataTransfer);
+                e.DragEffects = files.Length > 0 ? DragDropEffects.Copy : DragDropEffects.None;
+                zone.Classes.Set("over", files.Length > 0);
+                e.Handled = true;
+            });
+            DragDrop.AddDragOverHandler(target, (_, e) =>
+            {
+                e.DragEffects = DftDonutFactory.ImportedFiles(e.DataTransfer).Length > 0
+                    ? DragDropEffects.Copy : DragDropEffects.None;
+                e.Handled = true;
+            });
+            DragDrop.AddDragLeaveHandler(target, (_, e) =>
+            {
+                zone.Classes.Set("over", false);
+                e.Handled = true;
+            });
+            DragDrop.AddDropHandler(target, (_, e) =>
+            {
+                zone.Classes.Set("over", false);
+                var files = DftDonutFactory.ImportedFiles(e.DataTransfer);
+                if (files.Length > 0)
+                {
+                    e.DragEffects = DragDropEffects.Copy;
+                    onFiles(files);
+                }
+                e.Handled = true;
+            });
+        }
+        Attach(zone);
+        // The cloud is a full-size Button, so Explorer hits the Button rather
+        // than its parent Border. Register on both routed-event targets.
+        if (cloudButton is not null) Attach(Part<Button>(cloudButton));
     }
 
     private string _savedMode = "System";
@@ -507,6 +492,20 @@ internal sealed partial class CrystalShell : UserControl
         SetCohpExportReady(false);
     }
 
+    public string[] ReadSelectedExportExtensions(string page)
+    {
+        if (page is not ("Step" or "Dos" or "Cohp"))
+            throw new ArgumentException("未知的导出工作区：" + page);
+        var formats = new[]
+        {
+            ("Png", ".png"), ("Svg", ".svg"), ("Xlsx", ".xlsx"),
+            ("Dat", ".dat"), ("Csv", ".csv"),
+        };
+        return formats.Where(item =>
+            Part<CheckBox>(page + "Export" + item.Item1).IsChecked == true)
+            .Select(item => item.Item2).ToArray();
+    }
+
     public ClusterRequest ReadClusterRequest() => new(
         Faceted: Part<ComboBox>("ClusterMode").SelectedIndex == 1,
         Element: Part<TextBox>("ClusterElement").Text ?? "",
@@ -515,7 +514,9 @@ internal sealed partial class CrystalShell : UserControl
         LatticeConstant: Part<TextBox>("ClusterLatticeConstant").Text ?? "",
         Vacuum: Part<TextBox>("ClusterVacuum").Text ?? "12",
         OutputDirectory: Part<TextBox>("ClusterOutputDirectory").Text ?? "",
-        Cartesian: Part<CheckBox>("ClusterCartesian").IsChecked == true);
+        Cartesian: Part<CheckBox>("ClusterCartesian").IsChecked == true,
+        ExportPoscar: Part<CheckBox>("ClusterExportPoscar").IsChecked == true,
+        ExportCif: Part<CheckBox>("ClusterExportCif").IsChecked == true);
 
     public string ClusterOutputPath
     {
