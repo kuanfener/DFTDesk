@@ -449,7 +449,6 @@
                     <TextBlock Classes="caption" Text="放大或缩小 DFTDesk 窗口中的所有内容。"/>
                   </StackPanel>
                 </Border>
-              </StackPanel>
               <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
                 <Button Classes="accent" Content="保存主题" Click="OnThemeSave"/>
                 <Button Content="恢复上次保存" Click="OnThemeCancel"/>
