@@ -29,6 +29,17 @@
       <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
     </Style>
+    <Style Selector="Button.theme-swatch">
+      <Setter Property="Padding" Value="2"/>
+      <Setter Property="Background" Value="Transparent"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="Transparent"/>
+      <Setter Property="CornerRadius" Value="10"/>
+    </Style>
+    <Style Selector="Button.theme-swatch.selected">
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="BorderThickness" Value="2"/>
+    </Style>
   </UserControl.Styles>
   <Grid ColumnDefinitions="Auto,*">
     <Border x:Name="NavPane" Classes="navpane" Width="230" ClipToBounds="True"
@@ -407,7 +418,8 @@
                     <TextBlock Classes="caption" TextWrapping="Wrap"
                                Text="调整 DFTDesk 主窗口的宽高（像素）。"/>
                   </StackPanel>
-                  <WrapPanel Grid.Column="1" VerticalAlignment="Center" Orientation="Horizontal">
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                  <WrapPanel Orientation="Horizontal">
                     <ComboBox x:Name="WindowSizePreset" SelectedIndex="0" Width="172"
                               SelectionChanged="OnWindowPresetChanged" Margin="0,0,10,6">
                       <ComboBoxItem Content="默认 1080 × 760"/>
@@ -419,6 +431,8 @@
                     <TextBox x:Name="WindowHeightInput" Text="760" Width="77" Margin="0,0,8,6"/>
                     <Button Content="应用尺寸" Click="OnApplyWindowSize" Margin="0,0,0,6"/>
                   </WrapPanel>
+                  <TextBlock x:Name="WindowSizeStatus" Classes="caption" TextWrapping="Wrap" Text=""/>
+                  </StackPanel>
                 </Grid>
               </StackPanel>
             </Border>
