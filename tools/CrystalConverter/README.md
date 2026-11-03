@@ -2,6 +2,10 @@
 
 这是 DFTDesk 的首个正式版本（1.0.0），面向 DFT 与计算材料研究的 Windows 桌面工具平台。当前首批功能是 POSCAR / CONTCAR ⇄ CIF 转换；后续可扩展结构处理、VASP/Gaussian 输出解析和计算数据分析。界面与部分轮盘组件复用 Filee 开源项目的代码，保留其 MIT 许可与版权声明。
 
+## 侧边栏与原版 Filee 一致性
+
+DFTDesk 使用原版 Filee 的导航参数，而不是额外放大：展开/收起宽度为 230/64、内容边距为 (14,18)、导航行内部 Border 的内边距为 (12,9)、导航项间距为 (0,1)、图标尺寸 17、图标与文字间距 12。菜单行使用与原版一致的 Border 包裹结构，由共享的 Soft 样式控制悬停和选中态。
+
 ## 功能与操作
 
 - 识别 VASP `POSCAR` / `CONTCAR`（无扩展名）、`.vasp`、`.poscar` 和 `.cif`。
@@ -50,7 +54,7 @@ gh secret set DFTDESK_ALIPAY_QR_BASE64 --body $alipay
 
 ## 下载与构建
 
-GitHub Actions 的 **DFTDesk (standalone)** 工作流完成后，在构建结果的 Artifacts 中下载 `DFTDesk-win-x64`，解压运行 `DFTDesk.exe`。压缩包同时附带 Filee 的 MIT 许可文本。它使用 .NET 自包含单文件发布，运行电脑不需要额外安装 .NET。
+GitHub Actions 的独立 Windows 构建完成后，在构建结果的 Artifacts 中下载 `DFTDesk-win-x64`，解压运行 `DFTDesk.exe`。发布包只包含 `DFTDesk.exe`、`README.txt` 和必须保留的 `LICENSE-Filee.txt`，不再分发 `Filee.Core`、`Filee.Platform.Windows` 等单独的 DLL/XML/PDB 文件；这些程序依赖被打包在自包含 EXE 内。运行电脑无需另装 .NET。请勿删除 MIT 许可声明。
 
 也可以在安装 .NET 10 SDK 的 Windows 电脑上执行：
 
