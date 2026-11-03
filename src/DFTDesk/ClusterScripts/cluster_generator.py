@@ -178,6 +178,7 @@ def main():
     parser.add_argument("--a", type=float)
     parser.add_argument("--vacuum", type=float, default=VACUUM)
     parser.add_argument("--out", required=True)
+    parser.add_argument("--direct", action="store_true", help="输出 Direct 坐标，默认为 Cartesian")
     args = parser.parse_args()
 
     try:
@@ -200,7 +201,7 @@ def main():
     directory.mkdir(parents=True, exist_ok=True)
     print("元素：" + element + " | 原子数：" + str(numbers), flush=True)
     if args.mode == "general":
-        print(f"自动最近邻距离：{d:.3f} Å（{source}）；真空：{VACUUM:g} Å/侧", flush=True)
+        print(f"自动最近邻距离：{d:.3f} Å（{source}）；真空：{args.vacuum:g} Å/侧", flush=True)
     else:
         print(f"晶面：{facets} | FCC a：{a:.4f} Å（{source}） | 真空：{args.vacuum:g} Å/侧", flush=True)
         if non_fcc:
@@ -212,7 +213,7 @@ def main():
                 if args.mode == "general":
                     atoms, shape, extra = general_cluster(element, n, d)
                     atoms.set_pbc(False)
-                    atoms.center(vacuum=VACUUM)
+                    atoms.center(vacuum=args.vacuum)
                 else:
                     atoms, shape, extra = facet_cluster(element, n, facet, a, args.vacuum)
                 stem = f"{element}{n}_{shape}"
@@ -221,7 +222,7 @@ def main():
                 # Never replace an existing result from this run.
                 if poscar.exists() or cif.exists():
                     raise FileExistsError("输出文件已存在：" + stem)
-                write(str(poscar), atoms, format="vasp", sort=True, direct=True, vasp5=True)
+                write(str(poscar), atoms, format="vasp", sort=True, direct=args.direct, vasp5=True)
                 try:
                     write(str(cif), atoms, format="cif")
                 except Exception:
