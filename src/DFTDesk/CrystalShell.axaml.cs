@@ -316,7 +316,7 @@ internal sealed partial class CrystalShell : UserControl
         Part<Button>("StepCancelButton").IsEnabled = busy;
         Part<Button>("StepReplaceButton").IsEnabled = !busy;
         Part<Button>("StepRemoveButton").IsEnabled = !busy;
-        if (busy) Part<Button>("StepExportButton").IsEnabled = false;
+        Part<Button>("StepExportButton").IsEnabled = !busy && Part<Image>("StepPlotImage").IsVisible;
     }
 
     public void SetStepStatus(string text) => Part<TextBlock>("StepStatus").Text = text;
@@ -624,9 +624,12 @@ internal sealed partial class CrystalShell : UserControl
             ("Png", ".png"), ("Svg", ".svg"), ("Xlsx", ".xlsx"),
             ("Dat", ".dat"), ("Csv", ".csv"),
         };
-        return formats.Where(item =>
+        var selected = formats.Where(item =>
             Part<CheckBox>(page + "Export" + item.Item1).IsChecked == true)
-            .Select(item => item.Item2).ToArray();
+            .Select(item => item.Item2).ToList();
+        if (page == "Step" && Part<CheckBox>("StepExportOpju").IsChecked == true)
+            selected.Add(".opju");
+        return selected.ToArray();
     }
 
     public ClusterRequest ReadClusterRequest() => new(

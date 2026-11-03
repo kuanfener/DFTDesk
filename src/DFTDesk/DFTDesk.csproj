@@ -11,10 +11,10 @@
     <ApplicationIcon>Assets\\Icons\\dftdesk.ico</ApplicationIcon>
     <AssemblyTitle>DFTDesk</AssemblyTitle>
     <Product>DFTDesk</Product>
-    <Version>2.3.4</Version>
-    <AssemblyVersion>2.3.4.0</AssemblyVersion>
-    <FileVersion>2.3.4.0</FileVersion>
-    <InformationalVersion>2.3.4</InformationalVersion>
+    <Version>2.3.5</Version>
+    <AssemblyVersion>2.3.5.0</AssemblyVersion>
+    <FileVersion>2.3.5.0</FileVersion>
+    <InformationalVersion>2.3.5</InformationalVersion>
     <RootNamespace>DFTDesk</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
@@ -46,6 +46,7 @@
     <EmbeddedResource Include="DosScripts/dos_analyzer.py" LogicalName="DFTDesk.DosScripts.dos_analyzer.py" />
     <EmbeddedResource Include="CohpScripts/cohp_analyzer.py" LogicalName="DFTDesk.CohpScripts.cohp_analyzer.py" />
     <EmbeddedResource Include="StepScripts/step_diagram.py" LogicalName="DFTDesk.StepScripts.step_diagram.py" />
+    <EmbeddedResource Include="StepScripts/origin_project_export.py" LogicalName="DFTDesk.StepScripts.origin_project_export.py" />
     <EmbeddedResource Include="StepScripts/DFTDesk_HER_Template.xlsx" LogicalName="DFTDesk.StepScripts.DFTDesk_HER_Template.xlsx" />
     <EmbeddedResource Include="StepScripts/DFTDesk_ORR_OER_Template.xlsx" LogicalName="DFTDesk.StepScripts.DFTDesk_ORR_OER_Template.xlsx" />
     <EmbeddedResource Include="SurfaceScripts/surface_pourbaix.py" LogicalName="DFTDesk.SurfaceScripts.surface_pourbaix.py" />

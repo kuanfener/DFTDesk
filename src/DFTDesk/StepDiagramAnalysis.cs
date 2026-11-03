@@ -29,6 +29,7 @@ internal sealed class StepDiagramData
 internal static class StepDiagramAnalysis
 {
     private const string Resource = "DFTDesk.StepScripts.step_diagram.py";
+    private const string OriginProjectResource = "DFTDesk.StepScripts.origin_project_export.py";
     private const string HerTemplateResource = "DFTDesk.StepScripts.DFTDesk_HER_Template.xlsx";
     private const string OxygenTemplateResource = "DFTDesk.StepScripts.DFTDesk_ORR_OER_Template.xlsx";
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
@@ -73,6 +74,97 @@ internal static class StepDiagramAnalysis
             ?? throw new InvalidOperationException("Excel 原始模板未包含在可执行文件中。");
         using var output = new FileStream(destination, FileMode.Create, FileAccess.Write, FileShare.None);
         await source.CopyToAsync(output);
+    }
+
+    public static async Task ExportNativeOriginAsync(string profileWorkbook, string projectTemplate,
+        string outputPath, string python, CancellationToken cancellationToken = default)
+    {
+        if (!File.Exists(profileWorkbook))
+            throw new FileNotFoundException("台阶图 Excel 结果不存在。", profileWorkbook);
+        if (!File.Exists(projectTemplate) ||
+            !string.Equals(Path.GetExtension(projectTemplate), ".opju", StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("请选择存在的 Origin .opju 工程模板。");
+        if (string.Equals(Path.GetFullPath(outputPath), Path.GetFullPath(projectTemplate),
+                StringComparison.OrdinalIgnoreCase))
+            throw new ArgumentException("不能用导出结果覆盖原始 Origin 模板。");
+        if (File.Exists(outputPath))
+            throw new IOException("目标 Origin 工程已存在，请选择新的保存名称。");
+
+        var script = Path.Combine(Path.GetTempPath(),
+            "dftdesk_origin_" + Guid.NewGuid().ToString("N") + ".py");
+        try
+        {
+            using (var input = typeof(StepDiagramAnalysis).Assembly
+                       .GetManifestResourceStream(OriginProjectResource)
+                       ?? throw new InvalidOperationException("Origin 原生导出脚本未包含在可执行文件中。"))
+            using (var output = new FileStream(script, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                await input.CopyToAsync(output, cancellationToken);
+
+            var start = new ProcessStartInfo
+            {
+                FileName = string.IsNullOrWhiteSpace(python) ? "python" : python.Trim().Trim('"'),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            };
+            start.Environment["PYTHONIOENCODING"] = "utf-8";
+            foreach (var arg in new[]
+            {
+                "-u", script, "--template", Path.GetFullPath(projectTemplate),
+                "--input", Path.GetFullPath(profileWorkbook),
+                "--output", Path.GetFullPath(outputPath),
+            }) start.ArgumentList.Add(arg);
+
+            using var process = new Process { StartInfo = start };
+            try
+            {
+                if (!process.Start())
+                    throw new InvalidOperationException("Origin 自动化 Python 引擎无法启动。");
+            }
+            catch (Win32Exception ex)
+            {
+                throw new InvalidOperationException(
+                    "无法启动 Python；请在「工作引擎」配置正确的 python.exe。", ex);
+            }
+
+            var stdout = process.StandardOutput.ReadToEndAsync();
+            var stderr = process.StandardError.ReadToEndAsync();
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            timeout.CancelAfter(TimeSpan.FromMinutes(10));
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited)
+                {
+                    try { process.Kill(entireProcessTree: true); }
+                    catch (InvalidOperationException) { }
+                    await process.WaitForExitAsync(CancellationToken.None);
+                }
+                if (cancellationToken.IsCancellationRequested) throw;
+                throw new TimeoutException("Origin 原生工程导出超过 10 分钟，请检查是否有 Origin 弹窗。");
+            }
+
+            var outputText = (await stdout).Trim();
+            var errorText = (await stderr).Trim();
+            if (process.ExitCode != 0)
+            {
+                var message = string.IsNullOrWhiteSpace(errorText) ? outputText : errorText;
+                if (message.Length > 1800) message = message[^1800..];
+                throw new InvalidOperationException(message);
+            }
+            if (!File.Exists(outputPath) || new FileInfo(outputPath).Length == 0)
+                throw new IOException("Origin 引擎没有生成有效的 OPJU 工程。");
+        }
+        finally
+        {
+            if (File.Exists(script)) File.Delete(script);
+        }
     }
 
     private static async Task<StepDiagramData> ExecuteAsync(StepDiagramRequest request, string folder,

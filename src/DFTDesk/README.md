@@ -1,6 +1,6 @@
-# DFTDesk 2.3.4 — Windows 科研结构工作台
+# DFTDesk 2.3.5 — Windows 科研结构工作台
 
-**DFTDesk 2.3.4 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.5 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -9,7 +9,7 @@
 - 导出 POSCAR 默认 **Cartesian**，可在「结构文件格式转换」页面取消勾选切换 Direct。
 - 输出前先生成临时文件，成功后以不覆盖已有文件的方式命名；失败时清理临时输出文件。
 - 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「表面 Pourbaix 图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」十个入口。
-- 「DOS 分析」支持导入 VASP DOSCAR 或 vasprun.xml，选择元素、s/p/d 轨道、自旋与能量区间，生成 TDOS/PDOS 曲线，计算 DOS 积分及 d 带中心，输出 CSV/Excel XLSX/Origin DAT/PNG/SVG。
+- 「DOS 分析」支持导入 VASP DOSCAR 或 vasprun.xml，选择元素、s/p/d 轨道、自旋与能量区间，生成 TDOS/PDOS 曲线，计算 DOS 积分及 d 带中心，输出 CSV/Excel XLSX/Origin DAT / 原生 OPJU/PNG/SVG。
 - 「团簇生成」支持普通团簇、FCC(111)/(100)/(110) 局部取向和完整二十面体壳层魔数；批量输出 POSCAR 和 CIF；输出 POSCAR 默认 Cartesian；保留可选 Direct、真空厚度与晶格常数覆盖。
 - 界面仅保留 DFTDesk Soft 风格；主题页统一管理浅色/深色、强调色、圆角、轮盘透明度、动画和实际窗口尺寸。**轮盘不透明度右侧显示实时轮盘预览**，滑块和强调色调整时立即刷新，与资源管理器实际轮盘使用同一渲染器。侧边栏展开/收起宽度为 230 / 64。保留上游 MIT 版权信息。
 
@@ -19,6 +19,8 @@
 
 ```powershell
 python -m pip install ase pymatgen numpy matplotlib openpyxl
+   # 仅当需要导出原生 Origin .opju 工程时，额外安装：
+   python -m pip install originpro
 python -c "import ase,sys; print(ase.__version__); print(sys.executable)"
 ```
 
@@ -32,7 +34,7 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 首页「开始使用」提供结构转换、团簇生成、台阶图、表面 Pourbaix、DOS 与 COHP/ICOHP 六个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
-## 文件导入与删除（2.3.4）
+## 文件导入与删除（2.3.5）
 
 台阶图、表面 Pourbaix、DOS、COHP/ICOHP 的导入区沿用结构转换的云朵卡片交互：初始显示云朵；点击或拖入后原位置显示完整文件路径和「更换文件」「删除文件」按钮；删除后恢复云朵，同时清理当前数据预览与可选项。文件已导入时仍可把新文件拖到卡片上替换。结构转换继续支持多文件列表。
 
@@ -46,7 +48,7 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 ## 表面吸附态 Pourbaix 图
 
-在「绘制台阶图」下方点击「表面 Pourbaix 图」。软件使用你已有的 ORR/OER 自由能 Excel 数据（包含多组五行模板或 Material / DG_OH / DG_O / DG_OOH 宽表），通过 pymatgen `Composition` 得到吸附态 O/H 计量和电子转移数，再以四电子 CHE 求 *、*OH、*O、*OOH 的表面自由能最低态。输出 pH–SHE 电位二维相图，并标出理论水稳定边界。pH、电位范围可设置；可勾选 PNG、SVG、Excel、CSV、Origin DAT。
+在「绘制台阶图」下方点击「表面 Pourbaix 图」。软件使用你已有的 ORR/OER 自由能 Excel 数据（包含多组五行模板或 Material / DG_OH / DG_O / DG_OOH 宽表），通过 pymatgen `Composition` 得到吸附态 O/H 计量和电子转移数，再以四电子 CHE 求 *、*OH、*O、*OOH 的表面自由能最低态。输出 pH–SHE 电位二维相图，并标出理论水稳定边界。pH、电位范围可设置；可勾选 PNG、SVG、Excel、CSV、Origin DAT / 原生 OPJU。
 
 Excel/CSV/DAT 包含每一网格的 pH、电位、稳定吸附态和各吸附态自由能，适合在 Origin 中修改绘图。此图只刻画理想化表面吸附态，**不包括固体溶解、溶液离子、覆盖度、显式溶剂及动力学**；不是固液相平衡的完整 PourbaixDiagram。原始 Excel 只读，DAT 不会自动生成原生 .opju。
 
@@ -81,14 +83,14 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 
 - **COHPCAR**：使用 pymatgen 直接读取各编号键的 COHP、ICOHP 能量曲线；可以多选键、选择自旋和相对费米能级的能窗。默认绘制 **-COHP 与 -ICOHP**，展示成键/反键贡献，原始数值不会被反号存储。
 - **ICOHPLIST**：统计各键的键长、等价键数和上/下自旋 **ICOHP(Ef)**；仅导入 ICOHPLIST 时仍可导出键列表，但无法绘制能量曲线。
-- 结果包含 **CSV、Excel（.xlsx）、Origin 可读制表符（.dat）**，有 COHPCAR 时额外生成 **PNG / SVG**。Excel 中包含 ICOHP(Ef) 汇总页及完整曲线页，曲线保持 LOBSTER 原始符号。Origin DAT 是数据导入文件，不是只能用 Origin 创建的原生工程 `.opju`。
+- 结果包含 **CSV、Excel（.xlsx）、Origin 可读制表符（.dat）**，有 COHPCAR 时额外生成 **PNG / SVG**。Excel 中包含 ICOHP(Ef) 汇总页及完整曲线页，曲线保持 LOBSTER 原始符号。Origin DAT / 原生 OPJU 是数据导入文件，不是只能用 Origin 创建的原生工程 `.opju`。
 - LOBSTER COHP 的负值一般对应成键、正值对应反键；**ICOHP(Ef) 是 LOBSTER 已积分的物理量，不应与普通 DOS 积分混淆**。比较不同键时请注意是否以每键均值还是等价键总和表示。
 
 ## 绘制台阶图（2.2：HER / ORR / OER）
 
 左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm），并新增 HER、ORR、OER 三种专用模式。模式右侧的「下载当前模式 Excel 模板」会生成可直接填写的标准工作簿：HER 为 Material/State/DeltaG 三列，ORR/OER 为 Material/DG_OH/DG_O/DG_OOH 四列。第一个工作表从第 2 行填写，不改动表头，说明页不参与计算。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
 
-点击「绘制台阶图」后可预览可比催化剂叠加的能量平台、虚线连接及能量标注，并区分完整中间态路径；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
+点击「绘制台阶图」后可预览可比催化剂叠加的能量平台、虚线连接及能量标注，并区分完整中间态路径；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT / 原生 OPJU。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
 
 ### ORR / OER 模式的输入与计算约定
 
@@ -97,17 +99,17 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 - 四电子 CHE、298.15 K、反应总能 4.92 eV；台阶图的电位统一输入为 V vs RHE，不显示电位参照下拉框，且不重复施加 pH 修正。pH 输入用于记录溶液条件。
 - OER 前进步骤（0 V）：`ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH`，`U_L = max(ΔG_i)`，`η = U_L−1.23`；ORR 为逆序还原反应，`U_L = min(−ΔG_i)`，`η = 1.23−U_L`。
 - 在 U 下逐个一电子步骤修正 `−U_RHE`（OER）、`+U_RHE`（ORR）。ORR/OER 终态能量随电位变动，不应自动重置零点。
-- 多催化剂按相同中间态叠加绘图；**图上以粗线和菱形突出 PDS，右侧逐个催化剂显示 η 和 PDS 步数**；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步（RDS 需要动力学能垒）。
+- 多催化剂按相同中间态叠加绘图；**图上以粗线和菱形突出 PDS，右侧逐个催化剂显示 η 和 PDS 步数**；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT / 原生 OPJU、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步（RDS 需要动力学能垒）。
 
 ### ORR 原始多结构模板（2.2.1 修复）
 
 支持单张 Excel 中多组重复的五行结构块，A 列是「催化剂、*OOH、*O、*OH、催化剂」，G 列 U=0V 的自由能台阶；G 列为空时尝试读取 F 列或依据 D 列和气相参照恢复。每组独立产生 ORR 曲线，OER 反转中间态顺序；同样兼容原有 DG_OH/DG_O/DG_OOH 宽表和修正后 Gibbs 数据。
 
-绘图统一与所提供的 Origin 模板零点对应：ORR 0V 为 4.92→0 eV，OER 0V 为 0→4.92 eV；不同电位下四个单电子反应步分别按 ±U(RHE) 调整，首末状态不会被错误强制归零。Excel、Origin DAT 和图片均保留完整反应能量。
+绘图统一与所提供的 Origin 模板零点对应：ORR 0V 为 4.92→0 eV，OER 0V 为 0→4.92 eV；不同电位下四个单电子反应步分别按 ±U(RHE) 调整，首末状态不会被错误强制归零。Excel、Origin DAT / 原生 OPJU 和图片均保留完整反应能量。
 
 ### 拖放与按需导出
 
-云朵导入对不同分析类型分别处理，避免结构格式过滤器丢弃 DOSCAR、COHPCAR 和 Excel；同时在云朵内部的按钮上注册拖放事件。分析页面可多选 PNG、SVG、Excel、CSV 和 Origin DAT，只有勾选的格式才被保存到输出目录。团簇生成可选择 POSCAR 或 CIF。
+云朵导入对不同分析类型分别处理，避免结构格式过滤器丢弃 DOSCAR、COHPCAR 和 Excel；同时在云朵内部的按钮上注册拖放事件。分析页面可多选 PNG、SVG、Excel、CSV 和 Origin DAT / 原生 OPJU，只有勾选的格式才被保存到输出目录。团簇生成可选择 POSCAR 或 CIF。
 
 ## DOS 新增 Excel 与 Origin 导出
 
@@ -127,3 +129,9 @@ DOS 分析除 CSV、PNG、SVG 外，也输出 `.xlsx` 和 Origin 可导入的制
 ## 版权
 
 DFTDesk 自身以 MIT 授权；图形界面、轮盘及 Windows 支持组件部分沿用 Filee 的 MIT 源码，其原始版权与许可在 LICENSE、THIRD-PARTY-NOTICES 和 third_party/Filee 中保留。
+
+### Origin 2024 原生 OPJU 导出
+
+在「绘制台阶图」中勾选 **Origin OPJU（保留模板图）**。导出时选择你自己电脑上的原始 `.opju` 项目，再选择保存目录。此功能需要 Windows 本机安装 Origin 2021+（Origin 2024 支持），并在「工作引擎」配置已安装 `originpro` 的 Python。软件从原工程打开已有的 Book 和 Graph，向已有 Book 添加 `DFTDesk_Profiles` 工作表，将计算结果关联到已有绘图对象，并另存新 `.opju`；不会将原工程或原始数值上传到 GitHub，也不会覆盖原工程。
+
+**保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。

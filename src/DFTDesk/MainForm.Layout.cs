@@ -84,7 +84,7 @@ internal sealed partial class MainForm
         _shell.StepTemplateRequested += () => _ = SaveStepTemplateAsync();
         _shell.StepFileDropped += SetStepFile;
         _shell.StepAnalyzeRequested += () => _ = AnalyzeStepAsync();
-        _shell.StepExportRequested += ExportStep;
+        _shell.StepExportRequested += () => _ = ExportStepAsync();
         _shell.StepCancelRequested += () => _stepCancellation?.Cancel();
         _shell.SurfaceBrowseRequested += BrowseSurfaceFile;
         _shell.SurfaceClearRequested += ClearSurfaceFile;

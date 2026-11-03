@@ -1,4 +1,4 @@
-# DFTDesk 2.3.4
+# DFTDesk 2.3.5
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -17,6 +17,8 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
    ```powershell
    python -m pip install ase pymatgen numpy matplotlib openpyxl
+   # 仅当需要导出原生 Origin .opju 工程时，额外安装：
+   python -m pip install originpro
    ```
 
 5. 在软件「工作引擎」页面填写 **同一环境的 python.exe**，分别点击五张工具卡片上的检测按钮。
@@ -27,10 +29,10 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.4 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.5 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
-| 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT |
+| 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
 | 表面 Pourbaix 图 | 用 pymatgen 解析 * / *OH / *O / *OOH 组成，并用四电子 CHE 绘制 pH–SHE 电位稳定区；支持同 Excel 多催化剂与可编辑数据导出 |
 | DOS 分析 | VASP DOSCAR、vasprun.xml：TDOS/PDOS、元素 s/p/d、自旋、DOS 积分、d 带中心 |
 | COHP / ICOHP 分析 | LOBSTER COHPCAR、ICOHPLIST：多键曲线、自旋分辨、ICOHP(Ef) 键强度 |
@@ -40,7 +42,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 首页将六个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
 
-### 统一的文件导入区（2.3.4）
+### 统一的文件导入区（2.3.5）
 
 - 结构转换、台阶图、表面 Pourbaix、DOS 和 COHP/ICOHP 均支持点击云朵或直接拖入文件。
 - 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：载入后云朵在同一个导入框内替换为清晰的完整文件路径，支持「更换文件」和「删除文件」；删除后恢复云朵，并清空该功能的旧预览和选择状态。
@@ -67,7 +69,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 - 左侧「**绘制台阶图**」紧随「团簇生成」之后；首页也有独立入口。选择 HER / ORR / OER 后可点击 **「下载当前模式 Excel 模板」**，ORR/OER 模板从第 2 行填入数据；HER 下载的是原始七列分块 Excel（含 H2O / H2 参照及十个催化剂分块）；所有数值均已清空，请填写参考气体能量和催化剂的 DFT 能量/修正值。ORR/OER 共用一份 `Material、DG_OH、DG_O、DG_OOH` 模板。
 - 点击云朵或把 Excel .xlsx / .xlsm 拖入。支持提供的碱性 HER 自由能数据模板：第一列为催化剂/中间态，B 列为 DFT 能量，C 列为中间态校正，E 列为参照分子；D/F/G 原来的计算结果已清空，软件会根据 B/C 和气体参考重新计算（U=0 V）。也兼容旧九列表（B/E/G/I）和三列长表。ORR/OER 使用原始五行分块（Pt4、Pt3Co 等名称保留），数值同样全部清空；程序读取 B/C 输入并计算，避免引用陈旧的 G 列值。识别同一个催化剂的多段反应并绘图。
 - 也支持更直接的 Material / State / DeltaG 三列表格；一个 Excel 可以包含多个体系。
-- 按 Origin 模板将可比的催化剂曲线叠加显示，并为具有更多中间态的体系单独绘制完整路径；使用水平能级线、虚线连接和自由能标注，预览后可**勾选所需格式**导出 **PNG、SVG、CSV、Excel XLSX、Origin DAT**。
+- 按 Origin 模板将可比的催化剂曲线叠加显示，并为具有更多中间态的体系单独绘制完整路径；使用水平能级线、虚线连接和自由能标注，预览后可**勾选所需格式**导出 **PNG、SVG、CSV、Excel XLSX、Origin DAT / 原生 OPJU**。
 - 原始数据如有修改，应保存 Excel 后再导入；当前由 Python 读取数值并绘制，不会修改原始文件。
 - 附带的 .opju 仅作为 Origin 图形参考。导出的 DAT 可在 Origin 中导入并用于已有模板，但 DFTDesk **不会自动修改或生成 Origin 原生 .opju**，也不会把 Origin 工程上传至公开仓库。
 
@@ -94,7 +96,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 - **复用台阶图 Excel 输入格式**：支持你提供的多组五行 ORR 原始表（催化剂 / *OOH / *O / *OH / 催化剂），或者每行一个催化剂的 `Material, DG_OH, DG_O, DG_OOH` 宽表；也支持台阶图既有的 G / E+Corr 形式。无需原生 Origin 工程文件。
 - **pymatgen 的 `Composition`** 解析吸附物中的 O、H 计量，得到每个吸附态对应的质子–电子转移数 `n_e = 2n_O - n_H`（*、*OH、*O、*OOH 为 0、1、2、3）。结合 298.15 K 的四电子 CHE，自由能按 `Ω_X = ΔG_X(0) − n_e·U_RHE` 修正，再在每个 pH–电位网格上选最低自由能表面态。
 - 横轴 pH，纵轴 **U vs SHE**；使用 `U_RHE = U_SHE + 0.05916×pH`，标出 `H₂/H₂O` 和 `O₂/H₂O` 理论水稳定边界。默认 pH 0–14、电位 −1–2 V vs SHE，范围可修改。多个催化剂自动排列在同一张图中。
-- 可分别勾选导出 **PNG、SVG、Excel XLSX、CSV、Origin DAT**。表格中包含每个网格的 pH、SHE/RHE 电位、稳定吸附态、PhaseID 以及四种表面态的自由能，可在 Excel/Origin 中继续处理；DAT **不是**原生 `.opju` 工程。
+- 可分别勾选导出 **PNG、SVG、Excel XLSX、CSV、Origin DAT / 原生 OPJU**。表格中包含每个网格的 pH、SHE/RHE 电位、稳定吸附态、PhaseID 以及四种表面态的自由能，可在 Excel/Origin 中继续处理；DAT **不是**原生 `.opju` 工程。
 - **科学边界**：这是表面吸附态的 **CHE 下包络稳定区图**，并不是 pymatgen `PourbaixDiagram` 所处理的体相/溶解物种相图；不包含金属溶解、离子浓度、显式溶剂、不同吸附覆盖度及动力学，不能直接用来推断催化剂的抗腐蚀稳定性。
 
 ### 统一云朵导入
@@ -107,22 +109,22 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 - 选择 Fe、Co、Ni、Pt 等元素，按 s/p/d 轨道和自旋通道绘制。
 - 设定相对费米能级的窗口，计算 DOS 积分与 **d 带中心**。
 - DOSCAR 按元素投影需要同目录下对应的 POSCAR / CONTCAR；暂不支持非共线 / SOC 四分量投影。
-- 输出 PNG、SVG、CSV、**Excel XLSX**、**Origin DAT**。
+- 输出 PNG、SVG、CSV、**Excel XLSX**、**Origin DAT / 原生 OPJU**。
 
 ### LOBSTER COHP / ICOHP
 
 - 读取 `COHPCAR.lobster` 与 `ICOHPLIST.lobster`，同目录文件会自动关联。
 - 按键编号多选、自旋分辨、指定能量窗口，支持标准 **-COHP / -ICOHP** 绘制。
 - 查询键长与各自旋 **ICOHP(Ef)**；仅有 ICOHPLIST 时仍能导出键强度表。
-- 输出 PNG、SVG、CSV、**Excel XLSX**、**Origin DAT**（没有 COHPCAR 时不生成曲线图片）。
+- 输出 PNG、SVG、CSV、**Excel XLSX**、**Origin DAT / 原生 OPJU**（没有 COHPCAR 时不生成曲线图片）。
 
-Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲线工作表；**Origin DAT 是可直接导入 Origin 继续画图的制表符数据文件**，不是原生 `.opju` 工程文件。原始 COHP/ICOHP 符号保留在数值导出中，负的 ICOHP 通常代表成键贡献。
+Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲线工作表；**Origin DAT / 原生 OPJU 是可直接导入 Origin 继续画图的制表符数据文件**，不是原生 `.opju` 工程文件。原始 COHP/ICOHP 符号保留在数值导出中，负的 ICOHP 通常代表成键贡献。
 
 ## 导出格式选择（2.3.1）
 
 - 结构转换：原有 CIF、POSCAR 两个格式入口保持独立。
 - 团簇生成：勾选 POSCAR、CIF 或两者，未勾选的格式不生成。
-- HER/ORR/OER 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：在每个工作区勾选 PNG、SVG、Excel、Origin DAT、CSV 中需要的格式，再点「导出所选格式」；不再强制保存全部文件。纯 ICOHPLIST 数据无法导出不存在的曲线图像。
+- HER/ORR/OER 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：在每个工作区勾选 PNG、SVG、Excel、Origin DAT / 原生 OPJU、CSV 中需要的格式，再点「导出所选格式」；不再强制保存全部文件。纯 ICOHPLIST 数据无法导出不存在的曲线图像。
 
 ## 工作引擎：五个独立检测项
 
@@ -154,3 +156,9 @@ Windows CI 自动安装上述 Python 库，验证 ASE 转换、五个 Python 库
 ## 开源许可
 
 DFTDesk 采用 [MIT License](LICENSE)。部分 UI、轮盘和 Windows 组件复用 [KnifeLemon/Filee](https://github.com/KnifeLemon/Filee) 的 MIT 代码；版权和第三方许可参见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。ASE 采用 LGPL-2.1-or-later，作为外部 Python 库调用。个人赞助二维码通过本地文件或 Actions Secrets 注入，不提交至公开源码。
+
+### Origin 2024 原生 OPJU 导出
+
+在「绘制台阶图」中勾选 **Origin OPJU（保留模板图）**。导出时选择你自己电脑上的原始 `.opju` 项目，再选择保存目录。此功能需要 Windows 本机安装 Origin 2021+（Origin 2024 支持），并在「工作引擎」配置已安装 `originpro` 的 Python。软件从原工程打开已有的 Book 和 Graph，向已有 Book 添加 `DFTDesk_Profiles` 工作表，将计算结果关联到已有绘图对象，并另存新 `.opju`；不会将原工程或原始数值上传到 GitHub，也不会覆盖原工程。
+
+**保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。

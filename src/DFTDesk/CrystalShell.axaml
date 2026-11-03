@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.4"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.5"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.4" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.5" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -212,7 +212,7 @@
                 <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="绘制台阶图"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
-                             Text="支持 HER、ORR、OER 自由能台阶，自动计算四步反应和过电位；导出 PNG、SVG、Excel、Origin DAT。"/>
+                             Text="支持 HER、ORR、OER 自由能台阶，自动计算四步反应和过电位；可导出图片、Excel、Origin DAT 和本机模板 OPJU。"/>
                   <Button HorizontalAlignment="Left" Content="进入台阶图工具" Click="OnGoStep"/>
                 </StackPanel>
               </Border>
@@ -475,6 +475,7 @@
                   <CheckBox x:Name="StepExportSvg" Content="SVG" Margin="0,0,16,0"/>
                   <CheckBox x:Name="StepExportXlsx" Content="Excel" IsChecked="True" Margin="0,0,16,0"/>
                   <CheckBox x:Name="StepExportDat" Content="Origin DAT" Margin="0,0,16,0"/>
+                  <CheckBox x:Name="StepExportOpju" Content="Origin OPJU（保留模板图）" Margin="0,0,16,0"/>
                   <CheckBox x:Name="StepExportCsv" Content="CSV" Margin="0,0,16,0"/>
                 </WrapPanel>
                 <StackPanel Orientation="Horizontal" Spacing="9">
@@ -494,7 +495,7 @@
                 <Image x:Name="StepPlotImage" Height="520" Stretch="Uniform" IsVisible="False"/>
                 <TextBlock x:Name="StepSummary" Classes="caption" TextWrapping="Wrap"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="Excel 导出包含反应台阶和 ORR/OER 的 CHE Metrics、CHE Four Steps；Origin DAT 可导入现有 .opju 工程，不会自动修改原生 Origin 工程。"/>
+                           Text="Excel 含反应台阶、CHE Metrics 与 CHE Four Steps；Origin DAT 是可编辑数据，原生 OPJU 则在已安装 Origin 2024 时打开你选择的模板、重绑已有曲线并另存新项目。若曲线数不匹配将提示错误。"/>
               </StackPanel>
             </Border>
           </StackPanel>

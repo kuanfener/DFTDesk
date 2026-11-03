@@ -111,7 +111,7 @@ internal sealed partial class MainForm
             _stepResult = result;
             _shell.SetStepPreview(result);
             _shell.SetStepStatus("绘图完成：" + result.Summary +
-                "。可导出 PNG、SVG、CSV、Excel 和 Origin DAT。");
+                "。可选择导出 PNG、SVG、CSV、Excel、Origin DAT 或使用本机 Origin 的原生 OPJU。");
         }
         catch (OperationCanceledException)
         {
@@ -130,7 +130,7 @@ internal sealed partial class MainForm
         }
     }
 
-    private void ExportStep()
+    private async Task ExportStepAsync()
     {
         if (_stepBusy || _stepResult is not { } data) return;
         var selected = _shell.ReadSelectedExportExtensions("Step");
@@ -139,6 +139,21 @@ internal sealed partial class MainForm
             _shell.SetStepStatus("请至少勾选一种导出格式。");
             return;
         }
+
+        string? originTemplate = null;
+        if (selected.Contains(".opju"))
+        {
+            using var templateDialog = new OpenFileDialog
+            {
+                Title = "选择原始 Origin .opju 工程（保留其 Book 和 Graph）",
+                Filter = "Origin Unicode 工程|*.opju",
+                CheckFileExists = true,
+                Multiselect = false,
+            };
+            if (templateDialog.ShowDialog() != DialogResult.OK) return;
+            originTemplate = templateDialog.FileName;
+        }
+
         using var dialog = new FolderBrowserDialog
         {
             Description = "选择台阶图及 Origin / Excel 数据的导出目录",
@@ -153,12 +168,19 @@ internal sealed partial class MainForm
         var stem = "DFTDesk_StepDiagram_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var count = 0;
         string[] destinations;
+        string originOutput;
         do
         {
             var prefix = stem + (count == 0 ? "" : "_" + count);
             destinations = files.Select(file => Path.Combine(dialog.SelectedPath, prefix + file.Item2)).ToArray();
+            originOutput = Path.Combine(dialog.SelectedPath, prefix + ".opju");
             count++;
-        } while (destinations.Any(File.Exists));
+        } while (destinations.Any(File.Exists) ||
+                 (originTemplate != null && File.Exists(originOutput)));
+
+        _stepBusy = true;
+        _shell.SetStepBusy(true);
+        _stepCancellation = new CancellationTokenSource();
         var copied = new List<string>();
         try
         {
@@ -167,16 +189,38 @@ internal sealed partial class MainForm
                 File.Copy(files[i].Item1, destinations[i], overwrite: false);
                 copied.Add(destinations[i]);
             }
-            _shell.SetStepStatus("已导出：" + string.Join("、", destinations.Select(Path.GetFileName)));
+
+            if (originTemplate != null)
+            {
+                _shell.SetStepStatus("正在通过本机 Origin 更新原始工程中的已有曲线并保存 OPJU…");
+                await StepDiagramAnalysis.ExportNativeOriginAsync(
+                    data.Xlsx, originTemplate, originOutput,
+                    _shell.PythonExecutablePath, _stepCancellation.Token);
+                copied.Add(originOutput);
+            }
+
+            _shell.SetStepStatus("已导出：" +
+                string.Join("、", copied.Select(Path.GetFileName)) +
+                (originTemplate != null ? "。原始 Origin 模板未被修改。" : ""));
         }
         catch (Exception ex)
         {
-            foreach (var item in copied)
+            foreach (var item in copied.Concat(originTemplate != null ? new[] { originOutput } : Array.Empty<string>()))
             {
-                try { File.Delete(item); }
+                try { if (File.Exists(item)) File.Delete(item); }
                 catch (IOException) { }
+                catch (UnauthorizedAccessException) { }
             }
-            _shell.SetStepStatus("导出失败：" + ex.Message);
+            _shell.SetStepStatus(ex is OperationCanceledException
+                ? "已取消 Origin 项目导出。"
+                : "导出失败：" + ex.Message);
+        }
+        finally
+        {
+            _stepCancellation?.Dispose();
+            _stepCancellation = null;
+            _stepBusy = false;
+            _shell.SetStepBusy(false);
         }
     }
 
