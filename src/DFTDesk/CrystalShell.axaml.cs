@@ -48,6 +48,7 @@ internal sealed partial class CrystalShell : UserControl
     private bool _initializing = true;
     // ASE is the only engine. Older engine.json settings retain AseCartesian.
     private bool _aseCartesian = true;
+    private string _savedPythonExecutable = "python";
 
     public event Action? BrowseFilesRequested;
     public event Action? BrowseFolderRequested;
@@ -61,12 +62,14 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<bool>? CartesianChanged;
     public event Action<DrawingColor, double>? ThemeChanged;
     public event Action? AseCheckRequested;
-    public event Action? DosEngineCheckRequested;
+    public event Action? PymatgenCheckRequested;
+    public event Action? NumpyCheckRequested;
+    public event Action? MatplotlibCheckRequested;
+    public event Action? OpenpyxlCheckRequested;
     public event Action? DosBrowseRequested;
     public event Action? DosAnalyzeRequested;
     public event Action? DosExportRequested;
     public event Action? DosCancelRequested;
-    public event Action? CohpEngineCheckRequested;
     public event Action? CohpBrowseRequested;
     public event Action? CohpAnalyzeRequested;
     public event Action? CohpExportRequested;
@@ -180,11 +183,20 @@ internal sealed partial class CrystalShell : UserControl
     public void SetAseStatus(string text)
     {
         Part<TextBlock>("AseHealthText").Text = text;
-        Part<TextBlock>("HomeAseStatus").Text = text;
     }
 
-    public void SetDosEngineStatus(string text) =>
-        Part<TextBlock>("DosEngineHealthText").Text = text;
+    public void SetPythonPackageStatus(string package, string text)
+    {
+        var control = package switch
+        {
+            "pymatgen" => "PymatgenHealthText",
+            "numpy" => "NumpyHealthText",
+            "matplotlib" => "MatplotlibHealthText",
+            "openpyxl" => "OpenpyxlHealthText",
+            _ => throw new ArgumentException("未知的 Python 依赖：" + package),
+        };
+        Part<TextBlock>(control).Text = text;
+    }
 
     public void SetDosInput(string path)
     {
@@ -274,9 +286,6 @@ internal sealed partial class CrystalShell : UserControl
         SetDosExportReady(false);
     }
 
-
-    public void SetCohpEngineStatus(string text) =>
-        Part<TextBlock>("CohpEngineHealthText").Text = text;
 
     public void SetCohpInput(string path)
     {
@@ -523,6 +532,7 @@ internal sealed partial class CrystalShell : UserControl
         catch (Exception) { /* Malformed settings fall back to Python and Cartesian coordinates. */ }
 
         Part<CheckBox>("CartesianOption").IsChecked = _aseCartesian;
+        _savedPythonExecutable = PythonExecutablePath;
     }
 
     private void SaveEngineSettings()
@@ -542,12 +552,18 @@ internal sealed partial class CrystalShell : UserControl
 
     private void OnAsePathLostFocus(object? sender, RoutedEventArgs e)
     {
-        if (_initializing) return;
+        if (_initializing || string.Equals(PythonExecutablePath, _savedPythonExecutable, StringComparison.OrdinalIgnoreCase)) return;
+        _savedPythonExecutable = PythonExecutablePath;
         SaveEngineSettings();
+        SetAseStatus("ASE：Python 环境已更新，请重新检测。");
+        foreach (var package in new[] { "pymatgen", "numpy", "matplotlib", "openpyxl" })
+            SetPythonPackageStatus(package, package + "：Python 环境已更新，请重新检测。");
     }
 
-    private void OnCheckDosEngine(object? sender, RoutedEventArgs e) => DosEngineCheckRequested?.Invoke();
-    private void OnCheckCohpEngine(object? sender, RoutedEventArgs e) => CohpEngineCheckRequested?.Invoke();
+    private void OnCheckPymatgen(object? sender, RoutedEventArgs e) => PymatgenCheckRequested?.Invoke();
+    private void OnCheckNumpy(object? sender, RoutedEventArgs e) => NumpyCheckRequested?.Invoke();
+    private void OnCheckMatplotlib(object? sender, RoutedEventArgs e) => MatplotlibCheckRequested?.Invoke();
+    private void OnCheckOpenpyxl(object? sender, RoutedEventArgs e) => OpenpyxlCheckRequested?.Invoke();
     private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
     private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
     private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
@@ -664,6 +680,8 @@ internal sealed partial class CrystalShell : UserControl
         Part<ListBox>("Navigation").SelectedIndex = 2;
     private void OnGoDos(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 3;
+    private void OnGoCohp(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 4;
     private void OnGoEngine(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 6;
 

@@ -11,20 +11,6 @@ internal sealed partial class MainForm
     private CancellationTokenSource? _dosCancellation;
     private bool _dosBusy;
 
-    private async Task CheckDosEngineAsync()
-    {
-        _shell.SetDosEngineStatus("正在检测 pymatgen / NumPy / Matplotlib…");
-        try
-        {
-            var version = await DosAnalysis.ProbeAsync(_shell.PythonExecutablePath);
-            _shell.SetDosEngineStatus("可用：" + version);
-        }
-        catch (Exception ex)
-        {
-            _shell.SetDosEngineStatus("DOS 引擎不可用：" + ex.Message);
-        }
-    }
-
     private void BrowseDosFile()
     {
         if (_dosBusy) return;

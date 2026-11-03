@@ -26,6 +26,12 @@ python -c "import ase,sys; print(ase.__version__); print(sys.executable)"
 
 ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使下载的是自包含 Windows 单文件 EXE，使用结构转换 / DOS 分析仍需本地 Python 环境。ASE 采用 LGPL-2.1-or-later，详情见项目第三方许可说明。
 
+## 工作引擎（五项独立检测）
+
+工作引擎页有五张分开的状态卡片：**ASE、pymatgen、NumPy、Matplotlib、openpyxl**。每张卡片有各自的「单独检测」按钮和版本/错误状态；五项共用上方设置的 Python 路径，互相不合并。更改路径时旧状态会标记需要重新检查。
+
+首页「开始使用」新增独立的 DOS 与 COHP/ICOHP 快捷卡片，四个功能分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
+
 ## 团簇生成（新增）
 
 在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，且每个构型同时输出 POSCAR 和 CIF。所有团簇都只是初猜，需要 VASP 结构弛豫。

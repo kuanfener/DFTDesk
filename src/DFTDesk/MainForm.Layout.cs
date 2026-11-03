@@ -77,12 +77,14 @@ internal sealed partial class MainForm
         _shell.HomeFilesDropped += paths => AddFiles(paths);
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
-        _shell.DosEngineCheckRequested += () => _ = CheckDosEngineAsync();
         _shell.DosBrowseRequested += BrowseDosFile;
         _shell.DosAnalyzeRequested += () => _ = AnalyzeDosAsync();
         _shell.DosExportRequested += ExportDos;
         _shell.DosCancelRequested += () => _dosCancellation?.Cancel();
-        _shell.CohpEngineCheckRequested += () => _ = CheckCohpEngineAsync();
+        _shell.PymatgenCheckRequested += () => _ = CheckPackageAsync("pymatgen", "pymatgen.io.lobster");
+        _shell.NumpyCheckRequested += () => _ = CheckPackageAsync("numpy", "numpy");
+        _shell.MatplotlibCheckRequested += () => _ = CheckPackageAsync("matplotlib", "matplotlib");
+        _shell.OpenpyxlCheckRequested += () => _ = CheckPackageAsync("openpyxl", "openpyxl");
         _shell.CohpBrowseRequested += BrowseCohpFile;
         _shell.CohpAnalyzeRequested += () => _ = AnalyzeCohpAsync();
         _shell.CohpExportRequested += ExportCohp;

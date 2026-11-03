@@ -15,20 +15,6 @@ internal sealed partial class MainForm
     private CancellationTokenSource? _cohpCancellation;
     private bool _cohpBusy;
 
-    private async Task CheckCohpEngineAsync()
-    {
-        _shell.SetCohpEngineStatus("正在检测 LOBSTER / pymatgen 引擎…");
-        try
-        {
-            var version = await CohpAnalysis.ProbeAsync(_shell.PythonExecutablePath);
-            _shell.SetCohpEngineStatus("可用：" + version);
-        }
-        catch (Exception ex)
-        {
-            _shell.SetCohpEngineStatus("COHP 引擎不可用：" + ex.Message);
-        }
-    }
-
     private void BrowseCohpFile()
     {
         if (_cohpBusy) return;

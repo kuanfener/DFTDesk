@@ -170,7 +170,7 @@
               </StackPanel>
             </Border>
             <TextBlock Classes="h2" Text="开始使用"/>
-            <Grid ColumnDefinitions="*,16,*">
+            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto">
               <Border Grid.Column="0" Classes="card">
                 <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="结构文件格式转换"/>
@@ -187,13 +187,29 @@
                   <Button HorizontalAlignment="Left" Content="进入团簇生成" Click="OnGoCluster"/>
                 </StackPanel>
               </Border>
+              <Border Grid.Row="2" Grid.Column="0" Classes="card">
+                <StackPanel Spacing="10">
+                  <TextBlock Classes="h2" Text="DOS / PDOS 分析"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="VASP DOSCAR / vasprun.xml；元素和轨道投影、自旋分辨、d 带中心及 Excel / Origin 导出。"/>
+                  <Button HorizontalAlignment="Left" Content="进入 DOS 分析" Click="OnGoDos"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="2" Grid.Column="2" Classes="card">
+                <StackPanel Spacing="10">
+                  <TextBlock Classes="h2" Text="COHP / ICOHP 分析"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="LOBSTER 化学键 COHP 曲线、ICOHP(Ef) 键强度、Excel 和 Origin 数据导出。"/>
+                  <Button HorizontalAlignment="Left" Content="进入 COHP 分析" Click="OnGoCohp"/>
+                </StackPanel>
+              </Border>
             </Grid>
             <Border Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Classes="h2" Text="工作引擎状态"/>
-                <TextBlock x:Name="HomeAseStatus" Text="ASE 尚未检测。请前往「工作引擎」配置 Python 环境。"
-                           Classes="muted" TextWrapping="Wrap"/>
-                <Button HorizontalAlignment="Left" Content="配置 / 检测 ASE" Click="OnGoEngine"/>
+                <TextBlock Classes="h2" Text="工作引擎"/>
+                <TextBlock Classes="muted" TextWrapping="Wrap"
+                           Text="ASE、pymatgen、NumPy、Matplotlib、openpyxl 分别安装与检测，共用一个 Python 环境。"/>
+                <Button HorizontalAlignment="Left" Content="配置 / 检测工作引擎" Click="OnGoEngine"/>
               </StackPanel>
             </Border>
             <TextBlock Classes="caption" TextWrapping="Wrap"
@@ -592,29 +608,77 @@
           <StackPanel x:Name="WorkEnginePage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="工作引擎"/>
             <Border Classes="card">
-              <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="Python 工作引擎：ASE + pymatgen"/>
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="Python 环境"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="结构处理使用 ASE；DOS / COHP / ICOHP 后处理使用 pymatgen、NumPy、Matplotlib、openpyxl。请在同一 Python 环境安装：python -m pip install ase pymatgen numpy matplotlib openpyxl"/>
+                           Text="以下五个工具独立显示、独立检测，使用同一个 Python 环境。更改环境路径后，可按需逐个检查。"/>
                 <TextBlock Classes="label" Text="Python 可执行文件"/>
                 <TextBox x:Name="AsePythonExecutable" Text="python"
                          PlaceholderText="python 或 C:\Python311\python.exe"
                          LostFocus="OnAsePathLostFocus"/>
-                <StackPanel Orientation="Horizontal" Spacing="9">
-                  <Button Classes="accent" Content="检测 ASE" Click="OnCheckAse"/>
-                  <Button Content="检测 DOS 引擎" Click="OnCheckDosEngine"/>
-                  <Button Content="检测 COHP 引擎" Click="OnCheckCohpEngine"/>
-                </StackPanel>
-                <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
-                           Text="ASE：尚未检测。结构转换前会自动检查。"/>
-                <TextBlock x:Name="DosEngineHealthText" Classes="caption" TextWrapping="Wrap"
-                           Text="pymatgen / NumPy / Matplotlib / openpyxl：尚未检测。"/>
-                <TextBlock x:Name="CohpEngineHealthText" Classes="caption" TextWrapping="Wrap"
-                           Text="LOBSTER COHP / ICOHP 引擎：尚未检测。"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="DFTDesk 仅调用用户配置的外部 Python 环境，不捆绑这些 Python 包。ASE 使用 LGPL-2.1-or-later 许可。"/>
+                           Text="安装命令：python -m pip install ase pymatgen numpy matplotlib openpyxl"/>
               </StackPanel>
             </Border>
+            <Grid ColumnDefinitions="*,14,*" RowDefinitions="Auto,14,Auto,14,Auto">
+              <Border Grid.Row="0" Grid.Column="0" Classes="card">
+                <StackPanel Spacing="9">
+                  <TextBlock Classes="h2" Text="ASE"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="结构文件 POSCAR / CIF 转换、原子与团簇构型处理。"/>
+                  <Button Classes="accent" HorizontalAlignment="Left"
+                          Content="单独检测 ASE" Click="OnCheckAse"/>
+                  <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
+                             Text="ASE：尚未检测。"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="0" Grid.Column="2" Classes="card">
+                <StackPanel Spacing="9">
+                  <TextBlock Classes="h2" Text="pymatgen"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="VASP DOS / PDOS 与 LOBSTER COHP / ICOHP 数据解析。"/>
+                  <Button Classes="accent" HorizontalAlignment="Left"
+                          Content="单独检测 pymatgen" Click="OnCheckPymatgen"/>
+                  <TextBlock x:Name="PymatgenHealthText" Classes="caption" TextWrapping="Wrap"
+                             Text="pymatgen：尚未检测。"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="2" Grid.Column="0" Classes="card">
+                <StackPanel Spacing="9">
+                  <TextBlock Classes="h2" Text="NumPy"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="数值数组、DOS 积分和 d 带中心等计算。"/>
+                  <Button Classes="accent" HorizontalAlignment="Left"
+                          Content="单独检测 NumPy" Click="OnCheckNumpy"/>
+                  <TextBlock x:Name="NumpyHealthText" Classes="caption" TextWrapping="Wrap"
+                             Text="NumPy：尚未检测。"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="2" Grid.Column="2" Classes="card">
+                <StackPanel Spacing="9">
+                  <TextBlock Classes="h2" Text="Matplotlib"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="DOS、COHP/ICOHP 曲线绘制和 PNG / SVG 导出。"/>
+                  <Button Classes="accent" HorizontalAlignment="Left"
+                          Content="单独检测 Matplotlib" Click="OnCheckMatplotlib"/>
+                  <TextBlock x:Name="MatplotlibHealthText" Classes="caption" TextWrapping="Wrap"
+                             Text="Matplotlib：尚未检测。"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Classes="card">
+                <StackPanel Spacing="9">
+                  <TextBlock Classes="h2" Text="openpyxl"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="将 DOS 与 COHP/ICOHP 数值数据导出为可编辑 Excel（.xlsx）工作簿。"/>
+                  <Button Classes="accent" HorizontalAlignment="Left"
+                          Content="单独检测 openpyxl" Click="OnCheckOpenpyxl"/>
+                  <TextBlock x:Name="OpenpyxlHealthText" Classes="caption" TextWrapping="Wrap"
+                             Text="openpyxl：尚未检测。"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+            <TextBlock Classes="caption" TextWrapping="Wrap"
+                       Text="DFTDesk 不捆绑这些 Python 库；安装后在本页分别检测版本。ASE 采用 LGPL-2.1-or-later 许可。"/>
           </StackPanel>
           <StackPanel x:Name="AboutPage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="关于"/>
