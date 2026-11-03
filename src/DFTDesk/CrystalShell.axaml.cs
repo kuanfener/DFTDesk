@@ -202,7 +202,7 @@ internal sealed partial class CrystalShell : UserControl
         OutputDirectory: Part<TextBox>("ClusterOutputDirectory").Text ?? "",
         Cartesian: Part<CheckBox>("ClusterCartesian").IsChecked == true);
 
-    public string ClusterOutputDirectory
+    public string ClusterOutputPath
     {
         get => Part<TextBox>("ClusterOutputDirectory").Text ?? "";
         set => Part<TextBox>("ClusterOutputDirectory").Text = value;
