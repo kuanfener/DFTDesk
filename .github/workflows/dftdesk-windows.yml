@@ -40,11 +40,23 @@ jobs:
           $wechat = $env:DFTDESK_WECHAT_QR_BASE64
           $alipay = $env:DFTDESK_ALIPAY_QR_BASE64
           if (-not [string]::IsNullOrWhiteSpace($wechat) -and -not [string]::IsNullOrWhiteSpace($alipay)) {
-            $dir = Join-Path $env:LOCALAPPDATA 'DFTDesk\Donation'
-            New-Item -ItemType Directory -Force -Path $dir | Out-Null
-            [IO.File]::WriteAllBytes((Join-Path $dir 'wechat.png'), [Convert]::FromBase64String($wechat))
-            [IO.File]::WriteAllBytes((Join-Path $dir 'alipay.png'), [Convert]::FromBase64String($alipay))
-            Write-Host 'Private donation QR assets prepared.'
+            try {
+              $wechatBytes = [Convert]::FromBase64String($wechat.Trim())
+              $alipayBytes = [Convert]::FromBase64String($alipay.Trim())
+              $pngSignature = '89504E470D0A1A0A'
+              if ($wechatBytes.Length -lt 8 -or $alipayBytes.Length -lt 8 -or
+                  [Convert]::ToHexString($wechatBytes[0..7]) -ne $pngSignature -or
+                  [Convert]::ToHexString($alipayBytes[0..7]) -ne $pngSignature) {
+                throw 'QR secrets must encode PNG images.'
+              }
+              $dir = Join-Path $env:LOCALAPPDATA 'DFTDesk\Donation'
+              New-Item -ItemType Directory -Force -Path $dir | Out-Null
+              [IO.File]::WriteAllBytes((Join-Path $dir 'wechat.png'), $wechatBytes)
+              [IO.File]::WriteAllBytes((Join-Path $dir 'alipay.png'), $alipayBytes)
+              Write-Host 'Valid private donation QR PNG files prepared for embedding.'
+            } catch {
+              Write-Warning 'Donation QR secrets are not valid Base64 PNG files. Skipping embedded QR images; correct both GitHub Actions secrets.'
+            }
           } else {
             Write-Host 'Donation QR secrets not configured. No private QR data included.'
           }
