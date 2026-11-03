@@ -468,6 +468,12 @@
                 <TextBlock Classes="h2" Text="DFTDesk"/>
                 <TextBlock Text="DFT 计算文件与数据处理工作台 · POSCAR / CONTCAR ⇄ CIF"/>
                 <TextBlock Classes="caption" Text="部分界面样式、图标及 DonutMenu 组件复用了 Filee 开源项目（Myeonggu Kim / KnifeLemon 及贡献者），遵循 MIT License。原始版权与许可声明保留在发布包的 LICENSE-Filee.txt 中。"/>
+                <TextBlock Classes="h2" Text="第三方开源组件"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="Filee（界面与 DonutMenu）— MIT License；相应版权与许可声明见 LICENSE-Filee.txt。"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="ASE — Atomic Simulation Environment（可选的外部 Python 引擎）— LGPL-2.1-or-later；版权归 ASE contributors。ASE 不包含在 DFTDesk 的下载包中。"/>
+                <Button Content="ASE 官方网站" HorizontalAlignment="Left" Click="OnOpenAseWebsite"/>
                 <Button Content="DFTDesk" HorizontalAlignment="Left" Click="OnGitHub"/>
               </StackPanel>
             </Border>
