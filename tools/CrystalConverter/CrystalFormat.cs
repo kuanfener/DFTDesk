@@ -146,7 +146,7 @@ internal static class CrystalFormat
         return structure with { Sites = sites };
     }
 
-    public static string WritePoscar(CrystalStructure structure, bool cartesian = false)
+    public static string WritePoscar(CrystalStructure structure, bool cartesian = true)
     {
         Validate(structure);
         var elements = structure.Sites.Select(s => s.Element).Distinct().ToArray();
