@@ -196,7 +196,7 @@ internal sealed partial class CrystalShell : UserControl
     public double CurrentOpacity => _opacity / 100;
     public CrystalEngine SelectedEngine => Part<ComboBox>("CrystalEngineChoice").SelectedIndex == 1
         ? CrystalEngine.Ase : CrystalEngine.Native;
-    public string AsePythonExecutable => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
+    public string PythonExecutablePath => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
         ? executable : "python";
     public void SetAseStatus(string text) => Part<TextBlock>("AseHealthText").Text = text;
 
@@ -351,7 +351,7 @@ internal sealed partial class CrystalShell : UserControl
             File.WriteAllText(EngineSettingsFile, JsonSerializer.Serialize(new EngineOptions
             {
                 Name = SelectedEngine == CrystalEngine.Ase ? "ASE" : "Native",
-                PythonExecutable = AsePythonExecutable,
+                PythonExecutable = PythonExecutablePath,
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (IOException) { }
