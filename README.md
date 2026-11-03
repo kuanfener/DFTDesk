@@ -1,71 +1,71 @@
 # DFTDesk
 
-**面向 DFT / 计算材料研究的 Windows 文件与数据处理工作台。**
+**面向 DFT / 计算材料研究的 Windows 科研文件与数据处理工作台。**
 
-DFTDesk 从 **POSCAR / CONTCAR ⇄ CIF** 起步，逐步整合结构转换、VASP 与 Gaussian 结果整理、批量处理及可视化工具。主程序为独立的 Windows x64 桌面应用；不需要安装 .NET。
+DFTDesk 目前专注于 VASP 结构文件 **POSCAR / CONTCAR ⇄ CIF** 的转换、批处理和文件拖放，后续可扩展 VASP / Gaussian 数据处理。**结构转换只使用 ASE（Atomic Simulation Environment）；原生 C# POSCAR/CIF 转换器已移除。**
 
-![DFTDesk logo](src/DFTDesk/Assets/Icons/dftdesk.png)
+![DFTDesk](src/DFTDesk/Assets/Icons/dftdesk.png)
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## 下载与使用
+## 下载
 
-1. 打开 **[DFTDesk Windows Actions](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)**，选择一次成功的构建。
-2. 在 **Artifacts** 下载 `DFTDesk-win-x64`，解压并运行 `DFTDesk.exe`。
-3. 将 POSCAR、CONTCAR、VASP 结构或 CIF 拖入界面，可在环形工具栏或批量任务中转换。
+1. 前往 [DFTDesk Windows 构建](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)，打开成功的工作流运行。
+2. 在 **Artifacts** 下载 `DFTDesk-win-x64`，解压后双击 `DFTDesk.exe`。
+3. 程序为 Windows x64 自包含单文件 EXE，**无需额外安装 .NET，但转换功能需要另行安装 Python + ASE**。
 
-发布包只有 `DFTDesk.exe`、`README.txt`、`LICENSE.txt` 三个文件。不附带原项目的多格式转换程序、安装器或额外的 DLL。
+发布包包含 `DFTDesk.exe`、`README.txt` 与 `LICENSE.txt`。
 
-## 功能
+## 首次使用：配置 ASE（必需）
 
-| 模块 | 当前功能 |
-| --- | --- |
-| 晶体结构转换 | POSCAR / CONTCAR ⇄ CIF，批量队列与文件拖放 |
-| 原生引擎 | C# 实现，无需 Python；POSCAR 默认 **Cartesian**（可选 Direct） |
-| ASE 引擎 | 可选外部 Python + ASE；POSCAR 默认 Direct（可独立调整） |
-| 输出安全 | 不覆盖原始文件，同名自动追加序号 |
-| 格式 | 晶格 10 位、原子坐标 8 位定点小数（原生引擎） |
-| 界面 | Soft / Material You、亮暗主题、Ctrl + 左键拖动环形轮盘 |
-| 赞助 | 可由维护者在构建时通过 GitHub Secrets 注入黑白二维码，不在公开仓库保存收款码 |
+DFTDesk 使用已安装的 Python 环境调用 ASE，不随 EXE 捆绑 Python、ASE 或 NumPy。
 
-注意：CIF 对称性展开、非整占位、Selective Dynamics 等元数据在不同格式中并不保证完全往返。重要 VASP 结构应核查原子数、元素顺序、坐标和固定原子约束。
-
-## ASE 可选安装
-
-DFTDesk 默认直接使用 C# 引擎，不依赖 Python。如果想用 ASE：
+在 PowerShell、Miniconda Prompt 或 PyCharm 的 Python 环境中运行：
 
 ```powershell
 python -m pip install ase
-python -c "import sys; print(sys.executable)"
+python -c "import ase,sys; print('ASE:', ase.__version__); print('Python:', sys.executable)"
 ```
 
-在 **转换引擎** 页面填入第二条命令显示的 `python.exe` 完整路径，然后点击 **检测 ASE**。ASE 通过外部 Python 环境运行，**不包含在 DFTDesk.exe 中**。
+将输出的 `python.exe` 完整路径填入 **DFTDesk → 工作引擎 → Python 可执行文件**，点击 **检测 ASE**。检测成功即可使用轮盘和批量转换。已安装 Miniconda 的用户应填写对应环境下的 `python.exe`，不必重复安装 Python。
 
-## 从源码构建
+## 当前功能
 
-需 .NET 10 SDK；Windows x64 发布：
+| 功能 | 说明 |
+| --- | --- |
+| 晶体结构转换 | 使用 ASE 读写 POSCAR / CONTCAR ⇄ CIF |
+| 工作引擎 | **仅 ASE**；可设置 Python 路径并检测环境 |
+| POSCAR 坐标 | 默认为 **Direct**，可在「预设」勾选 **Cartesian** |
+| 批量与拖放 | 多选文件、拖放、环形工具栏、Ctrl + 鼠标左键拖动 |
+| 文件安全 | 自动避让同名文件，不覆盖源文件；失败清理临时文件 |
+| 外观 | DFTDesk 主题、Soft / Material You、浅色 / 深色模式 |
+| 赞助 | 微信和支付宝二维码可在本地配置或构建时通过 GitHub Secrets 注入 |
+
+**注意：** ASE 写出的 POSCAR 在本项目中使用 `sort=True` 按元素排序。CIF 的部分占位、空间群、POSCAR 的 Selective Dynamics 等信息无法保证完整往返；重要 VASP 输入文件需核对晶胞、元素顺序、原子数和约束。ASE 使用其自身输出精度，不保证与 VESTA 的固定小数格式完全相同。
+
+## 构建
+
+Windows 开发需要 .NET 10 SDK：
 
 ```powershell
 dotnet test tests/DFTDesk.Tests/DFTDesk.Tests.csproj -c Release
 dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 
-原生和 ASE 的自动化测试在 GitHub Actions 上运行，后者仅在 **CI 测试环境**安装 ASE，不会进入下载包。
+GitHub CI 会在测试机中安装 ASE 并执行真实转换测试；这些 Python 依赖不会进入最终下载的 EXE。
 
-## 项目结构
+## 仓库结构
 
 ```text
-src/DFTDesk/                    Windows 桌面程序、原生/ASE 转换引擎
-tests/DFTDesk.Tests/            转换与兼容性测试
-third_party/Filee/             必须保留的上游 MIT 代码（界面、轮盘、Windows 支持）
-.github/workflows/             DFTDesk 构建与发布
-THIRD-PARTY-NOTICES.md         依赖、版权及许可说明
+src/DFTDesk/                   DFTDesk UI、ASE 桥接、格式检测、批处理
+tests/DFTDesk.Tests/           ASE 往返转换及安全测试
+third_party/Filee/            复用的 Filee MIT 组件（轮盘、界面、Windows 交互）
+.github/workflows/            Windows 构建
+THIRD-PARTY-NOTICES.md        第三方版权及许可
 ```
 
-## 许可证和来源
+## 许可证
 
-DFTDesk 采用 **MIT License**。部分界面样式、轮盘与 Windows 组件源自 [Filee (KnifeLemon)](https://github.com/KnifeLemon/Filee)，相关原作者版权声明、MIT 许可和必要源代码保留在本仓库。详细信息见 [LICENSE](LICENSE)、[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 和 [third_party/Filee](third_party/Filee)。
+DFTDesk 采用 **MIT License**。部分 UI、环形轮盘和 Windows 交互组件基于 [KnifeLemon/Filee](https://github.com/KnifeLemon/Filee) 的 MIT 开源代码，原作者版权与许可在 [LICENSE](LICENSE)、[THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) 中保留。第三方源码在 [third_party/Filee](third_party/Filee) 中单独维护。
 
-可选 **ASE (Atomic Simulation Environment)** 属于独立第三方项目，采用 **LGPL-2.1-or-later**，未随 DFTDesk 分发。
-
-本仓库目前是 GitHub 上的 Filee fork；为保留来源和历史，仓库内部的第三方代码及 GitHub 的 fork 标识会继续存在，但 DFTDesk 的软件入口和发布包独立维护。
+**ASE** 由 ASE contributors 开发，采用 LGPL-2.1-or-later 许可，作为外部 Python 软件运行，不随 DFTDesk 分发。本仓库的 GitHub fork 关系仅用于保留上游来源。

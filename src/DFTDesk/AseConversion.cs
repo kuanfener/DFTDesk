@@ -8,10 +8,8 @@ using System.Threading.Tasks;
 
 namespace DFTDesk;
 
-internal enum CrystalEngine { Native, Ase }
-
 /// <summary>
-/// Optional ASE backend. Python/ASE are supplied by the user, not embedded in
+/// ASE is the sole structure conversion backend. Python/ASE are supplied by the user, not embedded in
 /// DFTDesk.exe. Python is invoked with ArgumentList, never via a shell.
 /// </summary>
 internal static class AseConversion
@@ -71,7 +69,7 @@ if __name__ == "__main__":
         bool cartesian, string pythonExecutable, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var source = ConversionBatch.Detect(input)
+        var source = CrystalFiles.Detect(input)
             ?? throw new FormatException($"无法识别文件格式：{Path.GetFileName(input)}");
         if (source == target)
             throw new InvalidOperationException($"{Path.GetFileName(input)} 已是目标格式。");
@@ -149,7 +147,7 @@ if __name__ == "__main__":
         }
         catch (Win32Exception ex)
         {
-            throw new InvalidOperationException($"无法启动 Python：{executable}。请在转换引擎中指定 python.exe 的完整路径。", ex);
+            throw new InvalidOperationException($"无法启动 Python：{executable}。请在「工作引擎」中指定 python.exe 的完整路径。", ex);
         }
 
         var stdout = process.StandardOutput.ReadToEndAsync();

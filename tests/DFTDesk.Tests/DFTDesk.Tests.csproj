@@ -8,8 +8,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
-    <Compile Include="../../src/DFTDesk/CrystalFormat.cs" Link="CrystalFormat.cs" />
-    <Compile Include="../../src/DFTDesk/ConversionBatch.cs" Link="ConversionBatch.cs" />
+    <Compile Include="../../src/DFTDesk/CrystalFiles.cs" Link="CrystalFiles.cs" />
     <Compile Include="../../src/DFTDesk/AseConversion.cs" Link="AseConversion.cs" />
     <Using Include="Xunit" />
   </ItemGroup>

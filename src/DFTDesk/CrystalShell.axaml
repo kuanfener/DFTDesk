@@ -145,7 +145,7 @@
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
-              <TextBlock Text="转换引擎" VerticalAlignment="Center"/>
+              <TextBlock Text="工作引擎" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
@@ -267,10 +267,10 @@
             <TextBlock Classes="h1" Text="预设"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="VESTA 风格导出"/>
-                <TextBlock Classes="muted" Text="POSCAR 晶格保留 10 位小数，原子坐标保留 8 位，列对齐。"/>
-                <CheckBox x:Name="CartesianOption" IsChecked="True" Content="POSCAR 输出 Cartesian 坐标（原生引擎默认；不勾选则为 Direct）"/>
-                <TextBlock Classes="caption" Text="坐标模式仅影响 POSCAR 输出，默认：原生引擎 Cartesian、ASE 引擎 Direct；两种模式可独立设置。CIF 输出不受影响。 "/>
+                <TextBlock Classes="h2" Text="POSCAR 坐标模式"/>
+                <TextBlock Classes="muted" Text="使用 ASE 输出 POSCAR，坐标模式由此设置。ASE 使用自己的数值输出精度。"/>
+                <CheckBox x:Name="CartesianOption" IsChecked="False" Content="POSCAR 输出 Cartesian 坐标（默认 Direct）"/>
+                <TextBlock Classes="caption" Text="仅影响 CIF → POSCAR；CIF 文件输出不受影响。所选模式会保存到工作引擎设置。"/>
               </StackPanel>
             </Border>
           </StackPanel>
@@ -426,34 +426,30 @@
             </Grid>
           </StackPanel>
 
-          <StackPanel x:Name="EnginesPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="转换引擎"/>
+          <StackPanel x:Name="WorkEnginePage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="工作引擎"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="晶体格式转换"/>
                 <TextBlock Text="POSCAR / CONTCAR ⇄ CIF" FontWeight="SemiBold"/>
-                <TextBlock Classes="label" Text="当前转换引擎"/>
-                <ComboBox x:Name="CrystalEngineChoice" SelectedIndex="0" Width="340"
-                          HorizontalAlignment="Left" SelectionChanged="OnEngineSelectionChanged">
-                  <ComboBoxItem Content="DFTDesk 原生引擎（默认，无需 Python）"/>
-                  <ComboBoxItem Content="ASE — Atomic Simulation Environment"/>
-                </ComboBox>
+                <TextBlock Classes="label" Text="当前工作引擎"/>
+                <TextBlock Text="ASE — Atomic Simulation Environment" FontSize="16" FontWeight="SemiBold"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="原生引擎保留 VESTA 风格定点精度；ASE 引擎使用 ASE 自身的读写规则，坐标精度和原子排序可能不同。选择后所有批量转换和轮盘转换均使用该引擎。"/>
+                           Text="DFTDesk 使用 ASE 作为唯一晶体转换引擎。轮盘和批量转换都调用选定的 Python 环境；ASE 可能调整元素顺序，转换后请核对结构。"/>
               </StackPanel>
             </Border>
             <Border Classes="card">
               <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="ASE（可选安装）"/>
+                <TextBlock Classes="h2" Text="Python / ASE 环境（必需）"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="ASE 不随 DFTDesk.exe 打包。请先在自己的 Python 环境安装：python -m pip install ase，然后填写该环境的 python.exe 路径。"/>
+                           Text="DFTDesk.exe 不包含 Python 或 ASE。请先在本机安装：python -m pip install ase，再填写已安装 ASE 的 python.exe 完整路径，点击检测。"/>
                 <TextBlock Classes="label" Text="Python 可执行文件"/>
                 <TextBox x:Name="AsePythonExecutable" Text="python"
                          PlaceholderText="python 或 C:\Python311\python.exe"
                          LostFocus="OnAsePathLostFocus"/>
                 <Button Classes="accent" HorizontalAlignment="Left" Content="检测 ASE" Click="OnCheckAse"/>
                 <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
-                           Text="尚未检测 ASE 环境。选择 ASE 引擎时，转换前会自动检查。"/>
+                           Text="尚未检测 ASE 环境。每次开始批量或轮盘转换前都会检查。"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="ASE 使用 LGPL-2.1-or-later 许可，版权归 ASE 贡献者；DFTDesk 仅调用独立 Python 环境，不捆绑 ASE 库。"/>
               </StackPanel>
@@ -470,7 +466,7 @@
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="开源界面及轮盘源项目：Filee (KnifeLemon) — MIT License；原作者版权保留。"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="ASE — Atomic Simulation Environment（可选的外部 Python 引擎）— LGPL-2.1-or-later；版权归 ASE contributors。ASE 不包含在 DFTDesk 的下载包中。"/>
+                           Text="ASE — Atomic Simulation Environment（DFTDesk 唯一结构转换引擎，外部 Python 环境）— LGPL-2.1-or-later；版权归 ASE contributors。ASE 不包含在 DFTDesk 的下载包中。"/>
                 <Button Content="ASE 官方网站" HorizontalAlignment="Left" Click="OnOpenAseWebsite"/>
                 <Button Content="DFTDesk" HorizontalAlignment="Left" Click="OnGitHub"/>
               </StackPanel>

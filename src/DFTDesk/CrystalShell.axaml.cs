@@ -44,8 +44,7 @@ internal sealed partial class CrystalShell : UserControl
     private bool _reduced;
     private bool _collapsed;
     private bool _initializing = true;
-    // Keep separate user choices; only the native engine defaults to Cartesian.
-    private bool _nativeCartesian = true;
+    // ASE is the only engine. Older engine.json settings retain AseCartesian.
     private bool _aseCartesian = false;
 
     public event Action? BrowseFilesRequested;
@@ -69,7 +68,7 @@ internal sealed partial class CrystalShell : UserControl
             Part<Control>("HomePage"), Part<Control>("GeneralPage"),
             Part<Control>("TriggersPage"), Part<Control>("ToolbarPage"),
             Part<Control>("PresetsPage"), Part<Control>("WatchPage"),
-            Part<Control>("ThemePage"), Part<Control>("EnginesPage"),
+            Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
             Part<Control>("AboutPage")
         ];
         var pageContainer = Part<Grid>("PageContainer");
@@ -152,8 +151,7 @@ internal sealed partial class CrystalShell : UserControl
             var cartesian = Part<CheckBox>("CartesianOption").IsChecked == true;
             if (!_initializing)
             {
-                if (SelectedEngine == CrystalEngine.Native) _nativeCartesian = cartesian;
-                else _aseCartesian = cartesian;
+                _aseCartesian = cartesian;
                 SaveEngineSettings();
             }
             CartesianChanged?.Invoke(cartesian);
@@ -204,8 +202,6 @@ internal sealed partial class CrystalShell : UserControl
     public bool Cartesian => Part<CheckBox>("CartesianOption").IsChecked == true;
     public DrawingColor CurrentAccent => ToDrawing(_accent);
     public double CurrentOpacity => _opacity / 100;
-    public CrystalEngine SelectedEngine => Part<ComboBox>("CrystalEngineChoice").SelectedIndex == 1
-        ? CrystalEngine.Ase : CrystalEngine.Native;
     public string PythonExecutablePath => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
         ? executable : "python";
     public void SetAseStatus(string text) => Part<TextBlock>("AseHealthText").Text = text;
@@ -334,10 +330,8 @@ internal sealed partial class CrystalShell : UserControl
 
     private sealed class EngineOptions
     {
-        public string Name { get; set; } = "Native";
         public string PythonExecutable { get; set; } = "python";
-        // Defaults also apply when migrating an older engine.json without these fields.
-        public bool NativeCartesian { get; set; } = true;
+        // An old engine.json may also contain Name and NativeCartesian; ignore both.
         public bool AseCartesian { get; set; } = false;
     }
 
@@ -350,19 +344,15 @@ internal sealed partial class CrystalShell : UserControl
                 var settings = JsonSerializer.Deserialize<EngineOptions>(File.ReadAllText(EngineSettingsFile));
                 if (settings is not null)
                 {
-                    _nativeCartesian = settings.NativeCartesian;
                     _aseCartesian = settings.AseCartesian;
-                    Part<ComboBox>("CrystalEngineChoice").SelectedIndex =
-                        settings.Name.Equals("ASE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
                     Part<TextBox>("AsePythonExecutable").Text =
                         string.IsNullOrWhiteSpace(settings.PythonExecutable) ? "python" : settings.PythonExecutable;
                 }
             }
         }
-        catch (Exception) { /* A malformed optional setting falls back to the native engine. */ }
+        catch (Exception) { /* Malformed settings fall back to Python and Direct coordinates. */ }
 
-        Part<CheckBox>("CartesianOption").IsChecked =
-            SelectedEngine == CrystalEngine.Native ? _nativeCartesian : _aseCartesian;
+        Part<CheckBox>("CartesianOption").IsChecked = _aseCartesian;
     }
 
     private void SaveEngineSettings()
@@ -372,25 +362,12 @@ internal sealed partial class CrystalShell : UserControl
             Directory.CreateDirectory(Path.GetDirectoryName(EngineSettingsFile)!);
             File.WriteAllText(EngineSettingsFile, JsonSerializer.Serialize(new EngineOptions
             {
-                Name = SelectedEngine == CrystalEngine.Ase ? "ASE" : "Native",
                 PythonExecutable = PythonExecutablePath,
-                NativeCartesian = _nativeCartesian,
                 AseCartesian = _aseCartesian,
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (IOException) { }
         catch (UnauthorizedAccessException) { }
-    }
-
-    private void OnEngineSelectionChanged(object? sender, SelectionChangedEventArgs e)
-    {
-        if (_initializing) return;
-        Part<CheckBox>("CartesianOption").IsChecked =
-            SelectedEngine == CrystalEngine.Native ? _nativeCartesian : _aseCartesian;
-        SaveEngineSettings();
-        SetAseStatus(SelectedEngine == CrystalEngine.Native
-            ? "当前使用无需 Python 的原生转换引擎。"
-            : "已选择 ASE。请点击检测 ASE，或直接开始转换以自动检测。");
     }
 
     private void OnAsePathLostFocus(object? sender, RoutedEventArgs e)

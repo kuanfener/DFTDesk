@@ -26,7 +26,7 @@ jobs:
       - name: Install ASE for integration testing only
         run: python -m pip install ase
 
-      - name: Test DFTDesk native and ASE conversion
+      - name: Test DFTDesk ASE conversion and file safety
         env:
           DFTDESK_TEST_ASE_PYTHON: python
         run: dotnet test tests/DFTDesk.Tests/DFTDesk.Tests.csproj -c Release

@@ -136,7 +136,7 @@ internal sealed partial class MainForm : Form
         var seen = _paths.ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var path in paths)
         {
-            if (!File.Exists(path) || ConversionBatch.Detect(path) is null || !seen.Add(path)) continue;
+            if (!File.Exists(path) || CrystalFiles.Detect(path) is null || !seen.Add(path)) continue;
             _paths.Add(path);
         }
         RefreshFiles();
@@ -172,7 +172,7 @@ internal sealed partial class MainForm : Form
     {
         if (_busy || _popup.Visible) return;
         var selection = _global.SelectedFiles();
-        if (!selection.Any(path => ConversionBatch.Detect(path) is not null)) return;
+        if (!selection.Any(path => CrystalFiles.Detect(path) is not null)) return;
         AddFiles(selection, replace: true);
         _popupFromDrag = dragMode;
         _popup.OpenAt(at, activate: !dragMode);
@@ -212,7 +212,7 @@ internal sealed partial class MainForm : Form
     private async Task StartBatchAsync(ExportFormat target)
     {
         if (_busy) return;
-        var inputs = _paths.Where(File.Exists).Where(path => ConversionBatch.Detect(path) != target).ToArray();
+        var inputs = _paths.Where(File.Exists).Where(path => CrystalFiles.Detect(path) != target).ToArray();
         if (inputs.Length == 0)
         {
             MessageBox.Show("请先添加需要转换的文件；已是目标格式的文件会自动跳过。",
@@ -222,7 +222,6 @@ internal sealed partial class MainForm : Form
 
         var directory = string.IsNullOrWhiteSpace(_output.Text) ? null : _output.Text.Trim();
         var cartesian = _cartesian.Checked;
-        var engine = _shell.SelectedEngine;
         var python = _shell.PythonExecutablePath;
         if (directory is not null && !Directory.Exists(directory))
         {
@@ -230,22 +229,19 @@ internal sealed partial class MainForm : Form
                 MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
-        if (engine == CrystalEngine.Ase)
+        _shell.SetAseStatus("正在检查 ASE 环境…");
+        try
         {
-            _shell.SetAseStatus("正在检查 ASE 环境…");
-            try
-            {
-                var version = await AseConversion.ProbeAsync(python);
-                _shell.SetAseStatus($"可用：{version}（{python}）");
-            }
-            catch (Exception ex)
-            {
-                _shell.SetAseStatus("ASE 不可用：" + ex.Message);
-                MessageBox.Show("ASE 引擎不可用：" + ex.Message +
-                    "\n\n可在转换引擎页面指定正确的 Python 环境，或切换回 DFTDesk 原生引擎。",
-                    "ASE 环境检查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+            var version = await AseConversion.ProbeAsync(python);
+            _shell.SetAseStatus($"可用：{version}（{python}）");
+        }
+        catch (Exception ex)
+        {
+            _shell.SetAseStatus("ASE 不可用：" + ex.Message);
+            MessageBox.Show("ASE 工作引擎不可用：" + ex.Message +
+                "\n\n请打开左侧「工作引擎」，检查 Python 路径并确认已安装 ASE。",
+                "ASE 环境检查", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
         }
         _busy = true;
         _shell.SetBusy(true);
@@ -255,7 +251,7 @@ internal sealed partial class MainForm : Form
         _progress.Value = 0;
         var success = 0;
         var failed = 0;
-        Log($"开始批量导出 {(target == ExportFormat.Cif ? "CIF" : "POSCAR")}，共 {inputs.Length} 个文件，使用 {(engine == CrystalEngine.Ase ? "ASE" : "DFTDesk 原生")} 引擎。");
+        Log($"开始批量导出 {(target == ExportFormat.Cif ? "CIF" : "POSCAR")}，共 {inputs.Length} 个文件，工作引擎：ASE。");
         try
         {
             foreach (var input in inputs)
@@ -263,11 +259,8 @@ internal sealed partial class MainForm : Form
                 if (_cancellation.IsCancellationRequested) break;
                 try
                 {
-                    var output = engine == CrystalEngine.Ase
-                        ? await AseConversion.ConvertOneAsync(input, directory, target, cartesian, python,
-                            _cancellation.Token)
-                        : await Task.Run(() => ConversionBatch.ConvertOne(input, directory, target,
-                            cartesian), _cancellation.Token);
+                    var output = await AseConversion.ConvertOneAsync(input, directory, target, cartesian, python,
+                        _cancellation.Token);
                     success++;
                     Log($"✓ {Path.GetFileName(input)} → {Path.GetFileName(output)}");
                 }

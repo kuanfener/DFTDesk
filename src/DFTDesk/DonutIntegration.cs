@@ -54,7 +54,7 @@ internal static class DftDonutFactory
 
     public static string[] Files(IDataTransfer transfer) =>
         (transfer.TryGetFiles() ?? []).Select(item => item.TryGetLocalPath())
-            .OfType<string>().Where(File.Exists).Where(path => ConversionBatch.Detect(path) is not null)
+            .OfType<string>().Where(File.Exists).Where(path => CrystalFiles.Detect(path) is not null)
             .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
 
     public static void AttachDrop(DonutMenu donut, Action<ExportFormat, string[]> onDrop)
