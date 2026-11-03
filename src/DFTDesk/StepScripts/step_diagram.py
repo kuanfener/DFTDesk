@@ -213,6 +213,7 @@ def _legacy_orr_records(sheet):
         # The downloadable template is intentionally empty; unused blocks
         # must not block other catalysts that the user has filled in.
         if all(_number(cell(row, 1)) is None and
+               _number(cell(row, 5)) is None and
                _number(cell(row, 6)) is None for row in block):
             index += 5
             continue
