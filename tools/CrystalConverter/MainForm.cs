@@ -196,7 +196,7 @@ internal sealed partial class MainForm : Form
 
     private async Task CheckAseAsync()
     {
-        var python = _shell.AsePythonExecutable;
+        var python = _shell.PythonExecutablePath;
         _shell.SetAseStatus("正在检测 Python / ASE…");
         try
         {
@@ -223,7 +223,7 @@ internal sealed partial class MainForm : Form
         var directory = string.IsNullOrWhiteSpace(_output.Text) ? null : _output.Text.Trim();
         var cartesian = _cartesian.Checked;
         var engine = _shell.SelectedEngine;
-        var python = _shell.AsePythonExecutable;
+        var python = _shell.PythonExecutablePath;
         if (directory is not null && !Directory.Exists(directory))
         {
             MessageBox.Show("输出文件夹不存在，请重新选择。", "输出目录错误",
