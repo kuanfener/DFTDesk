@@ -33,13 +33,12 @@ internal sealed partial class CrystalShell : UserControl
         ["#7F77DD", "#1D9E75", "#D85A30", "#378ADD", "#D4537E", "#BA7517", "#639922", "#5F5E5A"];
 
     private Control[] _pages = [];
-    private DonutMenu _wheel = null!;
-    private LayoutTransformControl? _zoomHost;
+    private readonly List<(Button Button, AvColor Color)> _swatchButtons = [];
     private AvColor _accent = AvColor.Parse("#7F77DD");
     private double _radius = 16;
     private double _opacity = 96;
-    private double _zoom = 1;
-    private bool _material;
+    private int _windowWidth = 1080;
+    private int _windowHeight = 760;
     private bool _reduced;
     private bool _collapsed;
     private bool _initializing = true;
@@ -61,6 +60,7 @@ internal sealed partial class CrystalShell : UserControl
     public event Action? ClusterBrowseRequested;
     public event Action? ClusterGenerateRequested;
     public event Action? ClusterCancelRequested;
+    public event Action<int, int>? WindowSizeRequested;
 
     public CrystalShell()
     {
@@ -75,19 +75,6 @@ internal sealed partial class CrystalShell : UserControl
         foreach (var page in _pages)
             pageContainer.Children.Remove(page);
         Part<ContentControl>("PageHost").Content = null;
-
-        _wheel = DftDonutFactory.Create(96, DrawingColor.FromArgb(127, 119, 221));
-        _wheel.SegmentInvoked += (_, index) =>
-        {
-            if (index is 0 or 1)
-                FormatChosen?.Invoke(index == 0 ? ExportFormat.Cif : ExportFormat.Poscar);
-        };
-        DftDonutFactory.AttachDrop(_wheel, (format, files) =>
-        {
-            FilesDropped?.Invoke(files);
-            FormatChosen?.Invoke(format);
-        });
-        Part<ContentControl>("WheelPreviewHost").Content = _wheel;
 
         var zone = Part<Border>("DropZone");
         DragDrop.SetAllowDrop(zone, true);
@@ -116,12 +103,6 @@ internal sealed partial class CrystalShell : UserControl
             }
             e.Handled = true;
         });
-        zone.PointerPressed += (_, e) =>
-        {
-            if (e.ClickCount >= 2)
-                BrowseFilesRequested?.Invoke();
-        };
-
         Part<TextBox>("OutputDirectory").PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -146,32 +127,15 @@ internal sealed partial class CrystalShell : UserControl
                 ApplyTheme();
             }
         };
-        Part<ColorPicker>("AccentPicker").PropertyChanged += (_, e) =>
-        {
-            if (_initializing || e.Property != ColorPicker.ColorProperty) return;
-            var color = Part<ColorPicker>("AccentPicker").Color;
-            if (color == _accent) return;
-            _accent = color;
-            ApplyTheme();
-        };
-
-        var body = (Control)Content!;
-        Content = null;
-        _zoomHost = new LayoutTransformControl { Child = body };
-        Content = _zoomHost;
-
         BuildSwatches();
         LoadSettings();
         LoadEngineSettings();
-        Part<ComboBox>("AppearanceMode").SelectedIndex =
-            (_savedMode is "Light") ? 1 : (_savedMode is "Dark") ? 2 : 0;
         _initializing = false;
         ApplyTheme();
         SetPage(0);
         AttachedToVisualTree += (_, _) =>
         {
             var window = TopLevel.GetTopLevel(this);
-            window?.Classes.Set("material-you", _material);
             window?.Classes.Set("reduced-motion", _reduced);
         };
     }
@@ -184,6 +148,7 @@ internal sealed partial class CrystalShell : UserControl
     public bool Cartesian => Part<CheckBox>("CartesianOption").IsChecked == true;
     public DrawingColor CurrentAccent => ToDrawing(_accent);
     public double CurrentOpacity => _opacity / 100;
+    public (int Width, int Height) StartupWindowSize => (_windowWidth, _windowHeight);
     public string PythonExecutablePath => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
         ? executable : "python";
     public void SetAseStatus(string text)
@@ -219,7 +184,12 @@ internal sealed partial class CrystalShell : UserControl
 
     public void SetFiles(IEnumerable<string> files)
     {
-        Part<ListBox>("FileList").ItemsSource = files.ToArray();
+        var items = files.ToArray();
+        Part<ListBox>("FileList").ItemsSource = items;
+        var imported = items.Length > 0;
+        Part<StackPanel>("EmptyImportPanel").IsVisible = !imported;
+        Part<StackPanel>("ImportedFilesPanel").IsVisible = imported;
+        Part<TextBlock>("ImportedFilesCount").Text = $"已导入 {items.Length} 个结构文件";
     }
 
     public void SetStatus(string status) => Part<TextBlock>("BatchStatus").Text = status;
@@ -275,9 +245,10 @@ internal sealed partial class CrystalShell : UserControl
                     Background = new SolidColorBrush(color),
                 },
             };
-            button.Classes.Add("ghost");
+            button.Classes.Add("theme-swatch");
             button.Click += (_, _) => { _accent = color; ApplyTheme(); };
             panel.Children.Add(button);
+            _swatchButtons.Add((button, color));
         }
     }
 
@@ -292,34 +263,20 @@ internal sealed partial class CrystalShell : UserControl
             _ => ThemeVariant.Default,
         };
         SoftPalette.ApplyCornerRadius(app.Resources, _radius);
-        if (_material)
-        {
-            app.Resources.ThemeDictionaries[ThemeVariant.Light] =
-                MaterialYouPalette.Generate(_accent, isDark: false).ToResourceDictionary();
-            app.Resources.ThemeDictionaries[ThemeVariant.Dark] =
-                MaterialYouPalette.Generate(_accent, isDark: true).ToResourceDictionary();
-            SoftPalette.ClearTopLevelAccent(app.Resources);
-        }
-        else
-        {
-            app.Resources.ThemeDictionaries.Remove(ThemeVariant.Light);
-            app.Resources.ThemeDictionaries.Remove(ThemeVariant.Dark);
-            SoftPalette.ApplyAccent(app.Resources, _accent);
-        }
+        // Keep one DFTDesk Soft palette; ignore any legacy MaterialYou theme.json flag.
+        app.Resources.ThemeDictionaries.Remove(ThemeVariant.Light);
+        app.Resources.ThemeDictionaries.Remove(ThemeVariant.Dark);
+        SoftPalette.ApplyAccent(app.Resources, _accent);
         Motion.Configure(_reduced, () => false);
-        TopLevel.GetTopLevel(this)?.Classes.Set("material-you", _material);
         TopLevel.GetTopLevel(this)?.Classes.Set("reduced-motion", _reduced);
-        DftDonutFactory.ApplyAccent(_wheel, ToDrawing(_accent));
-        _wheel.SliceOpacity = _opacity / 100;
-        Part<TextBlock>("CornerValue").Text = _radius.ToString("0");
+        Part<TextBlock>("CornerValue").Text = _radius.ToString("0") + " px";
         Part<TextBlock>("OpacityValue").Text = _opacity.ToString("0") + "%";
         Part<TextBox>("AccentHex").Text = $"#{_accent.R:X2}{_accent.G:X2}{_accent.B:X2}";
-        if (Part<ColorPicker>("AccentPicker").Color != _accent)
-            Part<ColorPicker>("AccentPicker").Color = _accent;
-        Part<Button>("SoftStyleButton").Classes.Set("selected", !_material);
-        Part<Button>("MaterialStyleButton").Classes.Set("selected", _material);
-        _zoomHost?.LayoutTransform = Math.Abs(_zoom - 1) < .001 ? null : new ScaleTransform(_zoom, _zoom);
-        Part<TextBlock>("ZoomValue").Text = (_zoom * 100).ToString("0") + "%";
+        foreach (var swatch in _swatchButtons)
+            swatch.Button.Classes.Set("selected", swatch.Color == _accent);
+        Part<Button>("AppearanceSystemButton").Classes.Set("selected", _savedMode == "System");
+        Part<Button>("AppearanceLightButton").Classes.Set("selected", _savedMode == "Light");
+        Part<Button>("AppearanceDarkButton").Classes.Set("selected", _savedMode == "Dark");
         ThemeChanged?.Invoke(ToDrawing(_accent), _opacity / 100);
     }
 
@@ -384,11 +341,11 @@ internal sealed partial class CrystalShell : UserControl
     {
         public string Accent { get; set; } = "#7F77DD";
         public string Mode { get; set; } = "System";
-        public bool MaterialYou { get; set; }
         public double CornerRadius { get; set; } = 16;
         public double Opacity { get; set; } = 96;
         public bool ReduceMotion { get; set; }
-        public double Zoom { get; set; } = 1;
+        public int WindowWidth { get; set; } = 1080;
+        public int WindowHeight { get; set; } = 760;
     }
 
     private void LoadSettings()
@@ -400,11 +357,13 @@ internal sealed partial class CrystalShell : UserControl
             if (saved is null) return;
             if (AvColor.TryParse(saved.Accent, out var accent)) _accent = accent;
             _savedMode = saved.Mode;
-            _material = saved.MaterialYou;
             _radius = Math.Clamp(saved.CornerRadius, 0, 28);
             _opacity = Math.Clamp(saved.Opacity, 30, 100);
             _reduced = saved.ReduceMotion;
-            _zoom = Math.Clamp(saved.Zoom, .7, 1.8);
+            _windowWidth = Math.Clamp(saved.WindowWidth, 820, 3840);
+            _windowHeight = Math.Clamp(saved.WindowHeight, 560, 2160);
+            Part<TextBox>("WindowWidthInput").Text = _windowWidth.ToString();
+            Part<TextBox>("WindowHeightInput").Text = _windowHeight.ToString();
             Part<Slider>("CornerSlider").Value = _radius;
             Part<Slider>("OpacitySlider").Value = _opacity;
             Part<CheckBox>("ReduceMotionOption").IsChecked = _reduced;
@@ -421,11 +380,11 @@ internal sealed partial class CrystalShell : UserControl
             {
                 Accent = $"#{_accent.R:X2}{_accent.G:X2}{_accent.B:X2}",
                 Mode = _savedMode,
-                MaterialYou = _material,
                 CornerRadius = _radius,
                 Opacity = _opacity,
                 ReduceMotion = _reduced,
-                Zoom = _zoom,
+                WindowWidth = _windowWidth,
+                WindowHeight = _windowHeight,
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (IOException) { }
@@ -499,17 +458,16 @@ internal sealed partial class CrystalShell : UserControl
     private void OnExportCif(object? sender, RoutedEventArgs e) => FormatChosen?.Invoke(ExportFormat.Cif);
     private void OnExportPoscar(object? sender, RoutedEventArgs e) => FormatChosen?.Invoke(ExportFormat.Poscar);
     private void OnCancelConversion(object? sender, RoutedEventArgs e) => CancelRequested?.Invoke();
-    private void OnStyleSoft(object? sender, RoutedEventArgs e) { _material = false; ApplyTheme(); }
-    private void OnStyleMaterial(object? sender, RoutedEventArgs e) { _material = true; ApplyTheme(); }
-    private void OnAppearanceChanged(object? sender, SelectionChangedEventArgs e)
+    private void SetAppearance(string mode)
     {
         if (_initializing) return;
-        _savedMode = Part<ComboBox>("AppearanceMode").SelectedIndex switch
-        {
-            1 => "Light", 2 => "Dark", _ => "System"
-        };
+        _savedMode = mode;
         ApplyTheme();
     }
+    private void OnAppearanceSystem(object? sender, RoutedEventArgs e) => SetAppearance("System");
+    private void OnAppearanceLight(object? sender, RoutedEventArgs e) => SetAppearance("Light");
+    private void OnAppearanceDark(object? sender, RoutedEventArgs e) => SetAppearance("Dark");
+
     private void OnAccentHexCommit(object? sender, RoutedEventArgs e)
     {
         if (AvColor.TryParse(Part<TextBox>("AccentHex").Text, out var color))
@@ -536,18 +494,43 @@ internal sealed partial class CrystalShell : UserControl
         _reduced = Part<CheckBox>("ReduceMotionOption").IsChecked == true;
         ApplyTheme();
     }
-    private void OnZoomOut(object? sender, RoutedEventArgs e) { _zoom = Math.Max(.7, _zoom - .1); ApplyTheme(); }
-    private void OnZoomIn(object? sender, RoutedEventArgs e) { _zoom = Math.Min(1.8, _zoom + .1); ApplyTheme(); }
-    private void OnZoomReset(object? sender, RoutedEventArgs e) { _zoom = 1; ApplyTheme(); }
+    private void OnWindowPresetChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_initializing) return;
+        switch (Part<ComboBox>("WindowSizePreset").SelectedIndex)
+        {
+            case 0:
+                Part<TextBox>("WindowWidthInput").Text = "1080";
+                Part<TextBox>("WindowHeightInput").Text = "760";
+                break;
+            case 1:
+                Part<TextBox>("WindowWidthInput").Text = "1440";
+                Part<TextBox>("WindowHeightInput").Text = "900";
+                break;
+        }
+    }
+
+    private void OnApplyWindowSize(object? sender, RoutedEventArgs e)
+    {
+        if (!int.TryParse(Part<TextBox>("WindowWidthInput").Text, out var width) ||
+            !int.TryParse(Part<TextBox>("WindowHeightInput").Text, out var height) ||
+            width is < 820 or > 3840 || height is < 560 or > 2160)
+        {
+            Part<TextBlock>("WindowSizeStatus").Text = "请输入宽 820–3840、高 560–2160 的整数。";
+            return;
+        }
+        _windowWidth = width;
+        _windowHeight = height;
+        Part<TextBlock>("WindowSizeStatus").Text = $"窗口已调整为 {width} × {height}。";
+        WindowSizeRequested?.Invoke(width, height);
+        SaveSettings();
+    }
     private void OnThemeSave(object? sender, RoutedEventArgs e) => SaveSettings();
-    private void OnThemeCancel(object? sender, RoutedEventArgs e) { LoadSettings(); ApplyTheme(); }
-    private void Choose(string color) { _accent = AvColor.Parse(color); ApplyTheme(); }
-    private void OnPresetMono(object? sender, RoutedEventArgs e) => Choose("#1F1E1D");
-    private void OnPresetLavender(object? sender, RoutedEventArgs e) => Choose("#7F77DD");
-    private void OnPresetPeach(object? sender, RoutedEventArgs e) => Choose("#E07A70");
-    private void OnPresetMint(object? sender, RoutedEventArgs e) => Choose("#529B7D");
-    private void OnPresetRose(object? sender, RoutedEventArgs e) => Choose("#E86483");
-    private void OnPresetSky(object? sender, RoutedEventArgs e) => Choose("#5B8BE3");
-    private void OnPresetAmber(object? sender, RoutedEventArgs e) => Choose("#CB852A");
-    private void OnPresetSage(object? sender, RoutedEventArgs e) => Choose("#5A8E51");
+    private void OnThemeCancel(object? sender, RoutedEventArgs e)
+    {
+        LoadSettings();
+        ApplyTheme();
+        WindowSizeRequested?.Invoke(_windowWidth, _windowHeight);
+    }
+
 }
