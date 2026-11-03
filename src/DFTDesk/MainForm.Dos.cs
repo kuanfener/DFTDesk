@@ -26,6 +26,15 @@ internal sealed partial class MainForm
         SetDosFile(dialog.FileName);
     }
 
+    private void ClearDosFile()
+    {
+        if (_dosBusy) return;
+        DisposeDosResult();
+        _dosInputPath = null;
+        _shell.ClearDosInput();
+        _shell.SetDosStatus("已删除 DOS 数据，可重新拖入 DOSCAR 或 vasprun.xml。");
+    }
+
     private void SetDosFile(string path)
     {
         if (_dosBusy) return;

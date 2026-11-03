@@ -80,12 +80,14 @@ internal sealed partial class MainForm
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.StepBrowseRequested += BrowseStepFile;
+        _shell.StepClearRequested += ClearStepFile;
         _shell.StepTemplateRequested += () => _ = SaveStepTemplateAsync();
         _shell.StepFileDropped += SetStepFile;
         _shell.StepAnalyzeRequested += () => _ = AnalyzeStepAsync();
         _shell.StepExportRequested += ExportStep;
         _shell.StepCancelRequested += () => _stepCancellation?.Cancel();
         _shell.SurfaceBrowseRequested += BrowseSurfaceFile;
+        _shell.SurfaceClearRequested += ClearSurfaceFile;
         _shell.SurfaceFileDropped += SetSurfaceFile;
         _shell.SurfaceAnalyzeRequested += () => _ = AnalyzeSurfaceAsync();
         _shell.SurfaceExportRequested += ExportSurface;
@@ -93,6 +95,7 @@ internal sealed partial class MainForm
         _shell.DosFileDropped += SetDosFile;
         _shell.CohpFileDropped += SetCohpFile;
         _shell.DosBrowseRequested += BrowseDosFile;
+        _shell.DosClearRequested += ClearDosFile;
         _shell.DosAnalyzeRequested += () => _ = AnalyzeDosAsync();
         _shell.DosExportRequested += ExportDos;
         _shell.DosCancelRequested += () => _dosCancellation?.Cancel();
@@ -101,6 +104,7 @@ internal sealed partial class MainForm
         _shell.MatplotlibCheckRequested += () => _ = CheckPackageAsync("matplotlib", "matplotlib");
         _shell.OpenpyxlCheckRequested += () => _ = CheckPackageAsync("openpyxl", "openpyxl");
         _shell.CohpBrowseRequested += BrowseCohpFile;
+        _shell.CohpClearRequested += ClearCohpFile;
         _shell.CohpAnalyzeRequested += () => _ = AnalyzeCohpAsync();
         _shell.CohpExportRequested += ExportCohp;
         _shell.CohpCancelRequested += () => _cohpCancellation?.Cancel();

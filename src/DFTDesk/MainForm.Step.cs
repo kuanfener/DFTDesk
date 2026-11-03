@@ -58,6 +58,15 @@ internal sealed partial class MainForm
             SetStepFile(dialog.FileName);
     }
 
+    private void ClearStepFile()
+    {
+        if (_stepBusy) return;
+        DisposeStepResult();
+        _stepInputPath = null;
+        _shell.ClearStepInput();
+        _shell.SetStepStatus("已删除台阶图 Excel，可重新拖入文件。");
+    }
+
     private void SetStepFile(string path)
     {
         if (_stepBusy) return;

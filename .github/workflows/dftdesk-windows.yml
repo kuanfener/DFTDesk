@@ -55,7 +55,7 @@ jobs:
           path: dist/step-templates/*.xlsx
           if-no-files-found: error
 
-      - name: Build DFTDesk 2.3.2 step diagram templates and annotations UI
+      - name: Build DFTDesk 2.3.3 unified file import cards
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

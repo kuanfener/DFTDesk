@@ -1,6 +1,6 @@
-# DFTDesk 2.3.2 — Windows 科研结构工作台
+# DFTDesk 2.3.3 — Windows 科研结构工作台
 
-**DFTDesk 2.3.2 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.3 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -32,11 +32,15 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 首页「开始使用」提供结构转换、团簇生成、台阶图、表面 Pourbaix、DOS 与 COHP/ICOHP 六个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
+## 文件导入与删除（2.3.3）
+
+台阶图、表面 Pourbaix、DOS、COHP/ICOHP 的导入区沿用结构转换的云朵卡片交互：初始显示云朵；点击或拖入后原位置显示完整文件路径和「更换文件」「删除文件」按钮；删除后恢复云朵，同时清理当前数据预览与可选项。文件已导入时仍可把新文件拖到卡片上替换。结构转换继续支持多文件列表。
+
 ## 团簇生成
 
 在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，按勾选生成 POSCAR、CIF 或两者。所有团簇都只是初猜，需要 VASP 结构弛豫。
 
-## 表面吸附态 Pourbaix 图（2.3.1）
+## 表面吸附态 Pourbaix 图
 
 在「绘制台阶图」下方点击「表面 Pourbaix 图」。软件使用你已有的 ORR/OER 自由能 Excel 数据（包含多组五行模板或 Material / DG_OH / DG_O / DG_OOH 宽表），通过 pymatgen `Composition` 得到吸附态 O/H 计量和电子转移数，再以四电子 CHE 求 *、*OH、*O、*OOH 的表面自由能最低态。输出 pH–SHE 电位二维相图，并标出理论水稳定边界。pH、电位范围可设置；可勾选 PNG、SVG、Excel、CSV、Origin DAT。
 

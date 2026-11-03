@@ -28,6 +28,15 @@ internal sealed partial class MainForm
         if (dialog.ShowDialog() == DialogResult.OK) SetSurfaceFile(dialog.FileName);
     }
 
+    private void ClearSurfaceFile()
+    {
+        if (_surfaceBusy) return;
+        DisposeSurfaceResult();
+        _surfaceInputPath = null;
+        _shell.ClearSurfaceInput();
+        _shell.SetSurfaceStatus("已删除表面吸附态 Excel，可重新拖入文件。");
+    }
+
     private void SetSurfaceFile(string path)
     {
         if (_surfaceBusy) return;

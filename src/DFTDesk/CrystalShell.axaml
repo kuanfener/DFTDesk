@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.2"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.3"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.2" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.3" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -447,19 +447,28 @@
                   <TextBlock Classes="caption" TextWrapping="Wrap"
                              Text="ORR 按原始 Origin 模板使用 4.92→0 eV（U=0V）台阶，OER 为逆过程。电位统一采用 RHE 参照，不额外施加 pH 校正；pH 保留用于记录溶液条件。采用 298.15 K 的四电子 CHE。"/>
                 </StackPanel>
-                <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+<Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button x:Name="StepCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnStepBrowse"
-                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
-                    <StackPanel Spacing="6" HorizontalAlignment="Center">
-                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
-                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
-                      <TextBlock Classes="caption" Text="支持 Excel .xlsx / .xlsm"/>
+                  <Grid>
+                    <Button x:Name="StepCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnStepBrowse"
+                            HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                      <StackPanel Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                        <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Classes="caption" Text="支持 Excel .xlsx / .xlsm"/>
+                      </StackPanel>
+                    </Button>
+                    <StackPanel x:Name="StepLoadedPanel" IsVisible="False" MinHeight="130" Spacing="12" VerticalAlignment="Center">
+                      <TextBlock Classes="label" Text="已导入台阶图 Excel"/>
+                      <TextBlock x:Name="StepInputFile" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text=""/>
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="StepReplaceButton" Content="更换文件" Click="OnStepBrowse"/>
+                        <Button x:Name="StepRemoveButton" Content="删除文件" Click="OnClearStepInput"/>
+                      </StackPanel>
                     </StackPanel>
-                  </Button>
+                  </Grid>
                 </Border>
-                <TextBlock x:Name="StepInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 Excel 数据"/>
                 <TextBlock Classes="label" Text="选择导出格式（可多选）"/>
                 <WrapPanel Orientation="Horizontal">
                   <CheckBox x:Name="StepExportPng" Content="PNG" IsChecked="True" Margin="0,0,16,0"/>
@@ -517,20 +526,28 @@
                 </Grid>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="支持五行分块的 ORR 原始表（可重复多个催化剂），或 Material / DG_OH / DG_O / DG_OOH 宽表；也兼容台阶图支持的 G 与 E+Corr 数据。纵轴采用 SHE，虚线标出水稳定区；RHE = SHE + 0.05916×pH（298.15 K）。"/>
-                <Border x:Name="SurfaceDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+<Border x:Name="SurfaceDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button x:Name="SurfaceCloudButton" Classes="ghost" DragDrop.AllowDrop="True"
-                          MinHeight="130" Click="OnSurfaceBrowse" HorizontalContentAlignment="Center"
-                          HorizontalAlignment="Stretch">
-                    <StackPanel Spacing="6" HorizontalAlignment="Center">
-                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
-                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
-                      <TextBlock Classes="caption" Text="支持 Excel .xlsx / .xlsm"/>
+                  <Grid>
+                    <Button x:Name="SurfaceCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnSurfaceBrowse"
+                            HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                      <StackPanel Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                        <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Classes="caption" Text="支持 Excel .xlsx / .xlsm"/>
+                      </StackPanel>
+                    </Button>
+                    <StackPanel x:Name="SurfaceLoadedPanel" IsVisible="False" MinHeight="130" Spacing="12" VerticalAlignment="Center">
+                      <TextBlock Classes="label" Text="已导入表面吸附态 Excel"/>
+                      <TextBlock x:Name="SurfaceInputFile" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text=""/>
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="SurfaceReplaceButton" Content="更换文件" Click="OnSurfaceBrowse"/>
+                        <Button x:Name="SurfaceRemoveButton" Content="删除文件" Click="OnClearSurfaceInput"/>
+                      </StackPanel>
                     </StackPanel>
-                  </Button>
+                  </Grid>
                 </Border>
-                <TextBlock x:Name="SurfaceInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未选择自由能 Excel"/>
                 <TextBlock Classes="label" Text="选择导出格式（可多选）"/>
                 <WrapPanel Orientation="Horizontal">
                   <CheckBox x:Name="SurfaceExportPng" Content="PNG" IsChecked="True" Margin="0,0,16,0"/>
@@ -568,19 +585,28 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 VASP 电子态密度"/>
-                <Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+<Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button x:Name="DosCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnDosBrowse"
-                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
-                    <StackPanel Spacing="6" HorizontalAlignment="Center">
-                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
-                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
-                      <TextBlock Classes="caption" Text="支持 DOSCAR / vasprun.xml"/>
+                  <Grid>
+                    <Button x:Name="DosCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnDosBrowse"
+                            HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                      <StackPanel Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                        <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Classes="caption" Text="支持 DOSCAR / vasprun.xml"/>
+                      </StackPanel>
+                    </Button>
+                    <StackPanel x:Name="DosLoadedPanel" IsVisible="False" MinHeight="130" Spacing="12" VerticalAlignment="Center">
+                      <TextBlock Classes="label" Text="已导入 DOS 数据"/>
+                      <TextBlock x:Name="DosInputFile" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text=""/>
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="DosReplaceButton" Content="更换文件" Click="OnDosBrowse"/>
+                        <Button x:Name="DosRemoveButton" Content="删除文件" Click="OnClearDosInput"/>
+                      </StackPanel>
                     </StackPanel>
-                  </Button>
+                  </Grid>
                 </Border>
-                <TextBlock x:Name="DosInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 DOS 数据"/>
                 <TextBlock x:Name="DosMetadataStatus" Classes="caption" TextWrapping="Wrap"
                            Text="DOSCAR 按元素分辨 PDOS 需要同目录 POSCAR 或 CONTCAR；优先推荐 vasprun.xml。"/>
                 <TextBlock Classes="label" Text="选择元素（Ctrl / Shift 可多选；默认选 Pt、Fe、Co、Ni）"/>
@@ -650,20 +676,28 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 LOBSTER 数据"/>
-                <Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+<Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
-                  <Button x:Name="CohpCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnCohpBrowse"
-                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
-                    <StackPanel Spacing="6" HorizontalAlignment="Center">
-                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
-                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
-                      <TextBlock Classes="caption" Text="支持 COHPCAR.lobster / ICOHPLIST.lobster"/>
+                  <Grid>
+                    <Button x:Name="CohpCloudButton" Classes="ghost" DragDrop.AllowDrop="True" MinHeight="130" Click="OnCohpBrowse"
+                            HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                      <StackPanel Spacing="6" HorizontalAlignment="Center">
+                        <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                        <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                        <TextBlock Classes="caption" Text="支持 COHPCAR.lobster / ICOHPLIST.lobster"/>
+                      </StackPanel>
+                    </Button>
+                    <StackPanel x:Name="CohpLoadedPanel" IsVisible="False" MinHeight="130" Spacing="12" VerticalAlignment="Center">
+                      <TextBlock Classes="label" Text="已导入 COHP / ICOHP 数据"/>
+                      <TextBlock x:Name="CohpInputFile" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Text=""/>
+                      <StackPanel Orientation="Horizontal" Spacing="10">
+                        <Button x:Name="CohpReplaceButton" Content="更换文件" Click="OnCohpBrowse"/>
+                        <Button x:Name="CohpRemoveButton" Content="删除文件" Click="OnClearCohpInput"/>
+                      </StackPanel>
                     </StackPanel>
-                  </Button>
+                  </Grid>
                 </Border>
-                <TextBlock x:Name="CohpInputFile" Classes="muted" TextWrapping="Wrap"
-                           Text="尚未导入 COHP 数据"/>
                 <TextBlock x:Name="CohpMetadataStatus" Classes="caption" TextWrapping="Wrap"
                            Text="优先导入 COHPCAR.lobster；同目录下的 ICOHPLIST.lobster 将自动读取。只有 ICOHPLIST 时仍可导出键强度表。"/>
                 <TextBlock Classes="label" Text="选择键（Ctrl / Shift 多选；默认选第一个键）"/>

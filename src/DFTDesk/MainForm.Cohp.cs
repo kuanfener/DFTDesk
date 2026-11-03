@@ -29,6 +29,15 @@ internal sealed partial class MainForm
         SetCohpFile(dialog.FileName);
     }
 
+    private void ClearCohpFile()
+    {
+        if (_cohpBusy) return;
+        DisposeCohpResult();
+        _cohpInputPath = null;
+        _shell.ClearCohpInput();
+        _shell.SetCohpStatus("已删除 COHP 数据，可重新拖入文件。");
+    }
+
     private void SetCohpFile(string path)
     {
         if (_cohpBusy) return;

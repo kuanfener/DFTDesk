@@ -70,6 +70,10 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<string>? CohpFileDropped;
     public event Action<string>? StepFileDropped;
     public event Action<string>? SurfaceFileDropped;
+    public event Action? StepClearRequested;
+    public event Action? SurfaceClearRequested;
+    public event Action? DosClearRequested;
+    public event Action? CohpClearRequested;
     public event Action? SurfaceBrowseRequested;
     public event Action? SurfaceAnalyzeRequested;
     public event Action? SurfaceExportRequested;
@@ -124,22 +128,22 @@ internal sealed partial class CrystalShell : UserControl
                 Path.GetFileName(path).StartsWith("DOSCAR", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetFileName(path).StartsWith("vasprun.xml", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xml", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]), "DosCloudButton");
+                ?? files[0]), "DosCloudButton", "DosLoadedPanel");
         ConfigureFileDrop("CohpDropZone", files =>
             CohpFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetFileName(path).StartsWith("COHPCAR", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetFileName(path).StartsWith("ICOHPLIST", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]), "CohpCloudButton");
+                ?? files[0]), "CohpCloudButton", "CohpLoadedPanel");
         ConfigureFileDrop("StepDropZone", files =>
             StepFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]), "StepCloudButton");
+                ?? files[0]), "StepCloudButton", "StepLoadedPanel");
         ConfigureFileDrop("SurfaceDropZone", files =>
             SurfaceFileDropped?.Invoke(files.FirstOrDefault(path =>
                 Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
                 Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
-                ?? files[0]), "SurfaceCloudButton");
+                ?? files[0]), "SurfaceCloudButton", "SurfaceLoadedPanel");
         Part<TextBox>("OutputDirectory").PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -177,7 +181,7 @@ internal sealed partial class CrystalShell : UserControl
         };
     }
 
-    private void ConfigureFileDrop(string name, Action<string[]> onFiles, string? cloudButton = null)
+    private void ConfigureFileDrop(string name, Action<string[]> onFiles, string? cloudButton = null, string? loadedPanel = null)
     {
         var zone = Part<Border>(name);
         void Attach(Control target)
@@ -217,6 +221,8 @@ internal sealed partial class CrystalShell : UserControl
         // The cloud is a full-size Button, so Explorer hits the Button rather
         // than its parent Border. Register on both routed-event targets.
         if (cloudButton is not null) Attach(Part<Button>(cloudButton));
+        // After import, the cloud is hidden. The full-size file card must remain a drop target.
+        if (loadedPanel is not null) Attach(Part<StackPanel>(loadedPanel));
     }
 
     private string _savedMode = "System";
@@ -284,9 +290,23 @@ internal sealed partial class CrystalShell : UserControl
         return new StepDiagramRequest(inputPath, mode, potential, ph, "RHE");
     }
 
+    private void ShowSingleFileImport(string prefix, string? path)
+    {
+        var hasFile = !string.IsNullOrWhiteSpace(path);
+        Part<Button>(prefix + "CloudButton").IsVisible = !hasFile;
+        Part<StackPanel>(prefix + "LoadedPanel").IsVisible = hasFile;
+        Part<TextBlock>(prefix + "InputFile").Text = path ?? "";
+    }
+
     public void SetStepInput(string path)
     {
-        Part<TextBlock>("StepInputFile").Text = path;
+        ShowSingleFileImport("Step", path);
+        ClearStepPreview();
+    }
+
+    public void ClearStepInput()
+    {
+        ShowSingleFileImport("Step", null);
         ClearStepPreview();
     }
 
@@ -294,6 +314,8 @@ internal sealed partial class CrystalShell : UserControl
     {
         Part<Button>("StepAnalyzeButton").IsEnabled = !busy;
         Part<Button>("StepCancelButton").IsEnabled = busy;
+        Part<Button>("StepReplaceButton").IsEnabled = !busy;
+        Part<Button>("StepRemoveButton").IsEnabled = !busy;
         if (busy) Part<Button>("StepExportButton").IsEnabled = false;
     }
 
@@ -346,7 +368,13 @@ internal sealed partial class CrystalShell : UserControl
 
     public void SetSurfaceInput(string path)
     {
-        Part<TextBlock>("SurfaceInputFile").Text = path;
+        ShowSingleFileImport("Surface", path);
+        ClearSurfacePreview();
+    }
+
+    public void ClearSurfaceInput()
+    {
+        ShowSingleFileImport("Surface", null);
         ClearSurfacePreview();
     }
 
@@ -354,6 +382,8 @@ internal sealed partial class CrystalShell : UserControl
     {
         Part<Button>("SurfaceAnalyzeButton").IsEnabled = !busy;
         Part<Button>("SurfaceCancelButton").IsEnabled = busy;
+        Part<Button>("SurfaceReplaceButton").IsEnabled = !busy;
+        Part<Button>("SurfaceRemoveButton").IsEnabled = !busy;
         if (busy) Part<Button>("SurfaceExportButton").IsEnabled = false;
     }
 
@@ -386,10 +416,18 @@ internal sealed partial class CrystalShell : UserControl
 
     public void SetDosInput(string path)
     {
-        Part<TextBlock>("DosInputFile").Text = path;
+        ShowSingleFileImport("Dos", path);
         ClearDosPreview();
         Part<ListBox>("DosElementList").ItemsSource = Array.Empty<string>();
         Part<TextBlock>("DosMetadataStatus").Text = "正在读取 DOS 元数据…";
+    }
+
+    public void ClearDosInput()
+    {
+        ShowSingleFileImport("Dos", null);
+        Part<ListBox>("DosElementList").ItemsSource = Array.Empty<string>();
+        Part<TextBlock>("DosMetadataStatus").Text = "DOSCAR 按元素分辨 PDOS 需要同目录 POSCAR 或 CONTCAR；优先推荐 vasprun.xml。";
+        ClearDosPreview();
     }
 
     public void SetDosMetadata(DosData data)
@@ -439,6 +477,8 @@ internal sealed partial class CrystalShell : UserControl
     {
         Part<Button>("DosAnalyzeButton").IsEnabled = !busy;
         Part<Button>("DosCancelButton").IsEnabled = busy;
+        Part<Button>("DosReplaceButton").IsEnabled = !busy;
+        Part<Button>("DosRemoveButton").IsEnabled = !busy;
         if (busy) Part<Button>("DosExportButton").IsEnabled = false;
     }
 
@@ -475,9 +515,17 @@ internal sealed partial class CrystalShell : UserControl
 
     public void SetCohpInput(string path)
     {
-        Part<TextBlock>("CohpInputFile").Text = path;
+        ShowSingleFileImport("Cohp", path);
         Part<TextBlock>("CohpMetadataStatus").Text = "正在读取 LOBSTER 键列表…";
         Part<ListBox>("CohpBondList").ItemsSource = Array.Empty<CohpBond>();
+        ClearCohpPreview();
+    }
+
+    public void ClearCohpInput()
+    {
+        ShowSingleFileImport("Cohp", null);
+        Part<ListBox>("CohpBondList").ItemsSource = Array.Empty<CohpBond>();
+        Part<TextBlock>("CohpMetadataStatus").Text = "优先导入 COHPCAR.lobster；同目录下的 ICOHPLIST.lobster 将自动读取。只有 ICOHPLIST 时仍可导出键强度表。";
         ClearCohpPreview();
     }
 
@@ -524,6 +572,8 @@ internal sealed partial class CrystalShell : UserControl
     {
         Part<Button>("CohpAnalyzeButton").IsEnabled = !busy;
         Part<Button>("CohpCancelButton").IsEnabled = busy;
+        Part<Button>("CohpReplaceButton").IsEnabled = !busy;
+        Part<Button>("CohpRemoveButton").IsEnabled = !busy;
         if (busy) Part<Button>("CohpExportButton").IsEnabled = false;
     }
 
@@ -767,19 +817,23 @@ internal sealed partial class CrystalShell : UserControl
     private void OnCheckMatplotlib(object? sender, RoutedEventArgs e) => MatplotlibCheckRequested?.Invoke();
     private void OnCheckOpenpyxl(object? sender, RoutedEventArgs e) => OpenpyxlCheckRequested?.Invoke();
     private void OnStepBrowse(object? sender, RoutedEventArgs e) => StepBrowseRequested?.Invoke();
+    private void OnClearStepInput(object? sender, RoutedEventArgs e) => StepClearRequested?.Invoke();
     private void OnStepTemplate(object? sender, RoutedEventArgs e) => StepTemplateRequested?.Invoke();
     private void OnStepAnalyze(object? sender, RoutedEventArgs e) => StepAnalyzeRequested?.Invoke();
     private void OnStepExport(object? sender, RoutedEventArgs e) => StepExportRequested?.Invoke();
     private void OnStepCancel(object? sender, RoutedEventArgs e) => StepCancelRequested?.Invoke();
     private void OnSurfaceBrowse(object? sender, RoutedEventArgs e) => SurfaceBrowseRequested?.Invoke();
+    private void OnClearSurfaceInput(object? sender, RoutedEventArgs e) => SurfaceClearRequested?.Invoke();
     private void OnSurfaceAnalyze(object? sender, RoutedEventArgs e) => SurfaceAnalyzeRequested?.Invoke();
     private void OnSurfaceExport(object? sender, RoutedEventArgs e) => SurfaceExportRequested?.Invoke();
     private void OnSurfaceCancel(object? sender, RoutedEventArgs e) => SurfaceCancelRequested?.Invoke();
     private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
+    private void OnClearDosInput(object? sender, RoutedEventArgs e) => DosClearRequested?.Invoke();
     private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
     private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
     private void OnDosCancel(object? sender, RoutedEventArgs e) => DosCancelRequested?.Invoke();
     private void OnCohpBrowse(object? sender, RoutedEventArgs e) => CohpBrowseRequested?.Invoke();
+    private void OnClearCohpInput(object? sender, RoutedEventArgs e) => CohpClearRequested?.Invoke();
     private void OnCohpAnalyze(object? sender, RoutedEventArgs e) => CohpAnalyzeRequested?.Invoke();
     private void OnCohpExport(object? sender, RoutedEventArgs e) => CohpExportRequested?.Invoke();
     private void OnCohpCancel(object? sender, RoutedEventArgs e) => CohpCancelRequested?.Invoke();
