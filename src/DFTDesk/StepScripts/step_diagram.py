@@ -16,6 +16,12 @@ import sys
 from collections import OrderedDict
 from pathlib import Path
 
+# Windows consoles may use cp1252; always return UTF-8 JSON/errors to .NET and CLI.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def _number(value):
     if isinstance(value, bool):
@@ -167,50 +173,95 @@ def export_profiles(profiles, outdir):
 
 
 def draw_profiles(profiles, outdir):
+    """Origin-inspired horizontal energy levels, grouped by comparable pathways."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib import font_manager
-    # Use installed Chinese fonts when available; otherwise show English labels.
     available = {f.name for f in font_manager.fontManager.ttflist}
     for name in ("Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "Arial Unicode MS"):
         if name in available:
             plt.rcParams["font.sans-serif"] = [name]
             break
     plt.rcParams["axes.unicode_minus"] = False
-    count = len(profiles)
-    fig, axes = plt.subplots(count, 1, figsize=(10.8, max(3.8, count * 3.5)), squeeze=False)
-    colors = ["#5753A3", "#218F83", "#DA7B3A", "#BC5477", "#4477B8"]
-    for i, profile in enumerate(profiles):
-        ax = axes[i][0]
-        color = colors[i % len(colors)]
-        energies = [value for _, _, value in profile]
-        labels = [state for _, state, _ in profile]
-        for j, energy in enumerate(energies):
-            ax.hlines(energy, j - .32, j + .32, color=color, lw=3, zorder=3)
-            if j + 1 < len(energies):
-                ax.plot([j + .32, j + .68], [energy, energies[j + 1]],
-                        lw=1.2, ls="--", color="#9B9DA9", zorder=1)
-            ax.annotate(f"{energy:+.2f}", (j, energy), textcoords="offset points",
-                        xytext=(0, 7), ha="center", fontsize=8.5, color=color)
-        ax.axhline(0, color="#A9ADB8", ls=":", lw=.9)
-        ax.set_title(profile[0][0], loc="left", fontsize=12, fontweight="bold")
-        ax.set_ylabel("Free energy (eV)")
-        ax.set_xticks(list(range(len(labels))), labels, rotation=25, ha="right")
-        ax.set_xlim(-.6, len(labels) - .4)
-        pad = max(.23, (max(energies) - min(energies)) * .18)
-        ax.set_ylim(min(energies) - pad, max(energies) + pad)
+
+    # An Origin project may contain both a shared-intermediate comparison and
+    # detailed reaction-coordinate pathways. Infer both without guessing states.
+    common = []
+    if len(profiles) > 1:
+        common = [state for _, state, _ in profiles[0][1:-1]
+                  if all(state in {r[1] for r in other[1:-1]} for other in profiles[1:])]
+    panels = []
+    if len(common) >= 2:
+        comparison = []
+        for profile in profiles:
+            values = {state: energy for _, state, energy in profile[1:-1]}
+            comparison.append(
+                [(profile[0][0], "初态", 0.0)] +
+                [(profile[0][0], state, values[state]) for state in common] +
+                [(profile[0][0], "终态", 0.0)])
+        panels.append(("共同中间态对比", comparison))
+
+    groups = OrderedDict()
+    for profile in profiles:
+        signature = tuple(row[1] for row in profile[1:-1])
+        groups.setdefault(signature, []).append(profile)
+    for signature, members in groups.items():
+        if len(common) >= 2 and len(groups) == 1:
+            continue  # The comparison already represents the same complete path.
+        if len(common) >= 2 and len(members) == 1:
+            continue  # Avoid duplicating a lone short path already in comparison.
+        title = "完整反应路径" if len(members) > 1 else members[0][0][0]
+        panels.append((title, members))
+    if not panels:
+        panels = [("完整反应路径", profiles)]
+
+    colors = ["#2F66C5", "#09958C", "#42A464", "#C65A7A", "#B37D31"]
+    palette = {profile[0][0]: colors[i % len(colors)] for i, profile in enumerate(profiles)}
+    fig, axes = plt.subplots(len(panels), 1,
+                             figsize=(10.6, max(3.9, 3.7 * len(panels))),
+                             squeeze=False)
+    for panel_index, (title, paths) in enumerate(panels):
+        ax = axes[panel_index][0]
+        all_energies = []
+        for profile in paths:
+            material = profile[0][0]
+            levels = [float(row[2]) for row in profile]
+            all_energies.extend(levels)
+            color = palette[material]
+            for index, energy in enumerate(levels):
+                ax.hlines(energy, index - .31, index + .31,
+                          color=color, lw=2.6, zorder=3,
+                          label=material if index == 0 else None)
+                if index + 1 < len(levels):
+                    ax.plot([index + .31, index + .69],
+                            [energy, levels[index + 1]],
+                            color=color, lw=1.1, ls=(0, (4, 3)), zorder=2)
+            if len(paths) == 1:
+                for index, energy in enumerate(levels[1:-1], 1):
+                    ax.annotate(f"{energy:+.2f}", (index, energy),
+                                xytext=(0, 8), textcoords="offset points",
+                                ha="center", fontsize=8.5, color=color)
+        labels = [row[1] for row in paths[0]]
+        ax.set_xticks(range(len(labels)), labels, rotation=12, ha="center")
+        ax.set_xlim(-.58, len(labels) - .4)
+        padding = max(.22, (max(all_energies) - min(all_energies)) * .18)
+        ax.set_ylim(min(all_energies) - padding, max(all_energies) + padding)
+        ax.axhline(0, color="#B6B8C0", ls=":", lw=.85, zorder=1)
+        ax.set_title(title, loc="left", fontsize=12, weight="bold")
+        ax.set_ylabel("Free Energy (eV)")
+        ax.set_xlabel("Reaction Coordinates")
+        if len(paths) > 1:
+            ax.legend(loc="lower left", frameon=False, fontsize=9, ncol=min(3, len(paths)))
         ax.spines[["top", "right"]].set_visible(False)
-        ax.grid(axis="y", color="#E9EAF0", lw=.65)
-    fig.suptitle("Reaction free-energy step diagram", fontsize=15, weight="bold")
-    fig.tight_layout(rect=(0, 0, 1, .98))
+        ax.tick_params(direction="in", length=4)
+    fig.tight_layout()
     png = str(Path(outdir) / "step_diagram.png")
     svg = str(Path(outdir) / "step_diagram.svg")
-    fig.savefig(png, dpi=220, bbox_inches="tight")
+    fig.savefig(png, dpi=240, bbox_inches="tight")
     fig.savefig(svg, bbox_inches="tight")
     plt.close(fig)
     return png, svg
-
 
 def main():
     parser = argparse.ArgumentParser()

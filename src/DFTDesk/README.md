@@ -74,7 +74,7 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 
 左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm）。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
 
-点击「绘制台阶图」后可预览每种材料的能量平台、虚线连接及能量标注；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
+点击「绘制台阶图」后可预览可比催化剂叠加的能量平台、虚线连接及能量标注，并区分完整中间态路径；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
 
 ## DOS 新增 Excel 与 Origin 导出
 
