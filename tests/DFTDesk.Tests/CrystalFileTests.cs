@@ -5,13 +5,13 @@ namespace DFTDesk.Tests;
 public class CrystalFileTests
 {
     [Theory]
-    [InlineData("POSCAR", ExportFormat.Poscar)]
-    [InlineData("contcar", ExportFormat.Poscar)]
-    [InlineData("sample.vasp", ExportFormat.Poscar)]
-    [InlineData("sample.poscar", ExportFormat.Poscar)]
-    [InlineData("sample.CIF", ExportFormat.Cif)]
-    public void Recognizes_supported_structure_files(string path, ExportFormat expected)
-        => Assert.Equal(expected, CrystalFiles.Detect(path));
+    [InlineData("POSCAR", "Poscar")]
+    [InlineData("contcar", "Poscar")]
+    [InlineData("sample.vasp", "Poscar")]
+    [InlineData("sample.poscar", "Poscar")]
+    [InlineData("sample.CIF", "Cif")]
+    public void Recognizes_supported_structure_files(string path, string expected)
+        => Assert.Equal(expected, CrystalFiles.Detect(path)?.ToString());
 
     [Theory]
     [InlineData("example.pdb")]
