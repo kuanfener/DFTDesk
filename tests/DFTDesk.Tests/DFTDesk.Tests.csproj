@@ -10,6 +10,8 @@
     <PackageReference Include="xunit.runner.visualstudio" />
     <Compile Include="../../src/DFTDesk/CrystalFiles.cs" Link="CrystalFiles.cs" />
     <Compile Include="../../src/DFTDesk/AseConversion.cs" Link="AseConversion.cs" />
+    <Compile Include="../../src/DFTDesk/ClusterGeneration.cs" Link="ClusterGeneration.cs" />
+    <EmbeddedResource Include="../../src/DFTDesk/ClusterScripts/cluster_generator.py" LogicalName="DFTDesk.ClusterScripts.cluster_generator.py" />
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

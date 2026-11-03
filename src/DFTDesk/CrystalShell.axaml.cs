@@ -34,7 +34,6 @@ internal sealed partial class CrystalShell : UserControl
 
     private Control[] _pages = [];
     private DonutMenu _wheel = null!;
-    private DonutMenu _themeWheel = null!;
     private LayoutTransformControl? _zoomHost;
     private AvColor _accent = AvColor.Parse("#7F77DD");
     private double _radius = 16;
@@ -45,7 +44,7 @@ internal sealed partial class CrystalShell : UserControl
     private bool _collapsed;
     private bool _initializing = true;
     // ASE is the only engine. Older engine.json settings retain AseCartesian.
-    private bool _aseCartesian = false;
+    private bool _aseCartesian = true;
 
     public event Action? BrowseFilesRequested;
     public event Action? BrowseFolderRequested;
@@ -59,24 +58,25 @@ internal sealed partial class CrystalShell : UserControl
     public event Action<bool>? CartesianChanged;
     public event Action<DrawingColor, double>? ThemeChanged;
     public event Action? AseCheckRequested;
+    public event Action? ClusterBrowseRequested;
+    public event Action? ClusterGenerateRequested;
+    public event Action? ClusterCancelRequested;
 
     public CrystalShell()
     {
         AvaloniaXamlLoader.Load(this);
         _pages =
         [
-            Part<Control>("HomePage"), Part<Control>("GeneralPage"),
-            Part<Control>("TriggersPage"), Part<Control>("ToolbarPage"),
-            Part<Control>("PresetsPage"), Part<Control>("WatchPage"),
-            Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
-            Part<Control>("AboutPage")
+            Part<Control>("HomePage"), Part<Control>("ConversionPage"),
+            Part<Control>("ClusterPage"), Part<Control>("ThemePage"),
+            Part<Control>("WorkEnginePage"), Part<Control>("AboutPage")
         ];
         var pageContainer = Part<Grid>("PageContainer");
         foreach (var page in _pages)
             pageContainer.Children.Remove(page);
         Part<ContentControl>("PageHost").Content = null;
 
-        _wheel = DftDonutFactory.Create(125, DrawingColor.FromArgb(127, 119, 221));
+        _wheel = DftDonutFactory.Create(96, DrawingColor.FromArgb(127, 119, 221));
         _wheel.SegmentInvoked += (_, index) =>
         {
             if (index is 0 or 1)
@@ -88,24 +88,6 @@ internal sealed partial class CrystalShell : UserControl
             FormatChosen?.Invoke(format);
         });
         Part<ContentControl>("WheelPreviewHost").Content = _wheel;
-
-        _themeWheel = new DonutMenu
-        {
-            Items =
-            [
-                new DonutItem { Id = "png", Label = "PNG" },
-                new DonutItem { Id = "pdf", Label = "PDF" },
-                new DonutItem { Id = "webp", Label = "WEBP" },
-                new DonutItem { Id = "hwpx", Label = "HWPX" },
-                new DonutItem { Id = "jpg", Label = "JPG 70%", Caption = "JPG" },
-                new DonutItem { Id = "tiff", Label = "TIFF" },
-            ],
-            CenterTitle = "JPG × 3",
-            OuterRadius = 121,
-            HoleRatio = .33,
-            SliceOpacity = .96,
-        };
-        Part<ContentControl>("ThemePreviewHost").Content = _themeWheel;
 
         var zone = Part<Border>("DropZone");
         DragDrop.SetAllowDrop(zone, true);
@@ -204,7 +186,36 @@ internal sealed partial class CrystalShell : UserControl
     public double CurrentOpacity => _opacity / 100;
     public string PythonExecutablePath => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
         ? executable : "python";
-    public void SetAseStatus(string text) => Part<TextBlock>("AseHealthText").Text = text;
+    public void SetAseStatus(string text)
+    {
+        Part<TextBlock>("AseHealthText").Text = text;
+        Part<TextBlock>("HomeAseStatus").Text = text;
+    }
+
+    public ClusterRequest ReadClusterRequest() => new(
+        Faceted: Part<ComboBox>("ClusterMode").SelectedIndex == 1,
+        Element: Part<TextBox>("ClusterElement").Text ?? "",
+        Numbers: Part<TextBox>("ClusterNumbers").Text ?? "",
+        Facets: Part<TextBox>("ClusterFacets").Text ?? "all",
+        LatticeConstant: Part<TextBox>("ClusterLatticeConstant").Text ?? "",
+        Vacuum: Part<TextBox>("ClusterVacuum").Text ?? "12",
+        OutputDirectory: Part<TextBox>("ClusterOutputDirectory").Text ?? "",
+        Cartesian: Part<CheckBox>("ClusterCartesian").IsChecked == true);
+
+    public string ClusterOutputPath
+    {
+        get => Part<TextBox>("ClusterOutputDirectory").Text ?? "";
+        set => Part<TextBox>("ClusterOutputDirectory").Text = value;
+    }
+
+    public void SetClusterBusy(bool busy)
+    {
+        Part<Button>("ClusterGenerateButton").IsEnabled = !busy;
+        Part<Button>("ClusterCancelButton").IsEnabled = busy;
+    }
+
+    public void SetClusterStatus(string status) => Part<TextBlock>("ClusterStatus").Text = status;
+    public void SetClusterLog(string log) => Part<TextBox>("ClusterLog").Text = log;
 
     public void SetFiles(IEnumerable<string> files)
     {
@@ -299,9 +310,7 @@ internal sealed partial class CrystalShell : UserControl
         TopLevel.GetTopLevel(this)?.Classes.Set("material-you", _material);
         TopLevel.GetTopLevel(this)?.Classes.Set("reduced-motion", _reduced);
         DftDonutFactory.ApplyAccent(_wheel, ToDrawing(_accent));
-        DftDonutFactory.ApplyAccent(_themeWheel, ToDrawing(_accent));
         _wheel.SliceOpacity = _opacity / 100;
-        _themeWheel.SliceOpacity = _opacity / 100;
         Part<TextBlock>("CornerValue").Text = _radius.ToString("0");
         Part<TextBlock>("OpacityValue").Text = _opacity.ToString("0") + "%";
         Part<TextBox>("AccentHex").Text = $"#{_accent.R:X2}{_accent.G:X2}{_accent.B:X2}";
@@ -309,17 +318,6 @@ internal sealed partial class CrystalShell : UserControl
             Part<ColorPicker>("AccentPicker").Color = _accent;
         Part<Button>("SoftStyleButton").Classes.Set("selected", !_material);
         Part<Button>("MaterialStyleButton").Classes.Set("selected", _material);
-        Part<Border>("ThemePreviewBackdrop").Background = new LinearGradientBrush
-        {
-            StartPoint = new RelativePoint(0, 0, RelativeUnit.Relative),
-            EndPoint = new RelativePoint(1, 1, RelativeUnit.Relative),
-            GradientStops =
-            {
-                new GradientStop(SoftPalette.Shade(_accent, .55), 0),
-                new GradientStop(_accent, .5),
-                new GradientStop(SoftPalette.Shade(_accent, -.45), 1),
-            },
-        };
         _zoomHost?.LayoutTransform = Math.Abs(_zoom - 1) < .001 ? null : new ScaleTransform(_zoom, _zoom);
         Part<TextBlock>("ZoomValue").Text = (_zoom * 100).ToString("0") + "%";
         ThemeChanged?.Invoke(ToDrawing(_accent), _opacity / 100);
@@ -332,7 +330,7 @@ internal sealed partial class CrystalShell : UserControl
     {
         public string PythonExecutable { get; set; } = "python";
         // An old engine.json may also contain Name and NativeCartesian; ignore both.
-        public bool AseCartesian { get; set; } = false;
+        public bool AseCartesian { get; set; } = true;
     }
 
     private void LoadEngineSettings()
@@ -350,7 +348,7 @@ internal sealed partial class CrystalShell : UserControl
                 }
             }
         }
-        catch (Exception) { /* Malformed settings fall back to Python and Direct coordinates. */ }
+        catch (Exception) { /* Malformed settings fall back to Python and Cartesian coordinates. */ }
 
         Part<CheckBox>("CartesianOption").IsChecked = _aseCartesian;
     }
@@ -411,7 +409,7 @@ internal sealed partial class CrystalShell : UserControl
             Part<Slider>("OpacitySlider").Value = _opacity;
             Part<CheckBox>("ReduceMotionOption").IsChecked = _reduced;
         }
-        catch (Exception) { /* A corrupt optional theme file falls back to Filee Soft. */ }
+        catch (Exception) { /* A corrupt optional theme file falls back to DFTDesk Soft. */ }
     }
 
     private void SaveSettings()
@@ -450,7 +448,7 @@ internal sealed partial class CrystalShell : UserControl
         Part<TextBlock>("VersionText").IsVisible = !_collapsed;
         Part<StackPanel>("CollapsedFooter").IsVisible = _collapsed;
         foreach (var item in Part<ListBox>("Navigation").Items.OfType<ListBoxItem>())
-            if (item.Content is StackPanel panel)
+            if (item.Content is Border border && border.Child is StackPanel panel)
                 foreach (var label in panel.Children.OfType<TextBlock>())
                     label.IsVisible = !_collapsed;
     }
@@ -469,6 +467,24 @@ internal sealed partial class CrystalShell : UserControl
         else
             dialog.Show();
     }
+    private void OnGoConversion(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 1;
+    private void OnGoCluster(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 2;
+    private void OnGoEngine(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 4;
+
+    private void OnClusterModeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_initializing) return;
+        Part<StackPanel>("FacetOptionsPanel").IsVisible =
+            Part<ComboBox>("ClusterMode").SelectedIndex == 1;
+    }
+
+    private void OnClusterBrowse(object? sender, RoutedEventArgs e) => ClusterBrowseRequested?.Invoke();
+    private void OnGenerateCluster(object? sender, RoutedEventArgs e) => ClusterGenerateRequested?.Invoke();
+    private void OnCancelCluster(object? sender, RoutedEventArgs e) => ClusterCancelRequested?.Invoke();
+
     private void OnBrowseFiles(object? sender, RoutedEventArgs e) => BrowseFilesRequested?.Invoke();
     private void OnBrowseFolder(object? sender, RoutedEventArgs e) => BrowseFolderRequested?.Invoke();
     private void OnClearFiles(object? sender, RoutedEventArgs e) => ClearFilesRequested?.Invoke();
