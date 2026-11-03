@@ -33,6 +33,8 @@ internal sealed partial class CrystalShell : UserControl
         ["#7F77DD", "#1D9E75", "#D85A30", "#378ADD", "#D4537E", "#BA7517", "#639922", "#5F5E5A"];
 
     private Control[] _pages = [];
+    // Non-interactive preview uses the same renderer and segment geometry as the real Explorer wheel.
+    private DonutMenu _themeWheel = null!;
     private readonly List<(Button Button, AvColor Color)> _swatchButtons = [];
     private AvColor _accent = AvColor.Parse("#7F77DD");
     private double _radius = 16;
@@ -75,6 +77,9 @@ internal sealed partial class CrystalShell : UserControl
         foreach (var page in _pages)
             pageContainer.Children.Remove(page);
         Part<ContentControl>("PageHost").Content = null;
+
+        _themeWheel = DftDonutFactory.Create(78, ToDrawing(_accent));
+        Part<ContentControl>("ThemeDonutPreviewHost").Content = _themeWheel;
 
         var zone = Part<Border>("DropZone");
         DragDrop.SetAllowDrop(zone, true);
@@ -269,6 +274,8 @@ internal sealed partial class CrystalShell : UserControl
         SoftPalette.ApplyAccent(app.Resources, _accent);
         Motion.Configure(_reduced, () => false);
         TopLevel.GetTopLevel(this)?.Classes.Set("reduced-motion", _reduced);
+        DftDonutFactory.ApplyAccent(_themeWheel, ToDrawing(_accent));
+        _themeWheel.SliceOpacity = _opacity / 100; // live preview, same value as the Explorer wheel
         Part<TextBlock>("CornerValue").Text = _radius.ToString("0") + " px";
         Part<TextBlock>("OpacityValue").Text = _opacity.ToString("0") + "%";
         Part<TextBox>("AccentHex").Text = $"#{_accent.R:X2}{_accent.G:X2}{_accent.B:X2}";
