@@ -434,8 +434,30 @@
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="晶体格式转换"/>
                 <TextBlock Text="POSCAR / CONTCAR ⇄ CIF" FontWeight="SemiBold"/>
-                <TextBlock Classes="muted" Text="独立的内部转换引擎，无需安装 VESTA、Python 或 ASE。"/>
-                <TextBlock Classes="caption" Text="POSCAR 采用 VESTA 风格的定点精度；CIF 输出 P1。"/>
+                <TextBlock Classes="label" Text="当前转换引擎"/>
+                <ComboBox x:Name="CrystalEngineChoice" SelectedIndex="0" Width="340"
+                          HorizontalAlignment="Left" SelectionChanged="OnEngineSelectionChanged">
+                  <ComboBoxItem Content="DFTDesk 原生引擎（默认，无需 Python）"/>
+                  <ComboBoxItem Content="ASE — Atomic Simulation Environment"/>
+                </ComboBox>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="原生引擎保留 VESTA 风格定点精度；ASE 引擎使用 ASE 自身的读写规则，坐标精度和原子排序可能不同。选择后所有批量转换和轮盘转换均使用该引擎。"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="ASE（可选安装）"/>
+                <TextBlock Classes="muted" TextWrapping="Wrap"
+                           Text="ASE 不随 DFTDesk.exe 打包。请先在自己的 Python 环境安装：python -m pip install ase，然后填写该环境的 python.exe 路径。"/>
+                <TextBlock Classes="label" Text="Python 可执行文件"/>
+                <TextBox x:Name="AsePythonExecutable" Text="python"
+                         PlaceholderText="python 或 C:\Python311\python.exe"
+                         LostFocus="OnAsePathLostFocus"/>
+                <Button Classes="accent" HorizontalAlignment="Left" Content="检测 ASE" Click="OnCheckAse"/>
+                <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
+                           Text="尚未检测 ASE 环境。选择 ASE 引擎时，转换前会自动检查。"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="ASE 使用 LGPL-2.1-or-later 许可，版权归 ASE 贡献者；DFTDesk 仅调用独立 Python 环境，不捆绑 ASE 库。"/>
               </StackPanel>
             </Border>
           </StackPanel>
