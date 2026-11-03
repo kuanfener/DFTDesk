@@ -72,6 +72,9 @@ internal sealed partial class MainForm
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.OutputDirectoryChanged += directory => _output.Text = directory;
         _shell.CartesianChanged += selected => _cartesian.Checked = selected;
+        // The shell loads engine-specific defaults before these event handlers are attached.
+        // Synchronize once so the first batch uses Cartesian for the native engine.
+        _cartesian.Checked = _shell.Cartesian;
         _shell.CancelRequested += () => _cancellation?.Cancel();
         _shell.ThemeChanged += (accent, opacity) =>
         {
