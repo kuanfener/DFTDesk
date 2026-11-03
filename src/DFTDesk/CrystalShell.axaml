@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.3"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.4"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.3" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.4" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -428,9 +428,9 @@
                     <ComboBoxItem Content="OER（四电子析氧）"/>
                   </ComboBox>
                   <Button x:Name="StepTemplateButton" Content="下载当前模式 Excel 模板"
-                          Click="OnStepTemplate" ToolTip.Tip="保存标准列名的空白 Excel，填入数据即可直接绘图"/>
+                          Click="OnStepTemplate" ToolTip.Tip="下载无数值的可填写原始 Excel 模板，HER 七列分块，ORR/OER 五行分块"/>
                 </StackPanel>
-                <TextBlock Classes="caption" Text="先下载对应模式的 Excel 模板，再从第 2 行填写真实自由能；支持多催化剂。"/>
+                <TextBlock Classes="caption" Text="模板保留原始表格布局与反应标签，所有数字数据均已清空；请填写 DFT 能量、校正值及 H2/H2O 参考能量。支持多催化剂。"/>
                 <StackPanel x:Name="StepCheOptions" Spacing="9" IsVisible="False">
                   <Grid ColumnDefinitions="*,12,*">
                     <StackPanel Spacing="5">
@@ -447,7 +447,7 @@
                   <TextBlock Classes="caption" TextWrapping="Wrap"
                              Text="ORR 按原始 Origin 模板使用 4.92→0 eV（U=0V）台阶，OER 为逆过程。电位统一采用 RHE 参照，不额外施加 pH 校正；pH 保留用于记录溶液条件。采用 298.15 K 的四电子 CHE。"/>
                 </StackPanel>
-<Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
                   <Grid>
@@ -526,7 +526,7 @@
                 </Grid>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="支持五行分块的 ORR 原始表（可重复多个催化剂），或 Material / DG_OH / DG_O / DG_OOH 宽表；也兼容台阶图支持的 G 与 E+Corr 数据。纵轴采用 SHE，虚线标出水稳定区；RHE = SHE + 0.05916×pH（298.15 K）。"/>
-<Border x:Name="SurfaceDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                <Border x:Name="SurfaceDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
                   <Grid>
@@ -585,7 +585,7 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 VASP 电子态密度"/>
-<Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                <Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
                   <Grid>
@@ -676,7 +676,7 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 LOBSTER 数据"/>
-<Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                <Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
                   <Grid>

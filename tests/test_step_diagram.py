@@ -29,51 +29,83 @@ class TestStepDiagram(unittest.TestCase):
     def test_generated_fill_in_templates_and_visible_che_labels(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            oxygen_template = subprocess.run(
+            oxygen_run = subprocess.run(
                 [sys.executable, str(SCRIPT), "--action", "template",
                  "--mode", "ORR", "--outdir", str(root)],
                 capture_output=True, text=True, encoding="utf-8", check=True)
-            path = Path(json.loads(oxygen_template.stdout)["Template"])
-            self.assertEqual("DFTDesk_ORR_OER_Template.xlsx", path.name)
-            book = load_workbook(path)
-            self.assertEqual(["Material", "DG_OH", "DG_O", "DG_OOH"],
-                             [cell.value for cell in book.active[1]])
-            self.assertIsNone(book.active["A2"].value)
-            self.assertIn("使用说明", book.sheetnames)
-            for line, values in enumerate([
-                ("FeN4", 1.60, 2.80, 3.90),
-                ("FeN4-defect", 1.48, 2.60, 3.83),
-            ], 2):
-                for col, value in enumerate(values, 1):
-                    book.active.cell(line, col).value = value
-            book.save(path)
-            book.close()
+            oxygen_path = Path(json.loads(oxygen_run.stdout)["Template"])
+            self.assertEqual("DFTDesk_ORR_OER_Template.xlsx", oxygen_path.name)
+            oxygen = load_workbook(oxygen_path)
+            sheet = oxygen.active
+            self.assertEqual("E(DFT)/eV", sheet["B1"].value)
+            self.assertEqual("△G/eV", sheet["C7"].value)
+            self.assertEqual(["Pt4", "*OOH", "*O", "*OH", "Pt4"],
+                             [sheet.cell(row, 1).value for row in range(8, 13)])
+            self.assertEqual("U=0V", sheet["G7"].value)
+            self.assertFalse(any(c.value is not None and c.data_type in ("n", "f")
+                                 for row in sheet for c in row))
+            # Fill two of the three blocks; the untouched third must be ignored.
+            sheet["B2"], sheet["B3"] = -14., -6.
+            sheet["E2"], sheet["E3"] = 0., 0.
+            for start, bare, ooh, o, oh in [
+                (8, -100., -115.1, -105.2, -109.4),
+                (15, -120., -135.17, -125.4, -129.52),
+            ]:
+                for row, energy in zip(range(start, start + 5),
+                                       [bare, ooh, o, oh, bare]):
+                    sheet.cell(row, 2, energy)
+                for row in range(start + 1, start + 4):
+                    sheet.cell(row, 3, 0.)
+            # A stale G value must not override newly entered B/C energies.
+            sheet["G9"] = -1234.
+            oxygen.save(oxygen_path)
+            oxygen.close()
             for mode in ("ORR", "OER"):
-                result = run_script(path, root / mode, extra=["--mode", mode])
+                result = run_script(oxygen_path, root / mode, extra=["--mode", mode])
                 self.assertEqual(2, result["SeriesCount"])
                 svg = Path(result["Svg"]).read_text(encoding="utf-8")
                 self.assertIn("PDS", svg)
                 self.assertIn("η = ", svg)
-                self.assertIn("FeN4", svg)
+                self.assertIn("Pt4", svg)
+                output = load_workbook(result["Xlsx"], read_only=True, data_only=True)
+                first = list(output["CHE Metrics"].values)[1]
+                self.assertAlmostEqual(1.60, first[3], places=6)
+                output.close()
 
-            her_result = subprocess.run(
+            her_run = subprocess.run(
                 [sys.executable, str(SCRIPT), "--action", "template",
                  "--mode", "HER", "--outdir", str(root)],
                 capture_output=True, text=True, encoding="utf-8", check=True)
-            her_path = Path(json.loads(her_result.stdout)["Template"])
+            her_path = Path(json.loads(her_run.stdout)["Template"])
+            self.assertEqual("DFTDesk_HER_Template.xlsx", her_path.name)
             her_book = load_workbook(her_path)
-            self.assertEqual(["Material", "State", "DeltaG"],
-                             [cell.value for cell in her_book.active[1]])
-            self.assertIsNone(her_book.active["A2"].value)
-            for line, values in enumerate([
-                ("Pt", "*H", -0.15), ("Pt", "*H-H", 0.06),
-                ("Fe", "*H", 0.22),
-            ], 2):
-                for col, value in enumerate(values, 1):
-                    her_book.active.cell(line, col).value = value
+            her = her_book.active
+            self.assertEqual("E(DFT)/eV", her["B1"].value)
+            self.assertEqual("△G/eV", her["C6"].value)
+            self.assertEqual("CoP-Sc", her["A7"].value)
+            self.assertEqual("H2O", her["E7"].value)
+            self.assertEqual("1/2H2", her["E11"].value)
+            self.assertEqual("*H", her["A12"].value)
+            self.assertFalse(any(c.value is not None and c.data_type in ("n", "f")
+                                 for row in her for c in row))
+            her["B2"], her["B3"] = -14., -6.
+            her["E2"], her["E3"] = 0., 0.
+            for row, energy in [(7, -100.), (8, -114.25), (9, -113.90),
+                                (11, -100.), (12, -102.76)]:
+                her.cell(row, 2, energy)
+            for row in (8, 9, 12):
+                her.cell(row, 3, 0.)
             her_book.save(her_path)
             her_book.close()
-            self.assertEqual(2, run_script(her_path, extra=["--mode", "HER"])["SeriesCount"])
+            result = run_script(her_path, root / "her", extra=["--mode", "HER"])
+            self.assertEqual(1, result["SeriesCount"])
+            out = load_workbook(result["Xlsx"], read_only=True, data_only=True)
+            records = [row for row in out.active.values if row[0] == "CoP-Sc"]
+            self.assertEqual(["初态", "*H2O", "*H-OH", "*H", "终态"],
+                             [row[2] for row in records])
+            self.assertAlmostEqual(-0.25, records[1][3], places=6)
+            self.assertAlmostEqual(0.24, records[3][3], places=6)
+            out.close()
 
     def test_original_her_layout_and_exports(self):
         with tempfile.TemporaryDirectory() as directory:

@@ -34,9 +34,11 @@ internal sealed partial class MainForm
         {
             _shell.SetStepStatus("正在生成 " + mode + " 标准 Excel 输入模板…");
             await StepDiagramAnalysis.CreateTemplateAsync(
-                mode, dialog.FileName, _shell.PythonExecutablePath);
+                mode, dialog.FileName);
             _shell.SetStepStatus("模板已保存：" + dialog.FileName +
-                "。请在第一个工作表从第 2 行填入数据，列名保持不变。");
+                (mode == "HER"
+                    ? "。HER 为原始七列分块表，所有数值已清空；请填写 B/C 列及参考气体能量。"
+                    : "。ORR/OER 为原始五行分块表，所有数值已清空；请填写参考气体能量、催化剂 B/C 列，软件会重新计算反应自由能。"));
         }
         catch (Exception ex)
         {

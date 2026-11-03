@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 """DFTDesk: HER reaction ladders and 4e ORR/OER computational-hydrogen-electrode diagrams.
 
-HER accepts a historical B/E/G/I worksheet or Material/State/DeltaG long table.
+HER accepts the supplied A-G block worksheet (E(DFT), correction, G, reference),
+the historical A-I block layout, or Material/State/DeltaG long tables.
 ORR/OER accept catalyst adsorption Gibbs free energies or properly corrected
-absolute VASP Gibbs energies, and retain the potential-dependent reaction endpoint.
+absolute VASP Gibbs energies, and retain the potential-dependent reaction endpoint. Template downloads preserve
+both original example workbooks; raw VASP energies take precedence over stale cached G.
 All plotting data remain exportable as Excel, CSV and Origin tab-separated DAT.
 """
 import argparse
@@ -11,6 +13,7 @@ import csv
 import json
 import math
 import os
+import shutil
 import sys
 from collections import OrderedDict
 from pathlib import Path
@@ -31,115 +34,72 @@ def _number(value):
 
 
 def create_input_template(outdir, mode):
-    """Create a fill-in Excel workbook with headers accepted by the parser."""
-    from openpyxl import Workbook
-    from openpyxl.styles import Alignment, Font, PatternFill
-    from openpyxl.utils import get_column_letter
-
-    oxygen = mode in ("ORR", "OER")
-    headers = (["Material", "DG_OH", "DG_O", "DG_OOH"] if oxygen
-               else ["Material", "State", "DeltaG"])
-    name = "DFTDesk_ORR_OER_Template.xlsx" if oxygen else "DFTDesk_HER_Template.xlsx"
-    book = Workbook()
-    data = book.active
-    data.title = "ORR_OER" if oxygen else "HER"
-    data.append(headers)
-    data.freeze_panes = "A2"
-    data.sheet_view.showGridLines = False
-    data.auto_filter.ref = f"A1:{get_column_letter(len(headers))}101"
-    for column, header in enumerate(headers, start=1):
-        letter = get_column_letter(column)
-        data.column_dimensions[letter].width = 29 if column == 1 else 22
-        cell = data.cell(1, column)
-        cell.fill = PatternFill("solid", fgColor="243F72")
-        cell.font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
-        cell.alignment = Alignment(horizontal="center", vertical="center")
-    data.row_dimensions[1].height = 28
-    for row in range(2, 102):
-        data.row_dimensions[row].height = 22
-        for column in range(1, len(headers) + 1):
-            cell = data.cell(row, column)
-            cell.fill = PatternFill("solid", fgColor="FFF5D6")
-            cell.font = Font(name="Arial", size=10, color="172B4D")
-            cell.alignment = Alignment(vertical="center")
-            if column > 1 and (oxygen or column == 3):
-                cell.number_format = "0.0000"
-
-    guide = book.create_sheet("使用说明")
-    guide.sheet_view.showGridLines = False
-    guide.column_dimensions["A"].width = 102
-    guide["A1"] = "DFTDesk 自由能台阶图 Excel 输入说明"
-    guide["A1"].font = Font(name="Arial", size=14, bold=True, color="243F72")
-    guide.row_dimensions[1].height = 30
-    rows = [
-        "1. 仅在第一个工作表黄色区域填写数据；第 1 行英文列名保持不变。",
-        "2. 每个数据项使用单独单元格。自由能直接填写数值（eV），不要输入 eV 单位文字。",
-        ("3. ORR 与 OER 共用此模板；每行一个催化剂，Material 必须唯一。"
-         if oxygen else
-         "3. HER：同一 Material 可以连续多行填写不同 State；DeltaG 是该中间态相对初态的自由能。"),
-        ("4. DG_OH / DG_O / DG_OOH 必须是 U=0 V vs RHE 下已完成校正的吸附吉布斯自由能；不要直接填写未修正的 VASP 总能。"
-         if oxygen else
-         "4. HER 程序自动补 0 eV 初态与终态，表中只填写实际中间态。"),
-        "5. 多个催化剂可以填在同一表中；其余黄色行留空即可，保存后拖入软件绘图。",
-        "6. 此说明页不参与计算；不需要删除。",
-    ]
-    for i, line in enumerate(rows, 3):
-        guide.cell(i, 1, line)
-        guide.cell(i, 1).font = Font(name="Arial", size=10, color="263447")
-        guide.row_dimensions[i].height = 24
-    guide.cell(11, 1, "示例（仅说明，未填入正式数据页）")
-    guide.cell(11, 1).font = Font(name="Arial", bold=True, color="243F72")
-    guide.cell(12, 1, ("Catalyst_A | 1.60 | 2.80 | 3.90" if oxygen
-                        else "Catalyst_A | *H | 0.24"))
-    guide.cell(13, 1, ("Catalyst_B | 1.48 | 2.60 | 3.83" if oxygen
-                        else "Catalyst_A | *H-H | 0.12"))
-    path = Path(outdir) / name
-    book.save(path)
-    book.close()
-    return str(path)
+    """Copy the original, user-supplied HER or ORR/OER Excel workbook verbatim."""
+    name = ("DFTDesk_HER_Template.xlsx" if mode == "HER"
+            else "DFTDesk_ORR_OER_Template.xlsx")
+    source = Path(__file__).with_name(name)
+    if not source.is_file():
+        raise FileNotFoundError("缺少随程序提供的 Excel 原始模板：" + str(source))
+    target = Path(outdir) / name
+    Path(outdir).mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    return str(target)
 
 
 def _states_from_template(sheet):
-    from openpyxl import load_workbook
-    # sheet is a cached-value worksheet; a second formula worksheet supplies raw B/E.
+    """Read editable adsorption-energy blocks, including original 7-column HER sheets.
+
+    A-G reference rows use E='H2O' or '1/2H2', and intermediate
+    energy corrections are in C. Older A-I sheets put the reference
+    in G and corrections in E. Absolute free energies are recomputed
+    from the raw energy/correction inputs rather than cached formulas.
+    """
     groups = OrderedDict()
     current = None
     baseline = None
     reference = None
+    correction_col = None
+    relative_col = None
+    h2o_raw, h2_raw = _number(sheet["B2"].value), _number(sheet["B3"].value)
+    gas_h2o = h2o_raw + (_number(sheet["E2"].value) or 0.0) if h2o_raw is not None else None
+    gas_h2 = h2_raw + (_number(sheet["E3"].value) or 0.0) if h2_raw is not None else None
+    gas_o2 = _number(sheet["F4"].value)
+    references = {"H2O": gas_h2o,
+                  "1/2H2": gas_h2 / 2 if gas_h2 is not None else None,
+                  "H2": gas_h2, "O2": gas_o2}
     for row in sheet.iter_rows(min_row=2, values_only=True):
         label = row[0] if row else None
         raw_energy = _number(row[1]) if len(row) > 1 else None
-        correction = _number(row[4]) if len(row) > 4 else None
-        ref_label = row[6] if len(row) > 6 else None
-        relative = _number(row[8]) if len(row) > 8 else None
-        if isinstance(ref_label, str) and ref_label.strip() in ("H2O", "1/2H2", "H2", "O2") and isinstance(label, str):
-            current = label.strip()
-            baseline = raw_energy
-            reference = ref_label.strip()
-            groups.setdefault(current, [])
-            continue
+        col_e = row[4] if len(row) > 4 else None
+        col_g = row[6] if len(row) > 6 else None
+        # This matches both the newly supplied A-G template and older A-I files.
+        if isinstance(label, str) and label.strip():
+            source_ref = next((value for value in (col_e, col_g)
+                               if isinstance(value, str) and
+                               value.strip() in references), None)
+            if source_ref is not None:
+                current = label.strip()
+                baseline = raw_energy
+                reference = source_ref.strip()
+                correction_col = 2 if col_e == source_ref else 4
+                relative_col = 6 if col_e == source_ref else 8
+                groups.setdefault(current, [])
+                continue
         if not isinstance(label, str) or not label.strip() or current is None:
             continue
-        if raw_energy is None and relative is None:
-            continue
-        # Recalculate from editable B/E columns; cached I is only a fallback.
-        h2o = (_number(sheet["B2"].value) or 0.0) + (_number(sheet["E2"].value) or 0.0)
-        h2 = (_number(sheet["B3"].value) or 0.0) + (_number(sheet["E3"].value) or 0.0)
-        gas = {
-            "H2O": h2o,
-            "1/2H2": h2 / 2,
-            "H2": h2,
-            "O2": _number(sheet["F4"].value),
-        }.get(reference)
+        correction = (_number(row[correction_col])
+                      if correction_col is not None and len(row) > correction_col else None)
+        relative = (_number(row[relative_col])
+                    if relative_col is not None and len(row) > relative_col else None)
+        gas = references.get(reference)
         if raw_energy is not None and baseline is not None and gas is not None:
-            energy = raw_energy + (correction or 0.0) - (baseline + gas)
+            energy = raw_energy + (correction or 0.0) - baseline - gas
         elif relative is not None:
             energy = relative
         else:
             continue
         groups[current].append((label.strip(), round(energy, 10)))
     return [(name, points) for name, points in groups.items() if points]
-
 
 def _states_from_tidy(sheet):
     header = [str(c.value or "").strip().lower().replace(" ", "").replace("_", "")
@@ -182,7 +142,7 @@ def read_profiles(path):
     finally:
         book.close()
     if not groups:
-        raise ValueError("未识别台阶图数据。支持所提供的 HER Excel 模板，或列为 Material / State / DeltaG 的长表。")
+        raise ValueError("未识别台阶图数据。HER 支持七列原始分块模板、旧版九列模板，或 Material / State / DeltaG 长表。")
     profiles = []
     for name, states in groups.items():
         # Explicit 0-eV start/end to represent initial and regenerated surfaces.
@@ -250,8 +210,28 @@ def _legacy_orr_records(sheet):
                 states != ["*OOH", "*O", "*OH"]):
             index += 1
             continue
+        # The downloadable template is intentionally empty; unused blocks
+        # must not block other catalysts that the user has filled in.
+        if all(_number(cell(row, 1)) is None and
+               _number(cell(row, 6)) is None for row in block):
+            index += 5
+            continue
 
-        energies = [_number(cell(row, 6)) for row in block]
+        # Recompute from editable DFT B/C values first. The supplied
+        # ORR/OER workbook has static D/F/G values (no Excel formulas), so
+        # its G column may be stale after the user changes a catalyst.
+        slab_energies = [_number(cell(row, 1)) for row in block]
+        ads_corrections = [_number(cell(block[k], 2)) for k in (1, 2, 3)]
+        if (h2o is not None and h2 is not None and
+                all(value is not None for value in slab_energies) and
+                all(value is not None for value in ads_corrections)):
+            clean = slab_energies[4]
+            ooh = slab_energies[1] + ads_corrections[0] - clean - 2 * h2o + 1.5 * h2
+            o = slab_energies[2] + ads_corrections[1] - clean - h2o + h2
+            oh = slab_energies[3] + ads_corrections[2] - clean - h2o + 0.5 * h2
+            energies = [4.92, ooh, o, oh, 0.0]
+        else:
+            energies = [_number(cell(row, 6)) for row in block]
         if any(value is None for value in energies):
             absolute = [_number(cell(row, 5)) for row in block]
             if any(value is None for value in absolute) and all(
