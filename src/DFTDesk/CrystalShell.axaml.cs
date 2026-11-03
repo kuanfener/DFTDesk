@@ -78,7 +78,7 @@ internal sealed partial class CrystalShell : UserControl
             pageContainer.Children.Remove(page);
         Part<ContentControl>("PageHost").Content = null;
 
-        _themeWheel = DftDonutFactory.Create(78, ToDrawing(_accent));
+        _themeWheel = DftDonutFactory.Create(60, ToDrawing(_accent));
         Part<ContentControl>("ThemeDonutPreviewHost").Content = _themeWheel;
 
         var zone = Part<Border>("DropZone");
