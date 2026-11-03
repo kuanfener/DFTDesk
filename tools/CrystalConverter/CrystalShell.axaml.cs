@@ -456,7 +456,8 @@ internal sealed partial class CrystalShell : UserControl
         try { Process.Start(new ProcessStartInfo(url) { UseShellExecute = true }); }
         catch (System.ComponentModel.Win32Exception) { }
     }
-    private void OnGitHub(object? sender, RoutedEventArgs e) => OpenUrl("https://github.com/kuanfener/Filee");
+    private void OnGitHub(object? sender, RoutedEventArgs e) => OpenUrl("https://github.com/kuanfener/DFTDesk");
+    private void OnOpenAseWebsite(object? sender, RoutedEventArgs e) => OpenUrl("https://ase-lib.org/");
     private void OnSponsor(object? sender, RoutedEventArgs e)
     {
         var dialog = new DonationDialog();
