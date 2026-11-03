@@ -54,8 +54,9 @@ class TestStepDiagram(unittest.TestCase):
             result = run_script(source, root / "outputs")
             for key in ("Png", "Svg", "Csv", "Xlsx", "Dat"):
                 self.assertGreater(Path(result[key]).stat().st_size, 0)
-            rows = load_workbook(result["Xlsx"], read_only=True, data_only=True).active
-            values = list(rows.values)
+            result_book = load_workbook(result["Xlsx"], read_only=True, data_only=True)
+            values = list(result_book.active.values)
+            result_book.close()
             self.assertEqual(["Material", "Step_Index", "State", "DeltaG_eV", "DeltaG_from_previous_eV"], list(values[0]))
             ru = [row for row in values[1:] if row[0] == "Ru"]
             self.assertEqual(["初态", "*H2O", "*H-OH", "*H", "终态"], [x[2] for x in ru])
