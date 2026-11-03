@@ -34,6 +34,9 @@ jobs:
       - name: Test VASP DOSCAR parsing, spin PDOS and image/CSV export
         run: python -m unittest discover -s tests -p test_dos_analyzer.py
 
+      - name: Build DFTDesk DOS analysis UI
+        run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
+
       - name: Prepare optional private donation QR assets
         shell: pwsh
         env:

@@ -31,8 +31,12 @@ class DosAnalyzerTests(unittest.TestCase):
             def run(*args):
                 result = subprocess.run(
                     [sys.executable, str(SCRIPT), *args], text=True,
-                    capture_output=True, check=True, timeout=120,
+                    capture_output=True, check=False, timeout=120,
                 )
+                if result.returncode:
+                    raise AssertionError(
+                        f"DOS subprocess exited {result.returncode}:\n{result.stderr}\n{result.stdout}"
+                    )
                 return json.loads(result.stdout)
 
             info = run("--action", "inspect", "--input", str(folder / "DOSCAR"))
