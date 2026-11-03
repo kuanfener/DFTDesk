@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""DFTDesk: convert reaction free energies to publishable staircase diagrams.
+"""DFTDesk: HER reaction ladders and 4e ORR/OER computational-hydrogen-electrode diagrams.
 
-Accepted workbooks:
-1. The supplied HER source workbook: A=state, B=DFT energy, E=correction,
-   G=gas reference, I=relative free energy (when cached).
-2. A tidy workbook with columns Material/Catalyst, State/Step, Energy/DeltaG.
-All plotting data remain exportable to Excel, CSV and Origin tab-separated DAT.
+HER accepts a historical B/E/G/I worksheet or Material/State/DeltaG long table.
+ORR/OER accept catalyst adsorption Gibbs free energies or properly corrected
+absolute VASP Gibbs energies, and retain the potential-dependent reaction endpoint.
+All plotting data remain exportable as Excel, CSV and Origin tab-separated DAT.
 """
 import argparse
 import csv
@@ -124,7 +123,152 @@ def read_profiles(path):
     return profiles
 
 
-def export_profiles(profiles, outdir):
+def _key(header):
+    """Accept DG_OH, ΔG_*OH, E(*OOH), and common spreadsheet separators."""
+    import re
+    value = str(header or "").strip().lower()
+    value = value.replace("Δ", "d").replace("δ", "d").replace("∆", "d")
+    value = value.replace("*", "star")
+    return re.sub(r"[^a-z0-9\u4e00-\u9fff]", "", value)
+
+
+def read_oxygen_profiles(path, mode, potential, ph, reference):
+    """Build 4e ORR/OER CHE profiles from adsorption free energies or corrected G."""
+    from openpyxl import load_workbook
+    if mode not in ("ORR", "OER"):
+        raise ValueError("需要选择 ORR 或 OER 模式。")
+    if reference not in ("RHE", "SHE"):
+        raise ValueError("电位参考必须是 RHE 或 SHE。")
+    if not math.isfinite(potential) or not math.isfinite(ph):
+        raise ValueError("电位与 pH 必须是有效数字。")
+    if not 0 <= ph <= 14:
+        raise ValueError("仅支持 pH 0–14 的溶液条件。")
+    alpha = 8.617333262145e-5 * 298.15 * math.log(10.0)
+    u_rhe = potential if reference == "RHE" else potential + alpha * ph
+    book = load_workbook(path, read_only=True, data_only=True)
+    profiles, metrics, existing = [], [], set()
+    def col(headers, *aliases):
+        return next((headers[a] for a in aliases if a in headers), None)
+    try:
+        for sheet in book:
+            if sheet.max_row < 2:
+                continue
+            headers = {_key(cell.value): index for index, cell in enumerate(sheet[1]) if cell.value is not None}
+            material_i = col(headers, "material", "catalyst", "system", "sample", "体系", "催化剂")
+            adsorption = [
+                col(headers, "dgoh", "dgstaroh", "deltagoh", "deltagstaroh"),
+                col(headers, "dgo", "dgstaro", "deltago", "deltagstaro"),
+                col(headers, "dgooh", "dgstarooh", "deltagooh", "deltagstarooh"),
+            ]
+            corrected = [col(headers, "gstar", "gsite", "gclean", "gslab"),
+                         col(headers, "goh", "gstaroh"),
+                         col(headers, "go", "gstaro"),
+                         col(headers, "gooh", "gstarooh"),
+                         col(headers, "gh2o", "gwater"),
+                         col(headers, "gh2", "ghydrogen")]
+            raw = [col(headers, "estar", "esite", "eclean", "eslab"),
+                   col(headers, "eoh", "estaroh"),
+                   col(headers, "eo", "estaro"),
+                   col(headers, "eooh", "estarooh"),
+                   col(headers, "eh2o", "ewater"),
+                   col(headers, "eh2", "ehydrogen")]
+            corrections = [col(headers, "corrstar", "correctionstar"),
+                           col(headers, "corroh", "correctionoh"),
+                           col(headers, "corro", "correctiono"),
+                           col(headers, "corrooh", "correctionooh"),
+                           col(headers, "corrh2o", "correctionh2o"),
+                           col(headers, "corrh2", "correctionh2")]
+            if all(i is not None for i in adsorption):
+                source_type, columns = "adsorption", adsorption
+            elif all(i is not None for i in corrected):
+                source_type, columns = "corrected-G", corrected
+            elif all(i is not None for i in raw):
+                if not all(i is not None for i in corrections):
+                    raise ValueError(
+                        f"{sheet.title}：仅有 VASP E_DFT 不足以计算 ΔG，请补充 Corr_star/OH/O/OOH/H2O/H2，"
+                        "或直接提供 DG_OH、DG_O、DG_OOH。")
+                source_type, columns = "DFT+correction", raw
+            else:
+                continue
+            for row_i, row in enumerate(sheet.iter_rows(min_row=2, values_only=True), start=2):
+                if all(value is None for value in row):
+                    continue
+                if material_i is not None:
+                    if material_i >= len(row) or row[material_i] is None or not str(row[material_i]).strip():
+                        raise ValueError(f"{sheet.title} 第 {row_i} 行缺少 Material / Catalyst。")
+                    material = str(row[material_i]).strip()
+                else:
+                    material = sheet.title
+                if material in existing:
+                    raise ValueError(f"重复的催化剂名称：{material}。请为每一行使用唯一 Material 名称。")
+                values = []
+                for index in columns:
+                    number = _number(row[index]) if index is not None and index < len(row) else None
+                    if number is None:
+                        raise ValueError(f"{sheet.title} 第 {row_i} 行 {material} 存在缺失/无效自由能。"
+                                         "如果单元格为公式，请先在 Excel 中重新计算并保存。")
+                    values.append(number)
+                if source_type == "adsorption":
+                    dgoh, dgo, dgooh = values
+                else:
+                    if source_type == "DFT+correction":
+                        adjusted = []
+                        for index, corr in zip(values, corrections):
+                            number = _number(row[corr]) if corr is not None and corr < len(row) else None
+                            if number is None:
+                                raise ValueError(f"{sheet.title} 第 {row_i} 行缺少某项 Corr 自由能修正。")
+                            adjusted.append(index + number)
+                        values = adjusted
+                    gs, goh, go, gooh, gh2o, gh2 = values
+                    dgoh = goh - gs - (gh2o - .5 * gh2)
+                    dgo = go - gs - (gh2o - gh2)
+                    dgooh = gooh - gs - (2 * gh2o - 1.5 * gh2)
+                # Four one-electron steps in their actual forward reaction order.
+                if mode == "OER":
+                    changes_0 = [dgoh, dgo - dgoh, dgooh - dgo, 4.92 - dgooh]
+                    labels = ["*", "*OH", "*O", "*OOH", "O₂ + *"]
+                    changes_u = [value - u_rhe for value in changes_0]
+                    limiting = max(changes_0)
+                    eta = limiting - 1.23
+                    pds = changes_0.index(limiting) + 1
+                else:
+                    changes_0 = [dgooh - 4.92, dgo - dgooh, dgoh - dgo, -dgoh]
+                    labels = ["O₂ + *", "*OOH", "*O", "*OH", "2H₂O + *"]
+                    changes_u = [value + u_rhe for value in changes_0]
+                    limiting = min(-value for value in changes_0)
+                    eta = 1.23 - limiting
+                    pds = changes_0.index(max(changes_0)) + 1
+                cumulative = [0.0]
+                for value in changes_u:
+                    cumulative.append(cumulative[-1] + value)
+                # Never force the end to zero at U ≠ 1.23 V vs RHE.
+                expected = (4.92 - 4 * u_rhe) * (1 if mode == "OER" else -1)
+                if not math.isclose(cumulative[-1], expected, rel_tol=0, abs_tol=1e-8):
+                    raise ValueError("四步反应自由能与 CHE 反应总能不守恒。")
+                profiles.append([(material, state, round(energy, 10))
+                                 for state, energy in zip(labels, cumulative)])
+                metrics.append({
+                    "Material": material, "Mode": mode, "Input": source_type,
+                    "DG_OH": dgoh, "DG_O": dgo, "DG_OOH": dgooh,
+                    "Potential_V": potential, "Reference": reference,
+                    "pH": ph, "U_RHE_V": u_rhe,
+                    "U_lim_RHE_V": limiting,
+                    "U_lim_selected_V": limiting if reference == "RHE" else limiting - alpha * ph,
+                    "Eta_V": eta, "PDS_step": pds,
+                    "DG0_steps": changes_0, "DG_U_steps": changes_u,
+                })
+                existing.add(material)
+    finally:
+        book.close()
+    if not profiles:
+        raise ValueError(
+            "未识别 ORR/OER 数据。需要 Material, DG_OH, DG_O, DG_OOH；"
+            "或六列 G_star/G_OH/G_O/G_OOH/G_H2O/G_H2；"
+            "或六列 E_* 加六列 Corr_* 的完整数据。")
+    return profiles, metrics
+
+
+def export_profiles(profiles, outdir, metrics=None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
     path = Path(outdir)
@@ -162,17 +306,45 @@ def export_profiles(profiles, outdir):
     for row in sheet.iter_rows(min_row=2, min_col=4, max_col=5):
         for cell in row:
             cell.number_format = "0.0000"
+    if metrics:
+        summary = book.create_sheet("CHE Metrics", 0)
+        keys = ["Material", "Mode", "Input", "DG_OH", "DG_O", "DG_OOH",
+                "Potential_V", "Reference", "pH", "U_RHE_V",
+                "U_lim_RHE_V", "U_lim_selected_V", "Eta_V", "PDS_step"]
+        summary.append(keys)
+        for entry in metrics:
+            summary.append([entry[key] for key in keys])
+        summary.freeze_panes = "A2"
+        summary.auto_filter.ref = summary.dimensions
+        for cell in summary[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="433E91")
+        for col in "ABCDEFGHIJKLMN":
+            summary.column_dimensions[col].width = 16 if col != "A" else 24
+        step_sheet = book.create_sheet("CHE Four Steps", 1)
+        step_sheet.append(["Material", "Reaction", "Step", "DG_U0_eV", "DG_U_eV", "PDS"])
+        for entry in metrics:
+            for index, (g0, gu) in enumerate(zip(entry["DG0_steps"], entry["DG_U_steps"]), start=1):
+                step_sheet.append([entry["Material"], entry["Mode"], index, g0, gu,
+                                   index == entry["PDS_step"]])
+        step_sheet.freeze_panes = "A2"
+        step_sheet.auto_filter.ref = step_sheet.dimensions
+        for cell in step_sheet[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="433E91")
+        for col, width in {"A": 24, "B": 15, "C": 12, "D": 18, "E": 18, "F": 12}.items():
+            step_sheet.column_dimensions[col].width = width
     guide = book.create_sheet("Origin Guide")
-    guide.append(["数据来源", "原始 Excel 台阶图能量 / 自由能修正"])
+    guide.append(["数据来源", "HER 自由能台阶；或 ORR/OER 四电子 CHE 反应自由能（eV）"])
     guide.append(["Origin 导入", "File > Import > Single ASCII，选择 step_diagram_origin.dat"])
     guide.append(["Origin 绘图", "X=Step_Index，Y=DeltaG_eV，按 Material 分组"])
-    guide.append(["说明", ".dat 为 Origin 可导入数据；不会修改用户的 .opju 原生工程模板。"])
+    guide.append(["说明", "ORR/OER 数据请看 CHE Metrics / CHE Four Steps 两表；.dat 是 Origin 可导入数据，不会修改 .opju。"])
     xlsx_path = path / "step_diagram.xlsx"
     book.save(xlsx_path)
     return str(csv_path), str(xlsx_path), str(dat_path)
 
 
-def draw_profiles(profiles, outdir):
+def draw_profiles(profiles, outdir, mode="HER"):
     """Origin-inspired horizontal energy levels, grouped by comparable pathways."""
     import matplotlib
     matplotlib.use("Agg")
@@ -188,7 +360,7 @@ def draw_profiles(profiles, outdir):
     # An Origin project may contain both a shared-intermediate comparison and
     # detailed reaction-coordinate pathways. Infer both without guessing states.
     common = []
-    if len(profiles) > 1:
+    if mode == "HER" and len(profiles) > 1:
         common = [state for _, state, _ in profiles[0][1:-1]
                   if all(state in {r[1] for r in other[1:-1]} for other in profiles[1:])]
     panels = []
@@ -268,22 +440,37 @@ def main():
     parser.add_argument("--action", choices=("inspect", "analyze"), default="analyze")
     parser.add_argument("--input", required=True)
     parser.add_argument("--outdir")
+    parser.add_argument("--mode", choices=("HER", "ORR", "OER"), default="HER")
+    parser.add_argument("--potential", type=float, default=0.0)
+    parser.add_argument("--ph", type=float, default=0.0)
+    parser.add_argument("--reference", choices=("RHE", "SHE"), default="RHE")
     args = parser.parse_args()
     input_path = Path(args.input)
     if not input_path.is_file():
         raise FileNotFoundError(str(input_path))
     if input_path.suffix.lower() not in (".xlsx", ".xlsm"):
         raise ValueError("台阶图输入必须为 Excel .xlsx 或 .xlsm 文件。")
-    profiles = read_profiles(input_path)
-    message = f"识别 {len(profiles)} 个体系：" + "；".join(
-        f"{p[0][0]} ({len(p)-2} 个中间态)" for p in profiles)
+    metrics = []
+    if args.mode == "HER":
+        profiles = read_profiles(input_path)
+        message = f"识别 {len(profiles)} 个体系：" + "；".join(
+            f"{p[0][0]} ({len(p)-2} 个中间态)" for p in profiles)
+    else:
+        profiles, metrics = read_oxygen_profiles(
+            input_path, args.mode, args.potential, args.ph, args.reference)
+        message = (f"{args.mode} | U={args.potential:.3f} V vs {args.reference}, pH={args.ph:g}；"
+                   f"参考 298.15 K，4e CHE；" +
+                   "；".join(f"{item['Material']}: η={item['Eta_V']:.3f} V,"
+                            f" U_L={item['U_lim_selected_V']:.3f} V vs {args.reference},"
+                            f" PDS=第 {item['PDS_step']} 步"
+                            for item in metrics))
     result = {"Summary": message, "SeriesCount": len(profiles),
               "Png": "", "Svg": "", "Csv": "", "Xlsx": "", "Dat": ""}
     if args.action == "analyze":
         if not args.outdir:
             raise ValueError("缺少输出目录。")
-        result["Csv"], result["Xlsx"], result["Dat"] = export_profiles(profiles, args.outdir)
-        result["Png"], result["Svg"] = draw_profiles(profiles, args.outdir)
+        result["Csv"], result["Xlsx"], result["Dat"] = export_profiles(profiles, args.outdir, metrics)
+        result["Png"], result["Svg"] = draw_profiles(profiles, args.outdir, args.mode)
     print(json.dumps(result, ensure_ascii=False))
 
 

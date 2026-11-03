@@ -1,4 +1,4 @@
-# DFTDesk 2.1.0
+# DFTDesk 2.2.0
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -27,10 +27,10 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.1 总览，结构转换、团簇生成、台阶图、DOS、COHP 五个功能入口 |
+| 首页 | DFTDesk 2.2 总览，结构转换、团簇生成、台阶图、DOS、COHP 五个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
-| 绘制台阶图 | Excel 自由能数据自动绘制反应台阶图，预览并导出图片、Excel、Origin DAT |
+| 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT |
 | DOS 分析 | VASP DOSCAR、vasprun.xml：TDOS/PDOS、元素 s/p/d、自旋、DOS 积分、d 带中心 |
 | COHP / ICOHP 分析 | LOBSTER COHPCAR、ICOHPLIST：多键曲线、自旋分辨、ICOHP(Ef) 键强度 |
 | 主题 | 明暗模式、强调色、圆角、窗口尺寸、环形轮盘不透明度与实时预览 |
@@ -55,7 +55,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 
 **科学边界：**所有团簇都是初始几何猜测，需要进一步进行 VASP 结构弛豫与收敛性验证。
 
-### 自动绘制反应台阶图（2.1 新增）
+### 自动绘制反应台阶图（2.2：HER / ORR / OER）
 
 - 左侧「**绘制台阶图**」紧随「团簇生成」之后；首页也有独立入口。
 - 点击云朵或把 Excel .xlsx / .xlsm 拖入。支持提供的碱性 HER 自由能数据模板：第一列为中间态，B 列为 DFT 能量，E 列为自由能修正，G 列为参照分子，I 列为相对自由能。识别同一个催化剂的多段反应并绘图。
@@ -63,6 +63,22 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图绘制、
 - 按 Origin 模板将可比的催化剂曲线叠加显示，并为具有更多中间态的体系单独绘制完整路径；使用水平能级线、虚线连接和自由能标注，预览后可导出 **PNG、SVG、CSV、Excel XLSX、Origin DAT**。
 - 原始数据如有修改，应保存 Excel 后再导入；当前由 Python 读取数值并绘制，不会修改原始文件。
 - 附带的 .opju 仅作为 Origin 图形参考。导出的 DAT 可在 Origin 中导入并用于已有模板，但 DFTDesk **不会自动修改或生成 Origin 原生 .opju**，也不会把 Origin 工程上传至公开仓库。
+
+#### ORR / OER 四电子 CHE 模式（2.2 新增）
+
+- 在「绘制台阶图」切换 **ORR / OER**，填写电位 U（V）、pH 与参考电极 **RHE / SHE**。在 298.15 K 下，`U_RHE = U_SHE + 0.05916 × pH`；RHE 输入无需重复进行 pH 校正。
+- Excel 的一个工作表中可以逐行给出多个催化剂，最简单的表头如下（单位 eV，数值仅用于演示）：
+
+  | Material | DG_OH | DG_O | DG_OOH |
+  | --- | ---: | ---: | ---: |
+  | Pt | 1.60 | 2.80 | 3.90 |
+  | Co | 1.48 | 2.60 | 3.83 |
+
+- 除了三列吸附自由能，也可提供经过修正的绝对吉布斯自由能：`Material, G_star, G_OH, G_O, G_OOH, G_H2O, G_H2`；或提供六列 `E_*` 加上对应六列 `Corr_*`（`star, OH, O, OOH, H2O, H2`）的 VASP DFT 总能及总自由能修正。**只有 VASP 电子总能而无振动、熵等自由能修正时，软件拒绝计算 CHE 台阶**，避免将未校正的电子能误作自由能。
+- OER 四步：`[ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH]`；ORR 为上述反应逆序并反号。默认采用四电子反应总自由能 4.92 eV，平衡电位 1.23 V（vs RHE）。
+- 电位改变每个一电子步骤 `±eU_RHE`，因此 **终态能量不固定为 0 eV**：在 0 V vs RHE 时 OER / ORR 终态分别为 +4.92 / −4.92 eV；在 1.23 V vs RHE 时两者终态均为 0 eV。
+- 软件自动输出 `U_L`、`η`、决速电位步 PDS，以及每一步在 0 V 与所选电位下的自由能。在 Excel 的 **CHE Metrics**、**CHE Four Steps** 表格中保留数值，可与图片、CSV、Origin DAT 同时导出。
+- 所计算的为 **CHE 热力学理论过电位**；不包含电荷转移动力学、显式溶剂、覆盖度或其他条件的自动校正，最终结果取决于输入自由能的定义和精度。
 
 ### 统一云朵导入
 
@@ -109,7 +125,7 @@ python -m unittest discover -s tests -p test_step_diagram.py
 dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 
-Windows CI 自动安装上述 Python 库，验证 ASE 转换、五个 Python 库的独立检测、DOS/COHP 数据处理、台阶图 Excel 模板、Excel/Origin 导出，并对独立 EXE 进行启动检查。
+Windows CI 自动安装上述 Python 库，验证 ASE 转换、五个 Python 库的独立检测、DOS/COHP 数据处理、HER 模板、ORR/OER CHE 数值与终态、Excel/Origin 导出，并对独立 EXE 进行启动检查。
 
 ## 开源许可
 

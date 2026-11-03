@@ -1,6 +1,6 @@
-# DFTDesk 2.1.0 — Windows 科研结构工作台
+# DFTDesk 2.2.0 — Windows 科研结构工作台
 
-**DFTDesk 2.1.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.2.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -70,11 +70,20 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 - 结果包含 **CSV、Excel（.xlsx）、Origin 可读制表符（.dat）**，有 COHPCAR 时额外生成 **PNG / SVG**。Excel 中包含 ICOHP(Ef) 汇总页及完整曲线页，曲线保持 LOBSTER 原始符号。Origin DAT 是数据导入文件，不是只能用 Origin 创建的原生工程 `.opju`。
 - LOBSTER COHP 的负值一般对应成键、正值对应反键；**ICOHP(Ef) 是 LOBSTER 已积分的物理量，不应与普通 DOS 积分混淆**。比较不同键时请注意是否以每键均值还是等价键总和表示。
 
-## 绘制台阶图（2.1 新增）
+## 绘制台阶图（2.2：HER / ORR / OER）
 
-左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm）。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
+左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm），并新增 HER、ORR、OER 三种专用模式。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
 
 点击「绘制台阶图」后可预览可比催化剂叠加的能量平台、虚线连接及能量标注，并区分完整中间态路径；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
+
+### ORR / OER 模式的输入与计算约定
+
+- **输入最小模板：**`Material,DG_OH,DG_O,DG_OOH`（宽表，一行一个催化剂；吸附自由能单位 eV）。
+- **高级模板：**`Material,G_star,G_OH,G_O,G_OOH,G_H2O,G_H2`（已经计算完自由能修正的吉布斯自由能），或 `E_star,E_OH,E_O,E_OOH,E_H2O,E_H2` 和对应 `Corr_star,Corr_OH,Corr_O,Corr_OOH,Corr_H2O,Corr_H2`。不能将无修正的 VASP 总能直接解释为 Gibbs 自由能。
+- 四电子 CHE、298.15 K、反应总能 4.92 eV，`U_RHE = U_SHE + 0.05916 × pH`；RHE 电位输入不再重复修正 pH。
+- OER 前进步骤（0 V）：`ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH`，`U_L = max(ΔG_i)`，`η = U_L−1.23`；ORR 为逆序还原反应，`U_L = min(−ΔG_i)`，`η = 1.23−U_L`。
+- 在 U 下逐个一电子步骤修正 `−U_RHE`（OER）、`+U_RHE`（ORR）。ORR/OER 终态能量随电位变动，不应自动重置零点。
+- 多催化剂按相同中间态叠加绘图；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步。
 
 ## DOS 新增 Excel 与 Origin 导出
 

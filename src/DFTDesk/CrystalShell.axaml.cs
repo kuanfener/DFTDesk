@@ -252,6 +252,41 @@ internal sealed partial class CrystalShell : UserControl
         Part<TextBlock>(control).Text = text;
     }
 
+    private void OnStepModeChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_initializing) return;
+        Part<StackPanel>("StepCheOptions").IsVisible = Part<ComboBox>("StepMode").SelectedIndex != 0;
+        ClearStepPreview();
+        SetStepStatus("模式已切换；请确认 Excel 数据列与反应类型相符，然后重新绘图。");
+    }
+
+    public StepDiagramRequest ReadStepRequest(string inputPath)
+    {
+        var mode = Part<ComboBox>("StepMode").SelectedIndex switch
+        {
+            1 => "ORR",
+            2 => "OER",
+            _ => "HER"
+        };
+        if (mode == "HER")
+            return new StepDiagramRequest(inputPath, mode, 0, 0, "RHE");
+
+        static double ParseSetting(string? text, string name)
+        {
+            if (string.IsNullOrWhiteSpace(text) ||
+                !double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ||
+                !double.IsFinite(value))
+                throw new ArgumentException(name + "必须是有效数字（请使用英文小数点）。");
+            return value;
+        }
+        var potential = ParseSetting(Part<TextBox>("StepPotential").Text, "电位");
+        var ph = ParseSetting(Part<TextBox>("StepPh").Text, "pH");
+        if (ph < 0 || ph > 14)
+            throw new ArgumentException("目前仅支持 pH 0–14 的溶液条件。");
+        var reference = Part<ComboBox>("StepReference").SelectedIndex == 1 ? "SHE" : "RHE";
+        return new StepDiagramRequest(inputPath, mode, potential, ph, reference);
+    }
+
     public void SetStepInput(string path)
     {
         Part<TextBlock>("StepInputFile").Text = path;

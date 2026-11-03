@@ -52,6 +52,13 @@ internal sealed partial class MainForm
             _shell.SetStepStatus("请先点击云朵或拖入 Excel 原始数据文件。");
             return;
         }
+        StepDiagramRequest request;
+        try { request = _shell.ReadStepRequest(_stepInputPath); }
+        catch (ArgumentException ex)
+        {
+            _shell.SetStepStatus("参数错误：" + ex.Message);
+            return;
+        }
         DisposeStepResult();
         _stepBusy = true;
         _shell.SetStepBusy(true);
@@ -60,7 +67,7 @@ internal sealed partial class MainForm
         try
         {
             var result = await StepDiagramAnalysis.AnalyzeAsync(
-                _stepInputPath, _shell.PythonExecutablePath, _stepCancellation.Token);
+                request, _shell.PythonExecutablePath, _stepCancellation.Token);
             _stepResult = result;
             _shell.SetStepPreview(result);
             _shell.SetStepStatus("绘图完成：" + result.Summary +

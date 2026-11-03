@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.1.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.2.0"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -176,7 +176,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.1" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.2" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自动绘制台阶图 · DOS / COHP / ICOHP 分析。输入文件均在本机处理。"/>
@@ -204,7 +204,7 @@
                 <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="绘制台阶图"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
-                             Text="导入 Excel 自由能数据，自动生成反应台阶图；导出 PNG、SVG、Excel、Origin DAT。"/>
+                             Text="支持 HER、ORR、OER 自由能台阶，自动计算四步反应和过电位；导出 PNG、SVG、Excel、Origin DAT。"/>
                   <Button HorizontalAlignment="Left" Content="进入台阶图工具" Click="OnGoStep"/>
                 </StackPanel>
               </Border>
@@ -395,10 +395,40 @@
           <StackPanel x:Name="StepPage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="绘制台阶图"/>
             <TextBlock Classes="muted" TextWrapping="Wrap"
-                       Text="从 Excel 中识别各催化剂及中间态自由能，自动绘制反应台阶图。兼容提供的 HER 原始数据模板，也支持 Material / State / DeltaG 三列表格。"/>
+                       Text="HER 兼容原始 Excel 自由能模板；ORR / OER 采用四电子 CHE 模型，按吸附自由能自动计算四步反应、限制电位及理论过电位。"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入原始自由能数据"/>
+                <TextBlock Classes="label" Text="反应模式"/>
+                <ComboBox x:Name="StepMode" SelectedIndex="0" Width="320"
+                          HorizontalAlignment="Left" SelectionChanged="OnStepModeChanged">
+                  <ComboBoxItem Content="HER（模板自由能台阶）"/>
+                  <ComboBoxItem Content="ORR（四电子氧还原）"/>
+                  <ComboBoxItem Content="OER（四电子析氧）"/>
+                </ComboBox>
+                <StackPanel x:Name="StepCheOptions" Spacing="9" IsVisible="False">
+                  <Grid ColumnDefinitions="*,12,*,12,*">
+                    <StackPanel Spacing="5">
+                      <TextBlock Classes="label" Text="电位 U（V）"/>
+                      <TextBox x:Name="StepPotential" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2" Spacing="5">
+                      <TextBlock Classes="label" Text="pH"/>
+                      <TextBox x:Name="StepPh" Text="0"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="4" Spacing="5">
+                      <TextBlock Classes="label" Text="电位参照"/>
+                      <ComboBox x:Name="StepReference" SelectedIndex="0">
+                        <ComboBoxItem Content="RHE"/>
+                        <ComboBoxItem Content="SHE"/>
+                      </ComboBox>
+                    </StackPanel>
+                  </Grid>
+                  <TextBlock Classes="caption" TextWrapping="Wrap"
+                             Text="ORR / OER Excel：一行一个催化剂，列名 Material、DG_OH、DG_O、DG_OOH（eV）。也支持六个 G 值或带六项 Corr 修正的 VASP 总能 E。采用 298.15 K、4.92 eV 的 CHE；多催化剂自动叠加绘图。"/>
+                  <TextBlock Classes="caption" TextWrapping="Wrap"
+                             Text="RHE 电位不再额外按 pH 修正；SHE 电位换算为 U(RHE) = U(SHE) + 0.05916 × pH。理论过电位不包含动力学及溶剂模型效应。"/>
+                </StackPanel>
                 <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
@@ -429,7 +459,7 @@
                 <Image x:Name="StepPlotImage" Height="520" Stretch="Uniform" IsVisible="False"/>
                 <TextBlock x:Name="StepSummary" Classes="caption" TextWrapping="Wrap"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="Excel/CSV/Origin DAT 保留每个中间态自由能。Origin DAT 可直接导入现有 .opju 工程；不会自动修改 Origin 原生工程模板。"/>
+                           Text="Excel 导出包含反应台阶和 ORR/OER 的 CHE Metrics、CHE Four Steps；Origin DAT 可导入现有 .opju 工程，不会自动修改原生 Origin 工程。"/>
               </StackPanel>
             </Border>
           </StackPanel>

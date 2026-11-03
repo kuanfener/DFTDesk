@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace DFTDesk;
 
+internal sealed record StepDiagramRequest(
+    string InputPath, string Mode, double Potential, double Ph, string Reference);
+
 internal sealed class StepDiagramData
 {
     public string Png { get; set; } = "";
@@ -27,15 +30,21 @@ internal static class StepDiagramAnalysis
     private const string Resource = "DFTDesk.StepScripts.step_diagram.py";
     private static readonly JsonSerializerOptions Json = new() { PropertyNameCaseInsensitive = true };
 
-    public static async Task<StepDiagramData> AnalyzeAsync(string source, string python,
+    public static async Task<StepDiagramData> AnalyzeAsync(StepDiagramRequest request, string python,
         CancellationToken cancellationToken = default)
     {
-        if (!File.Exists(source)) throw new FileNotFoundException("台阶图 Excel 文件不存在。", source);
+        if (!File.Exists(request.InputPath))
+            throw new FileNotFoundException("台阶图 Excel 文件不存在。", request.InputPath);
+        if (request.Mode is not ("HER" or "ORR" or "OER"))
+            throw new ArgumentException("未知的反应模式。");
+        if (request.Reference is not ("RHE" or "SHE") ||
+            !double.IsFinite(request.Potential) || !double.IsFinite(request.Ph))
+            throw new ArgumentException("电位、pH 或电位参考标尺无效。");
         var folder = Path.Combine(Path.GetTempPath(), "DFTDesk-STEP-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try
         {
-            var data = await ExecuteAsync(source, folder, python, cancellationToken);
+            var data = await ExecuteAsync(request, folder, python, cancellationToken);
             data.WorkingDirectory = folder;
             foreach (var file in new[] { data.Png, data.Svg, data.Csv, data.Xlsx, data.Dat })
                 if (string.IsNullOrWhiteSpace(file) || !File.Exists(file) || new FileInfo(file).Length == 0)
@@ -49,7 +58,7 @@ internal static class StepDiagramAnalysis
         }
     }
 
-    private static async Task<StepDiagramData> ExecuteAsync(string source, string folder,
+    private static async Task<StepDiagramData> ExecuteAsync(StepDiagramRequest request, string folder,
         string python, CancellationToken cancellationToken)
     {
         var script = Path.Combine(Path.GetTempPath(), "dftdesk_step_" + Guid.NewGuid().ToString("N") + ".py");
@@ -74,8 +83,11 @@ internal static class StepDiagramAnalysis
             start.Environment["MPLBACKEND"] = "Agg";
             foreach (var arg in new[]
             {
-                "-u", script, "--action", "analyze", "--input", Path.GetFullPath(source),
-                "--outdir", folder
+                "-u", script, "--action", "analyze", "--input", Path.GetFullPath(request.InputPath),
+                "--outdir", folder, "--mode", request.Mode,
+                "--potential", request.Potential.ToString("G17", System.Globalization.CultureInfo.InvariantCulture),
+                "--ph", request.Ph.ToString("G17", System.Globalization.CultureInfo.InvariantCulture),
+                "--reference", request.Reference
             }) start.ArgumentList.Add(arg);
             using var process = new Process { StartInfo = start };
             try
