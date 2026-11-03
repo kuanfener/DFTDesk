@@ -323,10 +323,18 @@ internal sealed partial class CrystalShell : UserControl
 
     public SurfacePourbaixRequest ReadSurfaceRequest(string inputPath)
     {
-        var phMin = ParseSetting(Part<TextBox>("SurfacePhMin").Text, "pH 下限");
-        var phMax = ParseSetting(Part<TextBox>("SurfacePhMax").Text, "pH 上限");
-        var uMin = ParseSetting(Part<TextBox>("SurfaceUMin").Text, "电位下限");
-        var uMax = ParseSetting(Part<TextBox>("SurfaceUMax").Text, "电位上限");
+        static double ParseSurfaceSetting(string? text, string name)
+        {
+            if (string.IsNullOrWhiteSpace(text) ||
+                !double.TryParse(text.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var value) ||
+                !double.IsFinite(value))
+                throw new ArgumentException(name + "必须是有效数字（请使用英文小数点）。");
+            return value;
+        }
+        var phMin = ParseSurfaceSetting(Part<TextBox>("SurfacePhMin").Text, "pH 下限");
+        var phMax = ParseSurfaceSetting(Part<TextBox>("SurfacePhMax").Text, "pH 上限");
+        var uMin = ParseSurfaceSetting(Part<TextBox>("SurfaceUMin").Text, "电位下限");
+        var uMax = ParseSurfaceSetting(Part<TextBox>("SurfaceUMax").Text, "电位上限");
         if (phMin < 0 || phMax > 14 || phMin >= phMax)
             throw new ArgumentException("pH 必须在 0–14 之间，且上限大于下限。");
         if (uMin < -3 || uMax > 3 || uMin >= uMax)
