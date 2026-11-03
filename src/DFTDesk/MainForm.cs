@@ -121,7 +121,6 @@ internal sealed partial class MainForm : Form
         if (dialog.ShowDialog() == DialogResult.OK)
         {
             AddFiles(dialog.FileNames);
-            if (_paths.Count > 0) ShowConversionWheelAtCursor();
         }
     }
 
