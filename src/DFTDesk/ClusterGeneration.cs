@@ -12,7 +12,7 @@ namespace DFTDesk;
 
 internal sealed record ClusterRequest(
     bool Faceted, string Element, string Numbers, string Facets,
-    string LatticeConstant, string Vacuum, string OutputDirectory);
+    string LatticeConstant, string Vacuum, string OutputDirectory, bool Cartesian = true);
 
 internal sealed record ClusterResult(string Directory, string Log, int StructureCount);
 
@@ -86,10 +86,12 @@ internal static class ClusterGeneration
                     start.ArgumentList.Add("--a");
                     start.ArgumentList.Add(request.LatticeConstant.Trim());
                 }
-                start.ArgumentList.Add("--vacuum");
-                start.ArgumentList.Add(string.IsNullOrWhiteSpace(request.Vacuum)
-                    ? "12" : request.Vacuum.Trim());
+
             }
+            start.ArgumentList.Add("--vacuum");
+            start.ArgumentList.Add(string.IsNullOrWhiteSpace(request.Vacuum)
+                ? "12" : request.Vacuum.Trim());
+            if (!request.Cartesian) start.ArgumentList.Add("--direct");
             using var process = new Process { StartInfo = start };
             try
             {
