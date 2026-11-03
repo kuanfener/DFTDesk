@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <!-- WinForms SDK otherwise imports System.Drawing and System.Windows.Forms globally,
+         making the original Avalonia DonutMenu types (Point, Control, Pen) ambiguous. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+    <AssemblyName>DFTDesk</AssemblyName>
+    <ApplicationIcon>Assets\\Icons\\dftdesk.ico</ApplicationIcon>
+    <AssemblyTitle>DFTDesk</AssemblyTitle>
+    <Product>DFTDesk</Product>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <InformationalVersion>1.0.0</InformationalVersion>
+    <RootNamespace>DFTDesk</RootNamespace>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
+    <ApplicationVisualStyles>true</ApplicationVisualStyles>
+    <!-- Bundle managed and native dependencies into one self-contained Windows EXE.
+         The CI release stage excludes optional sidecar XML/PDB files. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <SelfContained>true</SelfContained>
+    <PublishTrimmed>false</PublishTrimmed>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <!-- Optional private QR images are read from the owner's local profile at build time.
+         They are never committed to the public source tree. -->
+    <DftDeskDonationDir Condition="'$(DftDeskDonationDir)' == '' and '$(LOCALAPPDATA)' != ''">$(LOCALAPPDATA)\DFTDesk\Donation</DftDeskDonationDir>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(DftDeskDonationDir)\wechat.png')">
+    <EmbeddedResource Include="$(DftDeskDonationDir)\wechat.png" LogicalName="DFTDesk.Donation.wechat.png" />
+  </ItemGroup>
+  <ItemGroup Condition="Exists('$(DftDeskDonationDir)\alipay.png')">
+    <EmbeddedResource Include="$(DftDeskDonationDir)\alipay.png" LogicalName="DFTDesk.Donation.alipay.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Avalonia.Desktop" />
+    <PackageReference Include="Avalonia.Win32.Interoperability" />
+    <PackageReference Include="Avalonia.Themes.Fluent" />
+    <PackageReference Include="Avalonia.Controls.ColorPicker" />
+    <PackageReference Include="SharpHook" />
+    <ProjectReference Include="../../third_party/Filee/Platform.Windows/Filee.Platform.Windows.csproj" />
+    <Compile Include="../../third_party/Filee/App/Services/Triggers/GestureDetector.cs" Link="GestureDetector.cs" />
+    <Compile Include="../../third_party/Filee/App/Services/Triggers/QueuedGlobalHook.cs" Link="QueuedGlobalHook.cs" />
+    <!-- Link the original Filee donut; don't fork its rendering, hit-testing or animations. -->
+    <Compile Include="../../third_party/Filee/App/Controls/DonutMenu*.cs" LinkBase="UpstreamDonut" />
+    <Compile Include="../../third_party/Filee/App/Controls/DonutGeometry.cs" Link="UpstreamDonut/DonutGeometry.cs" />
+    <Compile Include="../../third_party/Filee/App/Services/Motion.cs" Link="UpstreamDonut/Motion.cs" />
+    <Compile Include="../../third_party/Filee/App/Services/KeyNames.cs" Link="UpstreamDonut/KeyNames.cs" />
+    <!-- Filee's runtime palette math is the only source of truth for Soft and M3. -->
+    <Compile Include="../../third_party/Filee/App/Services/SoftPalette.cs" Link="UpstreamThemes/SoftPalette.cs" />
+    <Compile Include="../../third_party/Filee/App/Services/MaterialYouPalette.cs" Link="UpstreamThemes/MaterialYouPalette.cs" />
+    <Compile Include="../../third_party/Filee/App/Services/AppLanguages.cs" Link="UpstreamThemes/AppLanguages.cs" />
+    <!-- MIT-licensed upstream styles are reused; DFTDesk has its own icons and brand. -->
+    <AvaloniaResource Include="Assets/Icons/dftdesk.png" />
+    <AvaloniaResource Include="Assets/Icons/dftdesk.ico" />
+    <AvaloniaResource Include="../../third_party/Filee/App/Styles/Soft.axaml" Link="Styles/Soft.axaml" />
+    <AvaloniaResource Include="../../third_party/Filee/App/Styles/Icons.axaml" Link="Styles/Icons.axaml" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,484 @@
+<!-- DFTDesk's own shell, using a subset of MIT-licensed upstream styles. -->
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="DFTDesk.CrystalShell"
+             FontSize="14" FontFamily="{DynamicResource AppFontFamily}"
+             Foreground="{DynamicResource TextPrimaryBrush}">
+  <UserControl.Styles>
+    <Style Selector="Border#DropZone">
+      <Setter Property="Transitions">
+        <Transitions>
+          <BrushTransition Property="Background" Duration="0:0:0.2"/>
+          <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.3" Easing="BackEaseOut"/>
+        </Transitions>
+      </Setter>
+    </Style>
+    <Style Selector="Border#DropZone.over">
+      <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="RenderTransform" Value="scale(1.015)"/>
+    </Style>
+    <Style Selector="Button.choice-card">
+      <Setter Property="CornerRadius" Value="{DynamicResource SoftRadius}"/>
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SubtleBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1.5"/>
+    </Style>
+    <Style Selector="Button.choice-card.selected">
+      <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="Button.preset-pill">
+      <Setter Property="CornerRadius" Value="{DynamicResource SoftRadiusPill}"/>
+      <Setter Property="Padding" Value="10,6"/>
+      <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SubtleBorderBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="HorizontalAlignment" Value="Left"/>
+      <Setter Property="Margin" Value="0,0,0,6"/>
+    </Style>
+    <Style Selector="Button.preset-pill:pointerover">
+      <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+  </UserControl.Styles>
+  <Grid ColumnDefinitions="Auto,*">
+    <Border x:Name="NavPane" Classes="navpane" Width="230" ClipToBounds="True"
+            Background="{DynamicResource SurfaceBrush}"
+            BorderBrush="{DynamicResource SubtleBorderBrush}" BorderThickness="0,0,1,0">
+      <DockPanel x:Name="NavDock" Margin="14,18">
+        <StackPanel DockPanel.Dock="Top" Classes="navheader" Orientation="Horizontal" Spacing="10">
+          <Image Source="avares://DFTDesk/Assets/Icons/dftdesk.png" Width="30" Height="30"/>
+          <StackPanel x:Name="BrandText" VerticalAlignment="Center">
+            <TextBlock Text="DFTDesk" FontSize="18" FontWeight="Bold"/>
+            <TextBlock Classes="caption" Text="DFT 文件与数据工具"/>
+          </StackPanel>
+        </StackPanel>
+        <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="4,12,4,0">
+          <Grid ColumnDefinitions="*,6,*" x:Name="NavFooterButtons">
+            <Button Classes="navlink" Click="OnGitHub" HorizontalAlignment="Stretch">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                <PathIcon Data="{StaticResource Icon.GitHub}" Width="13" Height="13"/>
+                <TextBlock Text="DFTDesk"/>
+              </StackPanel>
+            </Button>
+            <Button Grid.Column="2" Classes="navlink" Click="OnSponsor" ToolTip.Tip="赞助 DFTDesk" HorizontalAlignment="Stretch">
+              <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="6">
+                <PathIcon Data="{StaticResource Icon.Heart}" Width="13" Height="13" Foreground="#D4537E"/>
+                <TextBlock Text="赞助"/>
+              </StackPanel>
+            </Button>
+          </Grid>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 1.0.0"/>
+        </StackPanel>
+        <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
+          <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
+            <PathIcon Data="{StaticResource Icon.GitHub}" Width="13" Height="13"/>
+          </Button>
+          <Button Classes="navlink" Click="OnSponsor" ToolTip.Tip="赞助 DFTDesk" Padding="8,6">
+            <PathIcon Data="{StaticResource Icon.Heart}" Width="13" Height="13" Foreground="#D4537E"/>
+          </Button>
+        </StackPanel>
+        <Button DockPanel.Dock="Bottom" Classes="icon navtoggle" Margin="0,8,0,0"
+                Click="OnToggleNavigation" ToolTip.Tip="收起或展开侧边栏">
+          <PathIcon Data="{StaticResource Icon.Sidebar}" Width="17" Height="17"/>
+        </Button>
+        <ListBox x:Name="Navigation" Classes="nav" SelectedIndex="0"
+                 SelectionChanged="OnNavigationChanged">
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Home}" Width="17" Height="17"/>
+              <TextBlock Text="首页" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Settings}" Width="17" Height="17"/>
+              <TextBlock Text="常规" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Keyboard}" Width="17" Height="17"/>
+              <TextBlock Text="快捷操作" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Donut}" Width="17" Height="17"/>
+              <TextBlock Text="环形工具栏" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Tune}" Width="17" Height="17"/>
+              <TextBlock Text="预设" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Folder}" Width="17" Height="17"/>
+              <TextBlock Text="自动转换文件夹" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Palette}" Width="17" Height="17"/>
+              <TextBlock Text="主题" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
+              <TextBlock Text="转换引擎" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+              <PathIcon Classes="navicon" Data="{StaticResource Icon.Info}" Width="17" Height="17"/>
+              <TextBlock Text="关于" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+        </ListBox>
+      </DockPanel>
+    </Border>
+
+    <Border Grid.Column="1" Background="{DynamicResource PageBrush}">
+      <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <ContentControl x:Name="PageHost" Classes="page"
+                        Margin="32,26,32,32" HorizontalAlignment="Stretch" MaxWidth="980">
+        <Grid x:Name="PageContainer">
+          <!-- Original Filee homepage structure: title, drop zone and history. -->
+          <StackPanel x:Name="HomePage" Spacing="22">
+            <TextBlock Classes="h1" Text="首页"/>
+            <Border x:Name="DropZone" DragDrop.AllowDrop="True" MinHeight="220"
+                    Cursor="Hand" ToolTip.Tip="双击选择结构文件"
+                    Background="{DynamicResource AccentFaintBrush}"
+                    BorderBrush="{DynamicResource AccentSoftBrush}"
+                    BorderThickness="2" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="24">
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                <Border Width="64" Height="64" CornerRadius="999" HorizontalAlignment="Center"
+                        Background="{DynamicResource AccentSoftBrush}">
+                  <PathIcon Data="{StaticResource Icon.Upload}" Width="28" Height="28"
+                            Foreground="{DynamicResource AccentStrongBrush}"/>
+                </Border>
+                <TextBlock Classes="h2" Text="将文件拖放到这里" HorizontalAlignment="Center"/>
+                <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460"
+                           Text="或在资源管理器中按住 Ctrl 拖动文件，环形工具栏会在光标处打开。"/>
+              </StackPanel>
+            </Border>
+            <StackPanel Spacing="10">
+              <DockPanel>
+                <Button DockPanel.Dock="Right" Classes="ghost" Click="OnClearHistory" Content="清除"/>
+                <TextBlock Classes="h2" VerticalAlignment="Center" Text="最近的转换"/>
+              </DockPanel>
+              <TextBlock x:Name="HistoryEmpty" Classes="muted" Text="转换后的文件会显示在这里。"/>
+              <StackPanel x:Name="HistoryRecords" Spacing="8"/>
+            </StackPanel>
+          </StackPanel>
+
+          <StackPanel x:Name="GeneralPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="常规"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="晶体结构文件"/>
+                <TextBlock Classes="caption" Text="支持 POSCAR、CONTCAR、VASP 与 CIF，可一次添加多个文件。"/>
+                <Button HorizontalAlignment="Left" Classes="accent" Content="添加文件" Click="OnBrowseFiles"/>
+                <ListBox x:Name="FileList" MinHeight="140" MaxHeight="310" SelectionMode="Multiple"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="移除选中" Click="OnRemoveSelected"/>
+                  <Button Content="清空列表" Click="OnClearFiles"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="输出目录"/>
+                <TextBlock Classes="caption" Text="留空则保存在源文件目录；自动避让已存在的同名文件。"/>
+                <DockPanel>
+                  <Button DockPanel.Dock="Right" Content="浏览…" Click="OnBrowseFolder" Margin="8,0,0,0"/>
+                  <TextBox x:Name="OutputDirectory" PlaceholderText="默认：源文件所在目录"/>
+                </DockPanel>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="批量转换状态"/>
+                <TextBlock x:Name="BatchStatus" Classes="muted" Text="已选择 0 个文件"/>
+                <ProgressBar x:Name="BatchProgress" Minimum="0" Maximum="100" Value="0"/>
+                <Button x:Name="CancelConversionButton" Content="取消转换" HorizontalAlignment="Left"
+                        Click="OnCancelConversion" IsEnabled="False"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <StackPanel x:Name="TriggersPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="快捷操作"/>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="资源管理器快捷操作"/>
+                <TextBlock Text="Ctrl + 左键拖动文件" FontWeight="SemiBold"/>
+                <TextBlock Classes="muted" Text="拖动 POSCAR / CONTCAR / CIF 文件时，在光标处呼出 DFTDesk 环形工具栏。"
+                           TextWrapping="Wrap"/>
+                <TextBlock Text="Ctrl + Alt + Space" FontWeight="SemiBold"/>
+                <TextBlock Classes="muted" Text="对资源管理器当前选中文件打开轮盘，支持批量转换。"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <StackPanel x:Name="ToolbarPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="环形工具栏"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="预览"/>
+                <TextBlock Classes="caption" Text="与弹出轮盘使用同一套环形工具栏组件。"/>
+                <Border Background="{DynamicResource AccentFaintBrush}"
+                        CornerRadius="{DynamicResource SoftRadius}" HorizontalAlignment="Left"
+                        Width="330" Height="330">
+                  <ContentControl x:Name="WheelPreviewHost" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Border>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                  <Button Content="导出 CIF" Click="OnExportCif" Classes="accent"/>
+                  <Button Content="导出 POSCAR" Click="OnExportPoscar"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <StackPanel x:Name="PresetsPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="预设"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="VESTA 风格导出"/>
+                <TextBlock Classes="muted" Text="POSCAR 晶格保留 10 位小数，原子坐标保留 8 位，列对齐。"/>
+                <CheckBox x:Name="CartesianOption" IsChecked="True" Content="POSCAR 输出 Cartesian 坐标（原生引擎默认；不勾选则为 Direct）"/>
+                <TextBlock Classes="caption" Text="坐标模式仅影响 POSCAR 输出，默认：原生引擎 Cartesian、ASE 引擎 Direct；两种模式可独立设置。CIF 输出不受影响。 "/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <StackPanel x:Name="WatchPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="自动转换文件夹"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="批量转换"/>
+                <TextBlock Classes="muted" Text="当前独立版支持从文件夹多选和拖入文件后批量转换。"/>
+                <Button HorizontalAlignment="Left" Click="OnBrowseFiles" Content="选择要转换的文件"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
+          <!-- Original Filee theme page dimensions and card sequence. -->
+          <StackPanel x:Name="ThemePage" IsVisible="False" Spacing="18">
+            <TextBlock Classes="h1" Text="主题"/>
+            <Grid ColumnDefinitions="*,20,340" MinWidth="700">
+              <StackPanel Grid.Column="0" Spacing="16">
+                <Border Classes="card">
+                  <StackPanel Spacing="12">
+                    <TextBlock Classes="label" Text="主题样式"/>
+                    <Grid ColumnDefinitions="*,12,*">
+                      <Button x:Name="SoftStyleButton" Classes="choice-card" Click="OnStyleSoft"
+                              HorizontalContentAlignment="Stretch" Padding="14,10" MinHeight="78">
+                        <StackPanel Spacing="6">
+                          <TextBlock FontWeight="SemiBold" Text="DFTDesk Soft"/>
+                          <TextBlock Classes="caption" TextWrapping="Wrap" Text="DFTDesk 的圆角卡片与柔和配色。"/>
+                        </StackPanel>
+                      </Button>
+                      <Button Grid.Column="2" x:Name="MaterialStyleButton" Classes="choice-card" Click="OnStyleMaterial"
+                              HorizontalContentAlignment="Stretch" Padding="14,10" MinHeight="78">
+                        <StackPanel Spacing="6">
+                          <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock FontWeight="SemiBold" Text="Material You"/>
+                            <Border Background="{DynamicResource AccentBrush}" CornerRadius="999" Padding="6,1">
+                              <TextBlock Text="M3" Foreground="White" FontSize="10" FontWeight="Bold"/>
+                            </Border>
+                          </StackPanel>
+                          <TextBlock Classes="caption" TextWrapping="Wrap" Text="Google Material 3 设计，具有动态色调表面和自适应强调色。"/>
+                        </StackPanel>
+                      </Button>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="8">
+                    <TextBlock Classes="label" Text="外观"/>
+                    <ComboBox x:Name="AppearanceMode" Width="220" HorizontalAlignment="Left" SelectionChanged="OnAppearanceChanged">
+                      <ComboBoxItem Content="跟随系统"/>
+                      <ComboBoxItem Content="浅色"/>
+                      <ComboBoxItem Content="深色"/>
+                    </ComboBox>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="16">
+                    <TextBlock Classes="label" Text="强调色"/>
+                    <TextBlock Classes="caption" Text="鲜明色板" FontWeight="SemiBold"/>
+                    <WrapPanel x:Name="AccentSwatches" HorizontalAlignment="Left"/>
+                    <StackPanel Orientation="Horizontal" Spacing="10">
+                      <TextBlock Classes="label" Text="自定义" VerticalAlignment="Center"/>
+                      <ColorPicker x:Name="AccentPicker" Color="#7F77DD"
+                                   IsAlphaEnabled="False" MinHeight="40" MinWidth="90"
+                                   IsAlphaVisible="False" IsColorSpectrumVisible="True"
+                                   IsColorPaletteVisible="False" IsColorComponentsVisible="False"
+                                   IsColorModelVisible="False" IsColorPreviewVisible="True"
+                                   FlowDirection="LeftToRight"/>
+                      <TextBox x:Name="AccentHex" Width="120" PlaceholderText="#7F77DD" LostFocus="OnAccentHexCommit"/>
+                    </StackPanel>
+                    <TextBlock Classes="caption" Text="柔和预设" FontWeight="SemiBold"/>
+                    <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto,Auto">
+                      <Button Grid.Row="0" Grid.Column="0" Classes="preset-pill" Click="OnPresetMono">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#1F1E1D"/><TextBlock Text="黑白单色"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="0" Grid.Column="1" Classes="preset-pill" Click="OnPresetLavender">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#7F77DD"/><TextBlock Text="薰衣草"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="1" Grid.Column="0" Classes="preset-pill" Click="OnPresetPeach">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#E07A70"/><TextBlock Text="桃粉"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="1" Grid.Column="1" Classes="preset-pill" Click="OnPresetMint">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#529B7D"/><TextBlock Text="薄荷"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="2" Grid.Column="0" Classes="preset-pill" Click="OnPresetRose">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#E86483"/><TextBlock Text="玫瑰"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="2" Grid.Column="1" Classes="preset-pill" Click="OnPresetSky">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#5B8BE3"/><TextBlock Text="天蓝"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="3" Grid.Column="0" Classes="preset-pill" Click="OnPresetAmber">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#CB852A"/><TextBlock Text="琥珀"/></StackPanel>
+                      </Button>
+                      <Button Grid.Row="3" Grid.Column="1" Classes="preset-pill" Click="OnPresetSage">
+                        <StackPanel Orientation="Horizontal" Spacing="7"><Ellipse Width="15" Height="15" Fill="#5A8E51"/><TextBlock Text="鼠尾草"/></StackPanel>
+                      </Button>
+                    </Grid>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="16">
+                    <DockPanel>
+                      <TextBlock x:Name="CornerValue" DockPanel.Dock="Right" Text="16" FontWeight="SemiBold"/>
+                      <TextBlock Classes="label" Text="圆角"/>
+                    </DockPanel>
+                    <Slider x:Name="CornerSlider" Minimum="0" Maximum="28" Value="16" ValueChanged="OnCornerChanged"/>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="16">
+                    <DockPanel>
+                      <TextBlock x:Name="OpacityValue" DockPanel.Dock="Right" Text="96%" FontWeight="SemiBold"/>
+                      <TextBlock Classes="label" Text="环形工具栏不透明度"/>
+                    </DockPanel>
+                    <Slider x:Name="OpacitySlider" Minimum="30" Maximum="100" Value="96" ValueChanged="OnOpacityChanged"/>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="6">
+                    <CheckBox x:Name="ReduceMotionOption" Content="减少动画"/>
+                    <TextBlock Classes="caption" Text="适合配置较低的电脑。关闭过渡效果和圆环的弹跳效果。" Margin="28,0,0,0"
+                               TextWrapping="Wrap"/>
+                  </StackPanel>
+                </Border>
+                <Border Classes="card">
+                  <StackPanel Spacing="12">
+                    <TextBlock Classes="label" Text="窗口大小"/>
+                    <StackPanel Orientation="Horizontal" Spacing="12">
+                      <Button Content="−" Click="OnZoomOut" Padding="6,2"/>
+                      <TextBlock x:Name="ZoomValue" Text="100%" VerticalAlignment="Center" FontWeight="SemiBold"/>
+                      <Button Content="+" Click="OnZoomIn" Padding="6,2"/>
+                      <Button Content="重置" Click="OnZoomReset"/>
+                    </StackPanel>
+                    <TextBlock Classes="caption" Text="放大或缩小 DFTDesk 窗口中的所有内容。"/>
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+              <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
+                <StackPanel Spacing="12">
+                  <TextBlock Classes="label" Text="预览"/>
+                  <Border x:Name="ThemePreviewBackdrop" Height="302" CornerRadius="{DynamicResource SoftRadius}"
+                          Background="{DynamicResource AccentSoftBrush}">
+                    <ContentControl x:Name="ThemePreviewHost" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
+                    <Button Classes="accent" Content="保存" Click="OnThemeSave"/>
+                    <Button Content="取消" Click="OnThemeCancel"/>
+                  </StackPanel>
+                  <ToggleSwitch x:Name="ThemePreviewToggle" Content="关" HorizontalAlignment="Center"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+          </StackPanel>
+
+          <StackPanel x:Name="EnginesPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="转换引擎"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="晶体格式转换"/>
+                <TextBlock Text="POSCAR / CONTCAR ⇄ CIF" FontWeight="SemiBold"/>
+                <TextBlock Classes="label" Text="当前转换引擎"/>
+                <ComboBox x:Name="CrystalEngineChoice" SelectedIndex="0" Width="340"
+                          HorizontalAlignment="Left" SelectionChanged="OnEngineSelectionChanged">
+                  <ComboBoxItem Content="DFTDesk 原生引擎（默认，无需 Python）"/>
+                  <ComboBoxItem Content="ASE — Atomic Simulation Environment"/>
+                </ComboBox>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="原生引擎保留 VESTA 风格定点精度；ASE 引擎使用 ASE 自身的读写规则，坐标精度和原子排序可能不同。选择后所有批量转换和轮盘转换均使用该引擎。"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="ASE（可选安装）"/>
+                <TextBlock Classes="muted" TextWrapping="Wrap"
+                           Text="ASE 不随 DFTDesk.exe 打包。请先在自己的 Python 环境安装：python -m pip install ase，然后填写该环境的 python.exe 路径。"/>
+                <TextBlock Classes="label" Text="Python 可执行文件"/>
+                <TextBox x:Name="AsePythonExecutable" Text="python"
+                         PlaceholderText="python 或 C:\Python311\python.exe"
+                         LostFocus="OnAsePathLostFocus"/>
+                <Button Classes="accent" HorizontalAlignment="Left" Content="检测 ASE" Click="OnCheckAse"/>
+                <TextBlock x:Name="AseHealthText" Classes="caption" TextWrapping="Wrap"
+                           Text="尚未检测 ASE 环境。选择 ASE 引擎时，转换前会自动检查。"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="ASE 使用 LGPL-2.1-or-later 许可，版权归 ASE 贡献者；DFTDesk 仅调用独立 Python 环境，不捆绑 ASE 库。"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+          <StackPanel x:Name="AboutPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="关于"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="DFTDesk"/>
+                <TextBlock Text="DFT 计算文件与数据处理工作台 · POSCAR / CONTCAR ⇄ CIF"/>
+                <TextBlock Classes="caption" Text="DFTDesk 使用 MIT 许可；部分界面、轮盘及 Windows 文件组件源自上游开源项目，许可与原作者版权信息请见随附 LICENSE.txt 和源码中的第三方声明。"/>
+                <TextBlock Classes="h2" Text="第三方开源组件"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="开源界面及轮盘源项目：Filee (KnifeLemon) — MIT License；原作者版权保留。"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="ASE — Atomic Simulation Environment（可选的外部 Python 引擎）— LGPL-2.1-or-later；版权归 ASE contributors。ASE 不包含在 DFTDesk 的下载包中。"/>
+                <Button Content="ASE 官方网站" HorizontalAlignment="Left" Click="OnOpenAseWebsite"/>
+                <Button Content="DFTDesk" HorizontalAlignment="Left" Click="OnGitHub"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
+        </ContentControl>
+      </ScrollViewer>
+    </Border>
+  </Grid>
+</UserControl>
