@@ -63,12 +63,7 @@ internal sealed partial class MainForm
             RefreshFiles();
         };
         _shell.FilesDropped += paths => AddFiles(paths, replace: true);
-        _shell.HomeFilesDropped += paths =>
-        {
-            AddFiles(paths, replace: true);
-            if (_paths.Count > 0)
-                BeginInvoke(new Action(ShowConversionWheelAtCursor));
-        };
+        _shell.HomeFilesDropped += paths => AddFiles(paths, replace: true);
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.ClusterBrowseRequested += BrowseClusterFolder;
