@@ -84,7 +84,7 @@ def render_maps(catalysts, ph_values, she_values, png_path, svg_path):
             center = where[len(where) // 2]
             ax.text(float(ph[tuple(center)]), float(she[tuple(center)]),
                     label, fontsize=10, ha="center", va="center",
-                    color="#20242c", fontweight="semibold",
+                    color="#20242c", fontweight="bold",
                     bbox={"boxstyle": "round,pad=0.16", "facecolor": "white",
                           "edgecolor": "none", "alpha": 0.75})
         ax.set(title=catalyst["material"], xlabel="pH",

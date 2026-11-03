@@ -45,7 +45,7 @@ class SurfacePourbaixTests(unittest.TestCase):
             result = load_workbook(output["Xlsx"], read_only=True)
             try:
                 self.assertIn("SurfacePourbaixGrid", result.sheetnames)
-                self.assertEqual(result["Adsorbates"].max_row, 3)
+                self.assertEqual(sum(1 for _ in result["Adsorbates"].iter_rows(values_only=True)), 3)
             finally:
                 result.close()
 
