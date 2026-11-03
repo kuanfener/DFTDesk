@@ -44,6 +44,9 @@ internal sealed partial class CrystalShell : UserControl
     private bool _reduced;
     private bool _collapsed;
     private bool _initializing = true;
+    // Keep separate user choices; only the native engine defaults to Cartesian.
+    private bool _nativeCartesian = true;
+    private bool _aseCartesian = false;
 
     public event Action? BrowseFilesRequested;
     public event Action? BrowseFolderRequested;
@@ -145,8 +148,15 @@ internal sealed partial class CrystalShell : UserControl
         };
         Part<CheckBox>("CartesianOption").PropertyChanged += (_, e) =>
         {
-            if (e.Property == ToggleButton.IsCheckedProperty)
-                CartesianChanged?.Invoke(Part<CheckBox>("CartesianOption").IsChecked == true);
+            if (e.Property != ToggleButton.IsCheckedProperty) return;
+            var cartesian = Part<CheckBox>("CartesianOption").IsChecked == true;
+            if (!_initializing)
+            {
+                if (SelectedEngine == CrystalEngine.Native) _nativeCartesian = cartesian;
+                else _aseCartesian = cartesian;
+                SaveEngineSettings();
+            }
+            CartesianChanged?.Invoke(cartesian);
         };
         Part<CheckBox>("ReduceMotionOption").PropertyChanged += (_, e) =>
         {
@@ -326,21 +336,33 @@ internal sealed partial class CrystalShell : UserControl
     {
         public string Name { get; set; } = "Native";
         public string PythonExecutable { get; set; } = "python";
+        // Defaults also apply when migrating an older engine.json without these fields.
+        public bool NativeCartesian { get; set; } = true;
+        public bool AseCartesian { get; set; } = false;
     }
 
     private void LoadEngineSettings()
     {
         try
         {
-            if (!File.Exists(EngineSettingsFile)) return;
-            var settings = JsonSerializer.Deserialize<EngineOptions>(File.ReadAllText(EngineSettingsFile));
-            if (settings is null) return;
-            Part<ComboBox>("CrystalEngineChoice").SelectedIndex =
-                settings.Name.Equals("ASE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
-            Part<TextBox>("AsePythonExecutable").Text =
-                string.IsNullOrWhiteSpace(settings.PythonExecutable) ? "python" : settings.PythonExecutable;
+            if (File.Exists(EngineSettingsFile))
+            {
+                var settings = JsonSerializer.Deserialize<EngineOptions>(File.ReadAllText(EngineSettingsFile));
+                if (settings is not null)
+                {
+                    _nativeCartesian = settings.NativeCartesian;
+                    _aseCartesian = settings.AseCartesian;
+                    Part<ComboBox>("CrystalEngineChoice").SelectedIndex =
+                        settings.Name.Equals("ASE", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+                    Part<TextBox>("AsePythonExecutable").Text =
+                        string.IsNullOrWhiteSpace(settings.PythonExecutable) ? "python" : settings.PythonExecutable;
+                }
+            }
         }
         catch (Exception) { /* A malformed optional setting falls back to the native engine. */ }
+
+        Part<CheckBox>("CartesianOption").IsChecked =
+            SelectedEngine == CrystalEngine.Native ? _nativeCartesian : _aseCartesian;
     }
 
     private void SaveEngineSettings()
@@ -352,6 +374,8 @@ internal sealed partial class CrystalShell : UserControl
             {
                 Name = SelectedEngine == CrystalEngine.Ase ? "ASE" : "Native",
                 PythonExecutable = PythonExecutablePath,
+                NativeCartesian = _nativeCartesian,
+                AseCartesian = _aseCartesian,
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (IOException) { }
@@ -361,6 +385,8 @@ internal sealed partial class CrystalShell : UserControl
     private void OnEngineSelectionChanged(object? sender, SelectionChangedEventArgs e)
     {
         if (_initializing) return;
+        Part<CheckBox>("CartesianOption").IsChecked =
+            SelectedEngine == CrystalEngine.Native ? _nativeCartesian : _aseCartesian;
         SaveEngineSettings();
         SetAseStatus(SelectedEngine == CrystalEngine.Native
             ? "当前使用无需 Python 的原生转换引擎。"
