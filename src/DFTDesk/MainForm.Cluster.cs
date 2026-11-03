@@ -16,7 +16,7 @@ internal sealed partial class MainForm
             Description = "选择保存 POSCAR 和 CIF 团簇文件的根目录"
         };
         if (dialog.ShowDialog() == DialogResult.OK)
-            _shell.ClusterOutputDirectory = dialog.SelectedPath;
+            _shell.ClusterOutputPath = dialog.SelectedPath;
     }
 
     private async Task GenerateClusterAsync()
