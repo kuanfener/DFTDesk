@@ -43,9 +43,6 @@
       <Setter Property="Background" Value="{DynamicResource SurfaceAltBrush}"/>
       <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
     </Style>
-    <Style Selector="ListBox#Navigation ListBoxItem">
-      <Setter Property="Padding" Value="12,9"/>
-    </Style>
   </UserControl.Styles>
   <Grid ColumnDefinitions="Auto,*">
     <Border x:Name="NavPane" Classes="navpane" Width="230" ClipToBounds="True"
@@ -56,7 +53,7 @@
           <Image Source="avares://DFTDesk/Assets/Icons/filee.png" Width="30" Height="30"/>
           <StackPanel x:Name="BrandText" VerticalAlignment="Center">
             <TextBlock Text="DFTDesk" FontSize="18" FontWeight="Bold"/>
-            <TextBlock Classes="caption" Text="DFT 计算文件与数据处理工作台。"/>
+            <TextBlock Classes="caption" Text="DFT 文件与数据工具"/>
           </StackPanel>
         </StackPanel>
         <StackPanel DockPanel.Dock="Bottom" Spacing="8" Margin="4,12,4,0">
@@ -91,58 +88,76 @@
         <ListBox x:Name="Navigation" Classes="nav" SelectedIndex="0"
                  SelectionChanged="OnNavigationChanged">
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Home}" Width="17" Height="17"/>
               <TextBlock Text="首页" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Settings}" Width="17" Height="17"/>
               <TextBlock Text="常规" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Keyboard}" Width="17" Height="17"/>
               <TextBlock Text="快捷操作" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Donut}" Width="17" Height="17"/>
               <TextBlock Text="环形工具栏" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Tune}" Width="17" Height="17"/>
               <TextBlock Text="预设" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Folder}" Width="17" Height="17"/>
               <TextBlock Text="自动转换文件夹" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Palette}" Width="17" Height="17"/>
               <TextBlock Text="主题" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
               <TextBlock Text="转换引擎" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
           <ListBoxItem>
-            <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
               <PathIcon Classes="navicon" Data="{StaticResource Icon.Info}" Width="17" Height="17"/>
               <TextBlock Text="关于" VerticalAlignment="Center"/>
-            </StackPanel>
+              </StackPanel>
+            </Border>
           </ListBoxItem>
         </ListBox>
       </DockPanel>
