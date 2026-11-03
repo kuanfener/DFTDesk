@@ -66,10 +66,11 @@ internal sealed partial class MainForm : Form
         Shown += (_, _) => _global.Start();
         FormClosing += (_, e) =>
         {
-            if (!_busy && !_clusterBusy && !_dosBusy) return;
+            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy) return;
             _cancellation?.Cancel();
             _clusterCancellation?.Cancel();
             _dosCancellation?.Cancel();
+            _cohpCancellation?.Cancel();
             e.Cancel = true;
             Log("正在取消任务，请等待任务完成后再关闭窗口。");
         };
@@ -78,6 +79,8 @@ internal sealed partial class MainForm : Form
             _cancellation?.Cancel();
             _clusterCancellation?.Cancel();
             _dosCancellation?.Cancel();
+            _cohpCancellation?.Cancel();
+            DisposeCohpResult();
             DisposeDosResult();
             _dragGraceTimer.Dispose();
             _global.Dispose();

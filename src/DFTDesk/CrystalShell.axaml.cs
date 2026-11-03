@@ -66,6 +66,11 @@ internal sealed partial class CrystalShell : UserControl
     public event Action? DosAnalyzeRequested;
     public event Action? DosExportRequested;
     public event Action? DosCancelRequested;
+    public event Action? CohpEngineCheckRequested;
+    public event Action? CohpBrowseRequested;
+    public event Action? CohpAnalyzeRequested;
+    public event Action? CohpExportRequested;
+    public event Action? CohpCancelRequested;
     public event Action? ClusterBrowseRequested;
     public event Action? ClusterGenerateRequested;
     public event Action? ClusterCancelRequested;
@@ -78,7 +83,7 @@ internal sealed partial class CrystalShell : UserControl
         [
             Part<Control>("HomePage"), Part<Control>("ConversionPage"),
             Part<Control>("ClusterPage"), Part<Control>("DosPage"),
-            Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
+            Part<Control>("CohpPage"), Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
             Part<Control>("AboutPage")
         ];
         var pageContainer = Part<Grid>("PageContainer");
@@ -269,6 +274,102 @@ internal sealed partial class CrystalShell : UserControl
         SetDosExportReady(false);
     }
 
+
+    public void SetCohpEngineStatus(string text) =>
+        Part<TextBlock>("CohpEngineHealthText").Text = text;
+
+    public void SetCohpInput(string path)
+    {
+        Part<TextBlock>("CohpInputFile").Text = path;
+        Part<TextBlock>("CohpMetadataStatus").Text = "正在读取 LOBSTER 键列表…";
+        Part<ListBox>("CohpBondList").ItemsSource = Array.Empty<CohpBond>();
+        ClearCohpPreview();
+    }
+
+    public void SetCohpMetadata(CohpData info)
+    {
+        var list = Part<ListBox>("CohpBondList");
+        list.ItemsSource = info.Bonds;
+        if (info.Bonds.Length > 0)
+            list.SelectedItems?.Add(info.Bonds[0]);
+        Part<TextBlock>("CohpMetadataStatus").Text =
+            $"识别 {info.Bonds.Length} 个键；" +
+            (info.SpinPolarized ? "自旋极化；" : "非自旋极化；") +
+            (info.HasCurves
+                ? $"COHP 能量范围 [{info.EnergyMin:0.00}, {info.EnergyMax:0.00}] eV（相对 Ef）。"
+                : "目前仅有 ICOHP(Ef) 键列表，绘图需要同目录的 COHPCAR。");
+    }
+
+    public CohpRequest ReadCohpRequest(string input)
+    {
+        static double Parse(string? value, string label)
+        {
+            if (!double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var number) ||
+                !double.IsFinite(number))
+                throw new ArgumentException($"{label}需要有效数字，例如 -8 或 4。");
+            return number;
+        }
+        var labels = Part<ListBox>("CohpBondList").SelectedItems?
+            .OfType<CohpBond>().Select(bond => bond.Label).ToArray() ?? [];
+        if (labels.Length == 0)
+            throw new ArgumentException("请至少选择一个键。");
+        var spin = Part<ComboBox>("CohpSpinMode").SelectedIndex switch
+        {
+            1 => "up",
+            2 => "down",
+            _ => "both",
+        };
+        return new CohpRequest(input, labels, spin,
+            Parse(Part<TextBox>("CohpEnergyMin").Text, "能量下限"),
+            Parse(Part<TextBox>("CohpEnergyMax").Text, "能量上限"),
+            Part<CheckBox>("CohpNegative").IsChecked == true);
+    }
+
+    public void SetCohpBusy(bool busy)
+    {
+        Part<Button>("CohpAnalyzeButton").IsEnabled = !busy;
+        Part<Button>("CohpCancelButton").IsEnabled = busy;
+        if (busy) Part<Button>("CohpExportButton").IsEnabled = false;
+    }
+
+    public void SetCohpExportReady(bool ready) =>
+        Part<Button>("CohpExportButton").IsEnabled = ready;
+
+    public void SetCohpStatus(string status) =>
+        Part<TextBlock>("CohpStatus").Text = status;
+
+    public void SetCohpPreview(CohpData result)
+    {
+        ClearCohpPreview();
+        var image = Part<Image>("CohpPlotImage");
+        if (result.HasCurves)
+        {
+            image.Source = new Bitmap(result.Png);
+            image.IsVisible = true;
+            Part<TextBlock>("CohpPlotPlaceholder").IsVisible = false;
+        }
+        else
+        {
+            Part<TextBlock>("CohpPlotPlaceholder").Text =
+                "仅有 ICOHPLIST：已生成 ICOHP(Ef) 表格，无法生成 COHP 曲线。";
+        }
+        Part<TextBox>("CohpSummary").Text = result.Summary;
+    }
+
+    public void ClearCohpPreview()
+    {
+        var image = Part<Image>("CohpPlotImage");
+        var old = image.Source as Bitmap;
+        image.Source = null;
+        old?.Dispose();
+        image.IsVisible = false;
+        var placeholder = Part<TextBlock>("CohpPlotPlaceholder");
+        placeholder.IsVisible = true;
+        placeholder.Text = "分析完成后在此显示 COHP/ICOHP 曲线；仅 ICOHPLIST 时提供数据表。";
+        Part<TextBox>("CohpSummary").Text = "请选择键、自旋和能量窗口后点击分析。";
+        SetCohpExportReady(false);
+    }
+
     public ClusterRequest ReadClusterRequest() => new(
         Faceted: Part<ComboBox>("ClusterMode").SelectedIndex == 1,
         Element: Part<TextBox>("ClusterElement").Text ?? "",
@@ -446,10 +547,15 @@ internal sealed partial class CrystalShell : UserControl
     }
 
     private void OnCheckDosEngine(object? sender, RoutedEventArgs e) => DosEngineCheckRequested?.Invoke();
+    private void OnCheckCohpEngine(object? sender, RoutedEventArgs e) => CohpEngineCheckRequested?.Invoke();
     private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
     private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
     private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
     private void OnDosCancel(object? sender, RoutedEventArgs e) => DosCancelRequested?.Invoke();
+    private void OnCohpBrowse(object? sender, RoutedEventArgs e) => CohpBrowseRequested?.Invoke();
+    private void OnCohpAnalyze(object? sender, RoutedEventArgs e) => CohpAnalyzeRequested?.Invoke();
+    private void OnCohpExport(object? sender, RoutedEventArgs e) => CohpExportRequested?.Invoke();
+    private void OnCohpCancel(object? sender, RoutedEventArgs e) => CohpCancelRequested?.Invoke();
 
     private void OnCheckAse(object? sender, RoutedEventArgs e)
     {
@@ -559,7 +665,7 @@ internal sealed partial class CrystalShell : UserControl
     private void OnGoDos(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 3;
     private void OnGoEngine(object? sender, RoutedEventArgs e) =>
-        Part<ListBox>("Navigation").SelectedIndex = 5;
+        Part<ListBox>("Navigation").SelectedIndex = 6;
 
     private void OnClusterModeChanged(object? sender, SelectionChangedEventArgs e)
     {

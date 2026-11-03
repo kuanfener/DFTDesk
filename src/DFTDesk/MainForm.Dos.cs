@@ -108,7 +108,7 @@ internal sealed partial class MainForm
             _shell.SetDosPreview(result);
             _dosResult = result;
             _shell.SetDosExportReady(true);
-            _shell.SetDosStatus("分析完成，已生成 DOS 曲线、积分和 d 带中心；可导出 CSV / PNG / SVG。");
+            _shell.SetDosStatus("分析完成，已生成 DOS 曲线、积分和 d 带中心；可导出 CSV / Excel / Origin DAT / PNG / SVG。");
         }
         catch (OperationCanceledException)
         {
@@ -137,8 +137,8 @@ internal sealed partial class MainForm
         };
         if (dialog.ShowDialog() != DialogResult.OK) return;
 
-        var sources = new[] { _dosResult.Csv, _dosResult.Png, _dosResult.Svg };
-        var extensions = new[] { ".csv", ".png", ".svg" };
+        var sources = new[] { _dosResult.Csv, _dosResult.Xlsx, _dosResult.Dat, _dosResult.Png, _dosResult.Svg };
+        var extensions = new[] { ".csv", ".xlsx", ".dat", ".png", ".svg" };
         var label = _dosInputPath is null ? "DOS" : Path.GetFileNameWithoutExtension(_dosInputPath);
         var prefix = "DFTDesk_" + label + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         string[] destinations;

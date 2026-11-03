@@ -48,10 +48,11 @@ internal sealed partial class MainForm
         };
         _avaloniaWindow.Closing += (_, e) =>
         {
-            if (!_busy && !_clusterBusy && !_dosBusy) return;
+            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy) return;
             _cancellation?.Cancel();
             _clusterCancellation?.Cancel();
             _dosCancellation?.Cancel();
+            _cohpCancellation?.Cancel();
             e.Cancel = true;
             Log("正在取消任务，请等待运行结束后关闭窗口。");
         };
@@ -81,6 +82,11 @@ internal sealed partial class MainForm
         _shell.DosAnalyzeRequested += () => _ = AnalyzeDosAsync();
         _shell.DosExportRequested += ExportDos;
         _shell.DosCancelRequested += () => _dosCancellation?.Cancel();
+        _shell.CohpEngineCheckRequested += () => _ = CheckCohpEngineAsync();
+        _shell.CohpBrowseRequested += BrowseCohpFile;
+        _shell.CohpAnalyzeRequested += () => _ = AnalyzeCohpAsync();
+        _shell.CohpExportRequested += ExportCohp;
+        _shell.CohpCancelRequested += () => _cohpCancellation?.Cancel();
         _shell.ClusterBrowseRequested += BrowseClusterFolder;
         _shell.ClusterGenerateRequested += () => _ = GenerateClusterAsync();
         _shell.ClusterCancelRequested += () => _clusterCancellation?.Cancel();

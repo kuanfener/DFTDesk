@@ -206,6 +206,7 @@ def _analyze(data, args):
     outdir = Path(args.outdir)
     outdir.mkdir(parents=True, exist_ok=True)
     png, svg, csv_path = outdir / "dos.png", outdir / "dos.svg", outdir / "dos.csv"
+    xlsx_path, dat_path = outdir / "dos.xlsx", outdir / "dos_origin.dat"
     fig, ax = plt.subplots(figsize=(10, 5.5), dpi=150, layout="constrained")
     for label, values, spin, color, linestyle in curves:
         sign = -1 if spin == "down" else 1
@@ -233,6 +234,12 @@ def _analyze(data, args):
         for index, value in enumerate(relative):
             writer.writerow([float(value)] + [float(values[index]) for _, values in columns])
 
+    with dat_path.open("w", newline="", encoding="utf-8-sig") as handle:
+        writer = csv.writer(handle, delimiter="\t")
+        writer.writerow(["Energy_minus_Ef_eV"] + [name for name, _ in columns])
+        for index, value in enumerate(relative):
+            writer.writerow([float(value)] + [float(values[index]) for _, values in columns])
+
     summary = [f"E_F = {efermi:.4f} eV；积分能窗 [{lower:.3f}, {upper:.3f}] eV（相对 E_F）",
                "下自旋在图中镜像为负值，CSV 保留非负的原始 DOS。"]
     for element in elements:
@@ -254,8 +261,22 @@ def _analyze(data, args):
             integral, moment = _window_integral(relative, values, lower, upper)
             center = f"{moment / integral:.4f} eV" if abs(integral) > 1e-12 else "无有效 d 态"
             summary.append(f"{element} d 带中心 ({spin})：{center}；d-DOS 积分：{integral:.4f}")
+    from openpyxl import Workbook
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "DOS"
+    sheet.append(["Energy-Ef (eV)"] + [name for name, _ in columns])
+    for index, value in enumerate(relative):
+        sheet.append([float(value)] + [float(values[index]) for _, values in columns])
+    sheet.freeze_panes = "B2"
+    sheet.auto_filter.ref = sheet.dimensions
+    details = workbook.create_sheet("Summary")
+    for line in summary:
+        details.append([line])
+    workbook.save(xlsx_path)
     result = _metadata(data)
     result.update({"Png": str(png), "Svg": str(svg), "Csv": str(csv_path),
+                   "Xlsx": str(xlsx_path), "Dat": str(dat_path),
                    "Summary": "\n".join(summary)})
     return result
 
@@ -274,7 +295,8 @@ def main():
     if args.action == "check":
         from importlib.metadata import version
         import matplotlib
-        print(json.dumps({"Version": f"pymatgen {version('pymatgen')} · NumPy {np.__version__} · Matplotlib {matplotlib.__version__}"}))
+        import openpyxl
+        print(json.dumps({"Version": f"pymatgen {version('pymatgen')} · NumPy {np.__version__} · Matplotlib {matplotlib.__version__} · openpyxl {openpyxl.__version__}"}))
         return
     if not args.input:
         parser.error("--input is required")

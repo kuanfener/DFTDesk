@@ -24,7 +24,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install ASE and DOS analysis dependencies for integration testing
-        run: python -m pip install ase pymatgen numpy matplotlib
+        run: python -m pip install ase pymatgen numpy matplotlib openpyxl
 
       - name: Test DFTDesk ASE conversion and file safety
         env:
@@ -34,7 +34,10 @@ jobs:
       - name: Test VASP DOSCAR parsing, spin PDOS and image/CSV export
         run: python -m unittest discover -s tests -p test_dos_analyzer.py
 
-      - name: Build DFTDesk DOS analysis UI
+      - name: Test LOBSTER COHP and ICOHP parsing, Excel/Origin/image export
+        run: python -m unittest discover -s tests -p test_cohp_analyzer.py
+
+      - name: Build DFTDesk 2.0.0 analysis UI
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

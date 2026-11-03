@@ -27,6 +27,8 @@ internal sealed class DosData
     public string Png { get; set; } = "";
     public string Svg { get; set; } = "";
     public string Csv { get; set; } = "";
+    public string Xlsx { get; set; } = "";
+    public string Dat { get; set; } = "";
     public string Summary { get; set; } = "";
     public string WorkingDirectory { get; set; } = "";
 }
@@ -82,7 +84,7 @@ internal static class DosAnalysis
                  "--outdir", directory],
                 token, TimeSpan.FromMinutes(5));
             data.WorkingDirectory = directory;
-            foreach (var file in new[] { data.Png, data.Csv, data.Svg })
+            foreach (var file in new[] { data.Png, data.Csv, data.Svg, data.Xlsx, data.Dat })
                 if (string.IsNullOrWhiteSpace(file) || !File.Exists(file) || new FileInfo(file).Length == 0)
                     throw new IOException("DOS 分析未生成完整的 CSV / PNG / SVG 文件。");
             return data;
@@ -156,7 +158,7 @@ internal static class DosAnalysis
                 if (detail.Contains("ModuleNotFoundError", StringComparison.OrdinalIgnoreCase) ||
                     detail.Contains("No module named", StringComparison.OrdinalIgnoreCase))
                     throw new InvalidOperationException(
-                        "DOS 引擎缺少 Python 依赖。请在同一环境执行 python -m pip install pymatgen numpy matplotlib。\n" + detail);
+                        "DOS 引擎缺少 Python 依赖。请在同一环境执行 python -m pip install pymatgen numpy matplotlib openpyxl。\n" + detail);
                 throw new InvalidOperationException("DOS 分析失败：" + detail);
             }
             try

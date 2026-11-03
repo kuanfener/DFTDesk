@@ -52,7 +52,7 @@ class DosAnalyzerTests(unittest.TestCase):
                 "--emin", "-2", "--emax", "1",
                 "--outdir", str(folder / "out"),
             )
-            for key in ("Png", "Svg", "Csv"):
+            for key in ("Png", "Svg", "Csv", "Xlsx", "Dat"):
                 self.assertGreater(Path(result[key]).stat().st_size, 100)
             self.assertIn("Fe d 带中心 (up)：-0.5000 eV", result["Summary"])
             with Path(result["Csv"]).open(encoding="utf-8-sig", newline="") as handle:
@@ -60,6 +60,13 @@ class DosAnalyzerTests(unittest.TestCase):
             self.assertEqual(len(rows), 6)
             self.assertIn("Fe_d_up", rows[0])
             self.assertIn("Pt_d_down", rows[0])
+            from openpyxl import load_workbook
+            book = load_workbook(result["Xlsx"], read_only=True)
+            self.assertEqual(book["DOS"].max_row, 6)
+            self.assertTrue(any("Fe d 带中心" in (cell[0] or "") for cell in book["Summary"].iter_rows(values_only=True)))
+            book.close()
+            with Path(result["Dat"]).open(encoding="utf-8-sig") as handle:
+                self.assertIn("Fe_d_up", handle.readline())
 
 
 if __name__ == "__main__":
