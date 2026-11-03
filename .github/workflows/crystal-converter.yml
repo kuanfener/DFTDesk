@@ -21,7 +21,16 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Test POSCAR and CIF conversion
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install ASE for integration tests
+        run: python -m pip install ase
+
+      - name: Test POSCAR and CIF conversion (native and ASE)
+        env:
+          DFTDESK_TEST_ASE_PYTHON: python
         run: dotnet test tools/CrystalConverter.Tests/CrystalConverter.Tests.csproj -c Release
 
       - name: Prepare private donation QR resources (optional)
