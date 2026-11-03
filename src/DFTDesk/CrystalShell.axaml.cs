@@ -364,6 +364,12 @@ internal sealed partial class CrystalShell : UserControl
             _windowHeight = Math.Clamp(saved.WindowHeight, 560, 2160);
             Part<TextBox>("WindowWidthInput").Text = _windowWidth.ToString();
             Part<TextBox>("WindowHeightInput").Text = _windowHeight.ToString();
+            Part<ComboBox>("WindowSizePreset").SelectedIndex = (_windowWidth, _windowHeight) switch
+            {
+                (1080, 760) => 0,
+                (1440, 900) => 1,
+                _ => 2,
+            };
             Part<Slider>("CornerSlider").Value = _radius;
             Part<Slider>("OpacitySlider").Value = _opacity;
             Part<CheckBox>("ReduceMotionOption").IsChecked = _reduced;
