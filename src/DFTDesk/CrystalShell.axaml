@@ -388,7 +388,7 @@
                   </Grid>
                 </Grid>
                 <Border Height="1" Background="{DynamicResource SubtleBorderBrush}"/>
-                <Grid ColumnDefinitions="220,*,180" ColumnSpacing="16">
+                <Grid ColumnDefinitions="180,*,180" ColumnSpacing="16">
                   <StackPanel Spacing="4" VerticalAlignment="Center">
                     <TextBlock Classes="h2" Text="轮盘不透明度"/>
                     <TextBlock Classes="caption" TextWrapping="Wrap"
