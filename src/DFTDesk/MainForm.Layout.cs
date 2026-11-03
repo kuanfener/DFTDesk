@@ -40,10 +40,11 @@ internal sealed partial class MainForm
         };
         _avaloniaWindow.Closing += (_, e) =>
         {
-            if (!_busy) return;
+            if (!_busy && !_clusterBusy) return;
             _cancellation?.Cancel();
+            _clusterCancellation?.Cancel();
             e.Cancel = true;
-            Log("正在取消转换，请等待任务结束后关闭窗口。");
+            Log("正在取消任务，请等待运行结束后关闭窗口。");
         };
         _avaloniaWindow.Closed += (_, _) => Close();
         Shown += (_, _) =>
@@ -70,10 +71,12 @@ internal sealed partial class MainForm
         };
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
+        _shell.ClusterBrowseRequested += BrowseClusterFolder;
+        _shell.ClusterGenerateRequested += () => _ = GenerateClusterAsync();
+        _shell.ClusterCancelRequested += () => _clusterCancellation?.Cancel();
         _shell.OutputDirectoryChanged += directory => _output.Text = directory;
         _shell.CartesianChanged += selected => _cartesian.Checked = selected;
-        // The shell loads engine-specific defaults before these event handlers are attached.
-        // Synchronize once so the first batch uses Cartesian for the native engine.
+        // Synchronize the user-selected ASE output coordinate mode before the first conversion.
         _cartesian.Checked = _shell.Cartesian;
         _shell.CancelRequested += () => _cancellation?.Cancel();
         _shell.ThemeChanged += (accent, opacity) =>
