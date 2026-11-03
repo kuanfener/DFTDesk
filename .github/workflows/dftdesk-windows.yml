@@ -43,7 +43,7 @@ jobs:
       - name: Test pymatgen surface-adsorbate Pourbaix mapping and exports
         run: python -m unittest discover -s tests -p test_surface_pourbaix.py
 
-      - name: Build DFTDesk 2.3.0 surface Pourbaix UI
+      - name: Build DFTDesk 2.3.1 surface Pourbaix UI
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

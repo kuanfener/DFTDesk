@@ -278,8 +278,7 @@ internal sealed partial class CrystalShell : UserControl
         var ph = ParseSetting(Part<TextBox>("StepPh").Text, "pH");
         if (ph < 0 || ph > 14)
             throw new ArgumentException("目前仅支持 pH 0–14 的溶液条件。");
-        var reference = Part<ComboBox>("StepReference").SelectedIndex == 1 ? "SHE" : "RHE";
-        return new StepDiagramRequest(inputPath, mode, potential, ph, reference);
+        return new StepDiagramRequest(inputPath, mode, potential, ph, "RHE");
     }
 
     public void SetStepInput(string path)

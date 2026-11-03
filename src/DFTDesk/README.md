@@ -1,6 +1,6 @@
-# DFTDesk 2.3.0 — Windows 科研结构工作台
+# DFTDesk 2.3.1 — Windows 科研结构工作台
 
-**DFTDesk 2.3.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.1 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -36,7 +36,7 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，按勾选生成 POSCAR、CIF 或两者。所有团簇都只是初猜，需要 VASP 结构弛豫。
 
-## 表面吸附态 Pourbaix 图（2.3.0）
+## 表面吸附态 Pourbaix 图（2.3.1）
 
 在「绘制台阶图」下方点击「表面 Pourbaix 图」。软件使用你已有的 ORR/OER 自由能 Excel 数据（包含多组五行模板或 Material / DG_OH / DG_O / DG_OOH 宽表），通过 pymatgen `Composition` 得到吸附态 O/H 计量和电子转移数，再以四电子 CHE 求 *、*OH、*O、*OOH 的表面自由能最低态。输出 pH–SHE 电位二维相图，并标出理论水稳定边界。pH、电位范围可设置；可勾选 PNG、SVG、Excel、CSV、Origin DAT。
 
@@ -86,7 +86,7 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 
 - **输入最小模板：**`Material,DG_OH,DG_O,DG_OOH`（宽表，一行一个催化剂；吸附自由能单位 eV）。
 - **高级模板：**`Material,G_star,G_OH,G_O,G_OOH,G_H2O,G_H2`（已经计算完自由能修正的吉布斯自由能），或 `E_star,E_OH,E_O,E_OOH,E_H2O,E_H2` 和对应 `Corr_star,Corr_OH,Corr_O,Corr_OOH,Corr_H2O,Corr_H2`。不能将无修正的 VASP 总能直接解释为 Gibbs 自由能。
-- 四电子 CHE、298.15 K、反应总能 4.92 eV，`U_RHE = U_SHE + 0.05916 × pH`；RHE 电位输入不再重复修正 pH。
+- 四电子 CHE、298.15 K、反应总能 4.92 eV；台阶图的电位统一输入为 V vs RHE，不显示电位参照下拉框，且不重复施加 pH 修正。pH 输入用于记录溶液条件。
 - OER 前进步骤（0 V）：`ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH`，`U_L = max(ΔG_i)`，`η = U_L−1.23`；ORR 为逆序还原反应，`U_L = min(−ΔG_i)`，`η = 1.23−U_L`。
 - 在 U 下逐个一电子步骤修正 `−U_RHE`（OER）、`+U_RHE`（ORR）。ORR/OER 终态能量随电位变动，不应自动重置零点。
 - 多催化剂按相同中间态叠加绘图；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步。

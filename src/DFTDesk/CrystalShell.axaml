@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.1"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.0" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.1" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -427,27 +427,20 @@
                   <ComboBoxItem Content="OER（四电子析氧）"/>
                 </ComboBox>
                 <StackPanel x:Name="StepCheOptions" Spacing="9" IsVisible="False">
-                  <Grid ColumnDefinitions="*,12,*,12,*">
+                  <Grid ColumnDefinitions="*,12,*">
                     <StackPanel Spacing="5">
-                      <TextBlock Classes="label" Text="电位 U（V）"/>
+                      <TextBlock Classes="label" Text="电位 U（V vs RHE）"/>
                       <TextBox x:Name="StepPotential" Text="0"/>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Spacing="5">
                       <TextBlock Classes="label" Text="pH"/>
                       <TextBox x:Name="StepPh" Text="0"/>
                     </StackPanel>
-                    <StackPanel Grid.Column="4" Spacing="5">
-                      <TextBlock Classes="label" Text="电位参照"/>
-                      <ComboBox x:Name="StepReference" SelectedIndex="0">
-                        <ComboBoxItem Content="RHE"/>
-                        <ComboBoxItem Content="SHE"/>
-                      </ComboBox>
-                    </StackPanel>
                   </Grid>
                   <TextBlock Classes="caption" TextWrapping="Wrap"
                              Text="ORR / OER 支持你的原始五行分块表（催化剂、*OOH、*O、*OH、催化剂，G 列 U=0V）；也支持 Material、DG_OH、DG_O、DG_OOH 宽表及已修正的 Gibbs 数据。多个结构自动叠加绘图。"/>
                   <TextBlock Classes="caption" TextWrapping="Wrap"
-                             Text="ORR 按原始 Origin 模板使用 4.92→0 eV（U=0V）台阶，OER 为逆过程。RHE 电位不再额外修正 pH，SHE 电位换算为 U(RHE)=U(SHE)+0.05916×pH。采用 298.15 K 的四电子 CHE。"/>
+                             Text="ORR 按原始 Origin 模板使用 4.92→0 eV（U=0V）台阶，OER 为逆过程。电位统一采用 RHE 参照，不额外施加 pH 校正；pH 保留用于记录溶液条件。采用 298.15 K 的四电子 CHE。"/>
                 </StackPanel>
                 <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
