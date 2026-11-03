@@ -6,7 +6,7 @@ using SharpHook.Data;
 
 namespace DFTDesk;
 
-/// <summary>Uses Filee's own pure gesture detector for the same Explorer Ctrl-drag and Ctrl+Alt+Space gestures.</summary>
+/// <summary>Detects only Explorer Ctrl + left mouse drag for DFTDesk's conversion wheel.</summary>
 internal sealed class GlobalTriggerHost : IDisposable
 {
     private readonly GestureDetector _detector = new();
@@ -16,7 +16,6 @@ internal sealed class GlobalTriggerHost : IDisposable
 
     public event Action<int, int>? DragStarted;
     public event Action<int, int>? DragEnded;
-    public event Action<int, int>? ShortcutPressed;
     public event Action<string>? Failure;
 
     public IReadOnlyList<string> SelectedFiles() => _platform.GetFileManagerSelection();
@@ -24,13 +23,13 @@ internal sealed class GlobalTriggerHost : IDisposable
     public GlobalTriggerHost()
     {
         _detector.SystemDragThreshold = _platform.SystemDragThreshold;
-        _detector.Configure(TriggerGesture.Defaults());
-        _detector.ScopeFilter = (gesture, x, y) => gesture.Kind == TriggerKind.KeyChord
-            ? _platform.GetForegroundWindow()?.IsFileManager == true
-            : _platform.IsFileManagerAt(x, y);
+        _detector.Configure(TriggerGesture.Defaults().Where(g =>
+            g.Kind == TriggerKind.Drag &&
+            g.Modifiers == ModifierKeys.Ctrl &&
+            g.Button == TriggerMouseButton.Left));
+        _detector.ScopeFilter = (_, x, y) => _platform.IsFileManagerAt(x, y);
         _detector.DragStarted += (_, x, y) => DragStarted?.Invoke(x, y);
         _detector.DragEnded += (x, y) => DragEnded?.Invoke(x, y);
-        _detector.KeyChordTriggered += (_, x, y) => ShortcutPressed?.Invoke(x, y);
     }
 
     public void Start()
@@ -45,7 +44,6 @@ internal sealed class GlobalTriggerHost : IDisposable
                 _detector.MouseUp(Button(e.Data.Button), e.Data.X, e.Data.Y);
             _hook.MouseDragged += (_, e) => Move(e.Data.X, e.Data.Y, e.RawEvent.Mask);
             _hook.MouseMoved += (_, e) => Move(e.Data.X, e.Data.Y, e.RawEvent.Mask);
-            _hook.KeyPressed += (_, e) => _detector.KeyDown(KeyName(e.Data.KeyCode), Modifiers(e.RawEvent.Mask));
             var hook = _hook;
             _thread = new Thread(() =>
             {
@@ -62,9 +60,6 @@ internal sealed class GlobalTriggerHost : IDisposable
 
     private void Move(int x, int y, EventMask mask) => _detector.MouseMove(x, y, Modifiers(mask),
         mask.HasFlag(EventMask.Button1) ? TriggerMouseButton.Left : TriggerMouseButton.None);
-
-    private static string KeyName(KeyCode key) => key.ToString() is { } s && s.StartsWith("Vc", StringComparison.Ordinal)
-        ? s[2..] : key.ToString();
 
     private static TriggerMouseButton Button(MouseButton button) => button switch
     {
