@@ -38,6 +38,14 @@ internal sealed partial class MainForm
             Icon = new WindowIcon(AssetLoader.Open(new Uri("avares://DFTDesk/Assets/Icons/dftdesk.ico"))),
             Content = _shell,
         };
+        var initialSize = _shell.StartupWindowSize;
+        _avaloniaWindow.Width = initialSize.Width;
+        _avaloniaWindow.Height = initialSize.Height;
+        _shell.WindowSizeRequested += (width, height) =>
+        {
+            _avaloniaWindow.Width = width;
+            _avaloniaWindow.Height = height;
+        };
         _avaloniaWindow.Closing += (_, e) =>
         {
             if (!_busy && !_clusterBusy) return;
@@ -62,7 +70,6 @@ internal sealed partial class MainForm
             foreach (var path in removed) _paths.Remove(path);
             RefreshFiles();
         };
-        _shell.FilesDropped += paths => AddFiles(paths, replace: true);
         _shell.HomeFilesDropped += paths => AddFiles(paths, replace: true);
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();

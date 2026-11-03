@@ -25,16 +25,16 @@ python -c "import ase,sys; print('ASE', ase.__version__); print(sys.executable)"
 
 | 页面 | 内容 |
 | --- | --- |
-| 首页 | DFTDesk 工作台、两项功能快捷入口、ASE 状态与使用提示 |
-| 结构文件格式转换 | 文件拖放与列表、POSCAR/CIF 互转、批量输出、环形工具栏、历史与进度 |
+| 首页 | DFTDesk 工作台、普通样式功能快捷入口、ASE 状态与使用提示 |
+| 结构文件格式转换 | 云朵点击/拖放导入，导入后同区显示文件列表；POSCAR/CIF 互转、批量输出、历史与进度；资源管理器 Ctrl + 左键轮盘 |
 | 团簇生成 | 输入元素、原子数、普通或 FCC 晶面取向，批量输出 POSCAR 和 CIF |
-| 主题 | Soft / Material You、外观、强调色、缩放、圆角和轮盘透明度 |
+| 主题 | 单一 Soft 风格；外观、强调色、圆角、轮盘透明度、减少动画及窗口大小 |
 | 工作引擎 | Python / ASE 路径设置、安装检测 |
 | 关于 | 项目版本、开源许可证、相关链接 |
 
 ### 结构转换
 
-接受 `POSCAR`、`CONTCAR`、`.vasp`、`.poscar` 和 `.cif`。输出 POSCAR **默认 Cartesian（Å）**，可取消勾选改为 Direct。支持从资源管理器按 Ctrl + 左键拖动或 Ctrl + Alt + Space 打开轮盘，或在软件的同一页面多选文件后按按钮批量转换。同名文件自动避让，不覆盖原始文件。
+接受 `POSCAR`、`CONTCAR`、`.vasp`、`.poscar` 和 `.cif`。输出 POSCAR **默认 Cartesian（Å）**，可取消勾选改为 Direct。支持从资源管理器按 Ctrl + 左键拖动呼出轮盘；已移除 Ctrl + Alt + Space 快捷键。软件内点击云朵或拖入文件后，同一位置自动切换为文件列表；清空后返回云朵。导出按钮和 Cartesian 选项集中在单张卡片中。同名文件自动避让，不覆盖原始文件。
 
 ### 团簇生成
 

@@ -55,7 +55,6 @@ internal sealed partial class MainForm : Form
         };
         _global.DragStarted += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y), dragMode: true));
         _global.DragEnded += (x, y) => Post(() => EndExplorerDrag(new Point(x, y)));
-        _global.ShortcutPressed += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y), dragMode: false));
         _global.Failure += error => Post(() => Log("全局手势不可用：" + error));
 
         DragEnter += (_, e) => e.Effect = e.Data?.GetDataPresent(DataFormats.FileDrop) == true
@@ -297,15 +296,6 @@ internal sealed partial class MainForm : Form
         _log.Visible = true;
         if (_recentEmpty is not null)
             _recentEmpty.Visible = false;
-    }
-
-    private void ShowConversionWheelAtCursor()
-    {
-        if (!_busy && _paths.Count > 0 && !_popup.Visible)
-        {
-            _popupFromDrag = false;
-            _popup.OpenAt(Cursor.Position);
-        }
     }
 
     private void UpdateStatus()
