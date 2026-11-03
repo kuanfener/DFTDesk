@@ -69,6 +69,7 @@ internal sealed partial class MainForm
                 BeginInvoke(new Action(ShowConversionWheelAtCursor));
         };
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
+        _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.OutputDirectoryChanged += directory => _output.Text = directory;
         _shell.CartesianChanged += selected => _cartesian.Checked = selected;
         _shell.CancelRequested += () => _cancellation?.Cancel();
