@@ -58,7 +58,7 @@ public class ConversionTests
     {
         var initial = CrystalFormat.ReadPoscar(Poscar);
         var result = CrystalFormat.ReadPoscar(CrystalFormat.WritePoscar(
-            CrystalFormat.ReadCif(CrystalFormat.WriteCif(initial))));
+            CrystalFormat.ReadCif(CrystalFormat.WriteCif(initial)), cartesian: false));
         Assert.Equal(new[] { "Si", "O", "O" }, result.Sites.Select(s => s.Element));
         Assert.Equal(initial.Volume, result.Volume, 8);
         for (var i = 0; i < result.Sites.Count; i++)
@@ -99,7 +99,7 @@ public class ConversionTests
             new(7.8057762330853144e-16, 12.7478, 0),
             new(1.1021821192326179e-15, 1.1021821192326179e-15, 18),
             [new("C", new(0.98516000000000004, 0.050560000000000001, 0.43648999999999999))]);
-        var text = CrystalFormat.WritePoscar(source);
+        var text = CrystalFormat.WritePoscar(source, cartesian: false);
         var lines = text.Replace("\r", "").Split('\n');
 
         Assert.Equal("1.0", lines[1]);
@@ -113,6 +113,22 @@ public class ConversionTests
         Assert.DoesNotContain("E-", text);
         Assert.DoesNotContain("E+", text);
         Assert.Equal(1, CrystalFormat.ReadPoscar(text).Sites.Count);
+    }
+
+    [Fact]
+    public void Default_native_poscar_output_is_cartesian_while_direct_remains_available()
+    {
+        var structure = CrystalFormat.ReadPoscar(Poscar);
+        var defaultOutput = CrystalFormat.WritePoscar(structure);
+        var lines = defaultOutput.Replace("\r", "").Split('\n');
+        Assert.Equal("Cartesian", lines[7]);
+        // The first Si fractional position (0.125, 0.25, 0.375) becomes
+        // (0.8375, 1.5, 1.95) Å in this non-orthogonal cell.
+        Assert.Equal(new[] { "0.83750000", "1.50000000", "1.95000000" },
+            lines[8].Split(' ', StringSplitOptions.RemoveEmptyEntries));
+        var directOutput = CrystalFormat.WritePoscar(structure, cartesian: false);
+        Assert.Equal("Direct", directOutput.Replace("\r", "").Split('\n')[7]);
+        Assert.Equal(3, CrystalFormat.ReadPoscar(defaultOutput).Sites.Count);
     }
 
     [Fact]
