@@ -69,7 +69,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 1.0.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 1.1.0"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -88,72 +88,48 @@
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Home}" Width="17" Height="17"/>
-              <TextBlock Text="首页" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Home}" Width="17" Height="17"/>
+                <TextBlock Text="首页" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Settings}" Width="17" Height="17"/>
-              <TextBlock Text="常规" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Folder}" Width="17" Height="17"/>
+                <TextBlock Text="结构文件格式转换" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Keyboard}" Width="17" Height="17"/>
-              <TextBlock Text="快捷操作" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
+                <TextBlock Text="团簇生成" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Donut}" Width="17" Height="17"/>
-              <TextBlock Text="环形工具栏" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Palette}" Width="17" Height="17"/>
+                <TextBlock Text="主题" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Tune}" Width="17" Height="17"/>
-              <TextBlock Text="预设" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Settings}" Width="17" Height="17"/>
+                <TextBlock Text="工作引擎" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
           <ListBoxItem>
             <Border Background="Transparent" Padding="12,9">
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Folder}" Width="17" Height="17"/>
-              <TextBlock Text="自动转换文件夹" VerticalAlignment="Center"/>
-              </StackPanel>
-            </Border>
-          </ListBoxItem>
-          <ListBoxItem>
-            <Border Background="Transparent" Padding="12,9">
-              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Palette}" Width="17" Height="17"/>
-              <TextBlock Text="主题" VerticalAlignment="Center"/>
-              </StackPanel>
-            </Border>
-          </ListBoxItem>
-          <ListBoxItem>
-            <Border Background="Transparent" Padding="12,9">
-              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
-              <TextBlock Text="工作引擎" VerticalAlignment="Center"/>
-              </StackPanel>
-            </Border>
-          </ListBoxItem>
-          <ListBoxItem>
-            <Border Background="Transparent" Padding="12,9">
-              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
-              <PathIcon Classes="navicon" Data="{StaticResource Icon.Info}" Width="17" Height="17"/>
-              <TextBlock Text="关于" VerticalAlignment="Center"/>
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Info}" Width="17" Height="17"/>
+                <TextBlock Text="关于" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
@@ -166,53 +142,101 @@
         <ContentControl x:Name="PageHost" Classes="page"
                         Margin="32,26,32,32" HorizontalAlignment="Stretch" MaxWidth="980">
         <Grid x:Name="PageContainer">
-          <!-- Original Filee homepage structure: title, drop zone and history. -->
-          <StackPanel x:Name="HomePage" Spacing="22">
-            <TextBlock Classes="h1" Text="首页"/>
-            <Border x:Name="DropZone" DragDrop.AllowDrop="True" MinHeight="220"
+          <!-- DFTDesk home is a dashboard, never a second file-conversion interface. -->
+          <StackPanel x:Name="HomePage" Spacing="20">
+            <Border Background="{DynamicResource AccentFaintBrush}" CornerRadius="20" Padding="28"
+                    BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
+              <StackPanel Spacing="13">
+                <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
+                <TextBlock Text="DFTDesk 1.1" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
+                <TextBlock Classes="muted" TextWrapping="Wrap"
+                           Text="晶体结构文件转换 · ASE 团簇生成 · VASP 建模辅助。所有结构文件在本机处理。"/>
+                <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,9,0,0">
+                  <Button Classes="accent" Content="结构文件格式转换" Click="OnGoConversion"/>
+                  <Button Content="生成团簇" Click="OnGoCluster"/>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+            <TextBlock Classes="h2" Text="开始使用"/>
+            <Grid ColumnDefinitions="*,16,*">
+              <Border Grid.Column="0" Classes="card">
+                <StackPanel Spacing="10">
+                  <TextBlock Classes="h2" Text="结构文件格式转换"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="POSCAR / CONTCAR ⇄ CIF。拖放、多选、批量输出与环形轮盘在一个页面完成。"/>
+                  <Button HorizontalAlignment="Left" Content="进入转换工具" Click="OnGoConversion"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Column="2" Classes="card">
+                <StackPanel Spacing="10">
+                  <TextBlock Classes="h2" Text="团簇生成"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="任意元素、批量原子数、普通几何或 FCC 晶面取向；同时生成 POSCAR 和 CIF。"/>
+                  <Button HorizontalAlignment="Left" Content="进入团簇生成" Click="OnGoCluster"/>
+                </StackPanel>
+              </Border>
+            </Grid>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="工作引擎状态"/>
+                <TextBlock x:Name="HomeAseStatus" Text="ASE 尚未检测。请前往「工作引擎」配置 Python 环境。"
+                           Classes="muted" TextWrapping="Wrap"/>
+                <Button HorizontalAlignment="Left" Content="配置 / 检测 ASE" Click="OnGoEngine"/>
+              </StackPanel>
+            </Border>
+            <TextBlock Classes="caption" TextWrapping="Wrap"
+                       Text="使用提醒：团簇结果为几何初始猜测，需经过 VASP 几何优化；结构转换后请核对原子顺序、坐标与约束。首页将为后续 VASP / Gaussian 分析功能保留扩展空间。"/>
+          </StackPanel>
+
+          <StackPanel x:Name="ConversionPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="结构文件格式转换"/>
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="统一管理文件导入、输出格式、坐标模式和批量进度。所有转换使用工作引擎 ASE。"/>
+            <Border x:Name="DropZone" DragDrop.AllowDrop="True" MinHeight="120"
                     Cursor="Hand" ToolTip.Tip="双击选择结构文件"
                     Background="{DynamicResource AccentFaintBrush}"
                     BorderBrush="{DynamicResource AccentSoftBrush}"
-                    BorderThickness="2" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="24">
-              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
-                <Border Width="64" Height="64" CornerRadius="999" HorizontalAlignment="Center"
-                        Background="{DynamicResource AccentSoftBrush}">
-                  <PathIcon Data="{StaticResource Icon.Upload}" Width="28" Height="28"
-                            Foreground="{DynamicResource AccentStrongBrush}"/>
-                </Border>
-                <TextBlock Classes="h2" Text="将文件拖放到这里" HorizontalAlignment="Center"/>
-                <TextBlock Classes="muted" TextAlignment="Center" TextWrapping="Wrap" MaxWidth="460"
-                           Text="或在资源管理器中按住 Ctrl 拖动文件，环形工具栏会在光标处打开。"/>
+                    BorderThickness="2" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="18">
+              <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="7">
+                <TextBlock Classes="h2" Text="将 POSCAR、CONTCAR 或 CIF 拖放到这里" HorizontalAlignment="Center"/>
+                <TextBlock Classes="muted" TextAlignment="Center"
+                           Text="双击选择文件；也支持资源管理器 Ctrl + 左键拖动和 Ctrl + Alt + Space 轮盘快捷转换。"/>
               </StackPanel>
             </Border>
-            <StackPanel Spacing="10">
-              <DockPanel>
-                <Button DockPanel.Dock="Right" Classes="ghost" Click="OnClearHistory" Content="清除"/>
-                <TextBlock Classes="h2" VerticalAlignment="Center" Text="最近的转换"/>
-              </DockPanel>
-              <TextBlock x:Name="HistoryEmpty" Classes="muted" Text="转换后的文件会显示在这里。"/>
-              <StackPanel x:Name="HistoryRecords" Spacing="8"/>
-            </StackPanel>
-          </StackPanel>
-
-          <StackPanel x:Name="GeneralPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="常规"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="晶体结构文件"/>
-                <TextBlock Classes="caption" Text="支持 POSCAR、CONTCAR、VASP 与 CIF，可一次添加多个文件。"/>
-                <Button HorizontalAlignment="Left" Classes="accent" Content="添加文件" Click="OnBrowseFiles"/>
-                <ListBox x:Name="FileList" MinHeight="140" MaxHeight="310" SelectionMode="Multiple"/>
-                <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Classes="h2" Text="结构文件与输出"/>
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                  <Button Classes="accent" Content="添加文件" Click="OnBrowseFiles"/>
                   <Button Content="移除选中" Click="OnRemoveSelected"/>
                   <Button Content="清空列表" Click="OnClearFiles"/>
                 </StackPanel>
+                <ListBox x:Name="FileList" MinHeight="120" MaxHeight="220" SelectionMode="Multiple"/>
+                <TextBlock Classes="caption" Text="选中文件后选择目标格式；也可以直接拖到轮盘扇区。"/>
+                <Grid ColumnDefinitions="*,220" ColumnSpacing="12">
+                  <StackPanel Spacing="12" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="导出格式"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <Button Classes="accent" Content="转换为 CIF" Click="OnExportCif"/>
+                      <Button Content="转换为 POSCAR" Click="OnExportPoscar"/>
+                    </StackPanel>
+                    <CheckBox x:Name="CartesianOption" IsChecked="True"
+                              Content="POSCAR 使用 Cartesian（默认）"/>
+                    <TextBlock Classes="caption" TextWrapping="Wrap"
+                               Text="取消勾选则使用 Direct 分数坐标；只影响 POSCAR 输出。"/>
+                  </StackPanel>
+                  <Border Grid.Column="1" Background="{DynamicResource AccentFaintBrush}"
+                          CornerRadius="{DynamicResource SoftRadius}" Width="208" Height="208">
+                    <ContentControl x:Name="WheelPreviewHost" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
+                </Grid>
               </StackPanel>
             </Border>
             <Border Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Classes="h2" Text="输出目录"/>
-                <TextBlock Classes="caption" Text="留空则保存在源文件目录；自动避让已存在的同名文件。"/>
+                <TextBlock Classes="h2" Text="结果保存位置"/>
+                <TextBlock Classes="caption" Text="留空则在原文件目录生成结果；已存在的同名文件不会覆盖。"/>
                 <DockPanel>
                   <Button DockPanel.Dock="Right" Content="浏览…" Click="OnBrowseFolder" Margin="8,0,0,0"/>
                   <TextBox x:Name="OutputDirectory" PlaceholderText="默认：源文件所在目录"/>
@@ -221,76 +245,93 @@
             </Border>
             <Border Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Classes="h2" Text="批量转换状态"/>
+                <TextBlock Classes="h2" Text="转换进度与历史"/>
                 <TextBlock x:Name="BatchStatus" Classes="muted" Text="已选择 0 个文件"/>
                 <ProgressBar x:Name="BatchProgress" Minimum="0" Maximum="100" Value="0"/>
                 <Button x:Name="CancelConversionButton" Content="取消转换" HorizontalAlignment="Left"
                         Click="OnCancelConversion" IsEnabled="False"/>
+                <DockPanel Margin="0,8,0,0">
+                  <Button DockPanel.Dock="Right" Classes="ghost" Click="OnClearHistory" Content="清除历史"/>
+                  <TextBlock Classes="h2" VerticalAlignment="Center" Text="最近的转换"/>
+                </DockPanel>
+                <TextBlock x:Name="HistoryEmpty" Classes="muted" Text="转换后的文件会显示在这里。"/>
+                <StackPanel x:Name="HistoryRecords" Spacing="8"/>
               </StackPanel>
             </Border>
           </StackPanel>
 
-          <StackPanel x:Name="TriggersPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="快捷操作"/>
+          <StackPanel x:Name="ClusterPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="团簇生成"/>
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="基于 ASE 的几何初猜：普通团簇或具有 FCC(111)/(100)/(110) 局部取向的有限团簇。"/>
+            <Border Classes="card">
+              <StackPanel Spacing="13">
+                <TextBlock Classes="h2" Text="构型参数"/>
+                <Grid ColumnDefinitions="*,18,*">
+                  <StackPanel Spacing="6">
+                    <TextBlock Classes="label" Text="团簇元素"/>
+                    <TextBox x:Name="ClusterElement" Text="Pt" Watermark="如 Pt、Fe、Ni、Au"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Classes="label" Text="原子数量（支持批量和范围）"/>
+                    <TextBox x:Name="ClusterNumbers" Text="4,5,6,13" Watermark="如 4,5,6,13 或 4:12:2"/>
+                  </StackPanel>
+                </Grid>
+                <TextBlock Classes="label" Text="团簇类型"/>
+                <ComboBox x:Name="ClusterMode" SelectedIndex="0" Width="330"
+                          HorizontalAlignment="Left" SelectionChanged="OnClusterModeChanged">
+                  <ComboBoxItem Content="普通团簇（自动初猜）"/>
+                  <ComboBoxItem Content="FCC 晶面取向团簇"/>
+                </ComboBox>
+                <StackPanel x:Name="FacetOptionsPanel" Spacing="10" IsVisible="False">
+                  <TextBlock Classes="label" Text="晶面类型"/>
+                  <TextBox x:Name="ClusterFacets" Text="all" Watermark="all 或 111,100,110,ico"/>
+                  <TextBlock Classes="caption" TextWrapping="Wrap"
+                             Text="all = FCC(111)、FCC(100)、FCC(110)；也可填单个或组合。ico 只支持 13/55/147/309/561/923 原子。"/>
+                  <TextBlock Classes="label" Text="FCC 晶格常数 a (Å，可留空自动估算)"/>
+                  <TextBox x:Name="ClusterLatticeConstant" Watermark="留空按 ASE 元素参考值或共价半径估算"/>
+                </StackPanel>
+                <Grid ColumnDefinitions="*,18,*">
+                  <StackPanel Spacing="6">
+                    <TextBlock Classes="label" Text="每侧真空厚度 (Å)"/>
+                    <TextBox x:Name="ClusterVacuum" Text="12"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="6">
+                    <TextBlock Classes="label" Text="POSCAR 坐标"/>
+                    <CheckBox x:Name="ClusterCartesian" IsChecked="True"
+                              Content="Cartesian（默认，取消则 Direct）"/>
+                  </StackPanel>
+                </Grid>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="晶格常数/初始原子距离自动估算；非 FCC 元素的晶面团簇采用假设 FCC 初猜，不能代表真实稳定晶相。"/>
+              </StackPanel>
+            </Border>
             <Border Classes="card">
               <StackPanel Spacing="10">
-                <TextBlock Classes="h2" Text="资源管理器快捷操作"/>
-                <TextBlock Text="Ctrl + 左键拖动文件" FontWeight="SemiBold"/>
-                <TextBlock Classes="muted" Text="拖动 POSCAR / CONTCAR / CIF 文件时，在光标处呼出 DFTDesk 环形工具栏。"
-                           TextWrapping="Wrap"/>
-                <TextBlock Text="Ctrl + Alt + Space" FontWeight="SemiBold"/>
-                <TextBlock Classes="muted" Text="对资源管理器当前选中文件打开轮盘，支持批量转换。"/>
-              </StackPanel>
-            </Border>
-          </StackPanel>
-
-          <StackPanel x:Name="ToolbarPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="环形工具栏"/>
-            <Border Classes="card">
-              <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="预览"/>
-                <TextBlock Classes="caption" Text="与弹出轮盘使用同一套环形工具栏组件。"/>
-                <Border Background="{DynamicResource AccentFaintBrush}"
-                        CornerRadius="{DynamicResource SoftRadius}" HorizontalAlignment="Left"
-                        Width="330" Height="330">
-                  <ContentControl x:Name="WheelPreviewHost" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                </Border>
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                  <Button Content="导出 CIF" Click="OnExportCif" Classes="accent"/>
-                  <Button Content="导出 POSCAR" Click="OnExportPoscar"/>
+                <TextBlock Classes="h2" Text="输出文件"/>
+                <TextBlock Classes="caption" Text="每个团簇生成 POSCAR 与 CIF 两个文件，保存于自动创建的独立文件夹，不覆盖已有结果。"/>
+                <DockPanel>
+                  <Button DockPanel.Dock="Right" Content="浏览…" Click="OnClusterBrowse" Margin="8,0,0,0"/>
+                  <TextBox x:Name="ClusterOutputDirectory" Watermark="默认：文档文件夹"/>
+                </DockPanel>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <Button x:Name="ClusterGenerateButton" Classes="accent" Content="生成团簇" Click="OnGenerateCluster"/>
+                  <Button x:Name="ClusterCancelButton" Content="取消生成" Click="OnCancelCluster" IsEnabled="False"/>
                 </StackPanel>
+                <TextBlock x:Name="ClusterStatus" Classes="muted" Text="填写参数后点击生成团簇。"/>
+                <TextBox x:Name="ClusterLog" AcceptsReturn="True" IsReadOnly="True"
+                         TextWrapping="Wrap" MinHeight="135" MaxHeight="260"
+                         Watermark="生成记录、输出路径与异常信息将在此显示。"/>
               </StackPanel>
             </Border>
-          </StackPanel>
-
-          <StackPanel x:Name="PresetsPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="预设"/>
-            <Border Classes="card">
-              <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="POSCAR 坐标模式"/>
-                <TextBlock Classes="muted" Text="使用 ASE 输出 POSCAR，坐标模式由此设置。ASE 使用自己的数值输出精度。"/>
-                <CheckBox x:Name="CartesianOption" IsChecked="False" Content="POSCAR 输出 Cartesian 坐标（默认 Direct）"/>
-                <TextBlock Classes="caption" Text="仅影响 CIF → POSCAR；CIF 文件输出不受影响。所选模式会保存到工作引擎设置。"/>
-              </StackPanel>
-            </Border>
-          </StackPanel>
-
-          <StackPanel x:Name="WatchPage" Spacing="16" IsVisible="False">
-            <TextBlock Classes="h1" Text="自动转换文件夹"/>
-            <Border Classes="card">
-              <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="批量转换"/>
-                <TextBlock Classes="muted" Text="当前独立版支持从文件夹多选和拖入文件后批量转换。"/>
-                <Button HorizontalAlignment="Left" Click="OnBrowseFiles" Content="选择要转换的文件"/>
-              </StackPanel>
-            </Border>
+            <TextBlock Classes="caption" TextWrapping="Wrap"
+                       Text="注意：输出仅为初始构型，需要进行 VASP 结构弛豫和真空层收敛测试；小团簇的晶面仅指局部几何取向。"/>
           </StackPanel>
 
           <!-- Original Filee theme page dimensions and card sequence. -->
           <StackPanel x:Name="ThemePage" IsVisible="False" Spacing="18">
             <TextBlock Classes="h1" Text="主题"/>
-            <Grid ColumnDefinitions="*,20,340" MinWidth="700">
-              <StackPanel Grid.Column="0" Spacing="16">
+            <StackPanel Spacing="16" MaxWidth="760">
                 <Border Classes="card">
                   <StackPanel Spacing="12">
                     <TextBlock Classes="label" Text="主题样式"/>
@@ -409,35 +450,15 @@
                   </StackPanel>
                 </Border>
               </StackPanel>
-              <Border Grid.Column="2" Classes="card" VerticalAlignment="Top">
-                <StackPanel Spacing="12">
-                  <TextBlock Classes="label" Text="预览"/>
-                  <Border x:Name="ThemePreviewBackdrop" Height="302" CornerRadius="{DynamicResource SoftRadius}"
-                          Background="{DynamicResource AccentSoftBrush}">
-                    <ContentControl x:Name="ThemePreviewHost" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                  </Border>
-                  <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8">
-                    <Button Classes="accent" Content="保存" Click="OnThemeSave"/>
-                    <Button Content="取消" Click="OnThemeCancel"/>
-                  </StackPanel>
-                  <ToggleSwitch x:Name="ThemePreviewToggle" Content="关" HorizontalAlignment="Center"/>
-                </StackPanel>
-              </Border>
-            </Grid>
+              <StackPanel Orientation="Horizontal" Spacing="10" Margin="0,4,0,0">
+                <Button Classes="accent" Content="保存主题" Click="OnThemeSave"/>
+                <Button Content="恢复上次保存" Click="OnThemeCancel"/>
+              </StackPanel>
+            </StackPanel>
           </StackPanel>
 
           <StackPanel x:Name="WorkEnginePage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="工作引擎"/>
-            <Border Classes="card">
-              <StackPanel Spacing="12">
-                <TextBlock Classes="h2" Text="晶体格式转换"/>
-                <TextBlock Text="POSCAR / CONTCAR ⇄ CIF" FontWeight="SemiBold"/>
-                <TextBlock Classes="label" Text="当前工作引擎"/>
-                <TextBlock Text="ASE — Atomic Simulation Environment" FontSize="16" FontWeight="SemiBold"/>
-                <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="DFTDesk 使用 ASE 作为唯一晶体转换引擎。轮盘和批量转换都调用选定的 Python 环境；ASE 可能调整元素顺序，转换后请核对结构。"/>
-              </StackPanel>
-            </Border>
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="Python / ASE 环境（必需）"/>
@@ -460,7 +481,7 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="DFTDesk"/>
-                <TextBlock Text="DFT 计算文件与数据处理工作台 · POSCAR / CONTCAR ⇄ CIF"/>
+                <TextBlock Text="DFT 计算文件与数据处理工作台 · 结构转换与 ASE 团簇生成"/>
                 <TextBlock Classes="caption" Text="DFTDesk 使用 MIT 许可；部分界面、轮盘及 Windows 文件组件源自上游开源项目，许可与原作者版权信息请见随附 LICENSE.txt 和源码中的第三方声明。"/>
                 <TextBlock Classes="h2" Text="第三方开源组件"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
