@@ -11,10 +11,10 @@
     <ApplicationIcon>Assets\\Icons\\dftdesk.ico</ApplicationIcon>
     <AssemblyTitle>DFTDesk</AssemblyTitle>
     <Product>DFTDesk</Product>
-    <Version>1.0.0</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-    <InformationalVersion>1.0.0</InformationalVersion>
+    <Version>1.1.0</Version>
+    <AssemblyVersion>1.1.1.0</AssemblyVersion>
+    <FileVersion>1.1.1.0</FileVersion>
+    <InformationalVersion>1.1.0</InformationalVersion>
     <RootNamespace>DFTDesk</RootNamespace>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationDefaultFont>Segoe UI, 10pt</ApplicationDefaultFont>
@@ -40,6 +40,9 @@
   </ItemGroup>
   <ItemGroup Condition="Exists('$(DftDeskDonationDir)\alipay.png')">
     <EmbeddedResource Include="$(DftDeskDonationDir)\alipay.png" LogicalName="DFTDesk.Donation.alipay.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="ClusterScripts/cluster_generator.py" LogicalName="DFTDesk.ClusterScripts.cluster_generator.py" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Avalonia.Desktop" />
