@@ -388,18 +388,27 @@
                   </Grid>
                 </Grid>
                 <Border Height="1" Background="{DynamicResource SubtleBorderBrush}"/>
-                <Grid ColumnDefinitions="220,*" ColumnSpacing="16">
-                  <StackPanel Spacing="4">
+                <Grid ColumnDefinitions="180,*,180" ColumnSpacing="16">
+                  <StackPanel Spacing="4" VerticalAlignment="Center">
                     <TextBlock Classes="h2" Text="轮盘不透明度"/>
                     <TextBlock Classes="caption" TextWrapping="Wrap"
-                               Text="调整资源管理器 Ctrl + 左键拖动轮盘的不透明度。"/>
+                               Text="拖动滑块实时预览资源管理器 Ctrl + 左键拖动时的轮盘效果。"/>
                   </StackPanel>
-                  <Grid Grid.Column="1" ColumnDefinitions="*,78" ColumnSpacing="14" VerticalAlignment="Center">
+                  <Grid Grid.Column="1" ColumnDefinitions="*,56" ColumnSpacing="8"
+                        VerticalAlignment="Center">
                     <Slider x:Name="OpacitySlider" Minimum="30" Maximum="100" Value="96"
                             VerticalAlignment="Center" ValueChanged="OnOpacityChanged"/>
                     <TextBlock Grid.Column="1" x:Name="OpacityValue" Text="96%"
                                VerticalAlignment="Center" FontWeight="SemiBold"/>
                   </Grid>
+                  <Border Grid.Column="2" Width="180" Height="180" Padding="7"
+                          Background="{DynamicResource AccentFaintBrush}"
+                          BorderBrush="{DynamicResource SubtleBorderBrush}" BorderThickness="1"
+                          CornerRadius="{DynamicResource SoftRadius}" HorizontalAlignment="Center">
+                    <ContentControl x:Name="ThemeDonutPreviewHost"
+                                    IsHitTestVisible="False"
+                                    HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                  </Border>
                 </Grid>
                 <Border Height="1" Background="{DynamicResource SubtleBorderBrush}"/>
                 <Grid ColumnDefinitions="220,*" ColumnSpacing="16">
