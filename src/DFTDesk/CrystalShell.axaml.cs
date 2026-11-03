@@ -75,6 +75,7 @@ internal sealed partial class CrystalShell : UserControl
     public event Action? SurfaceExportRequested;
     public event Action? SurfaceCancelRequested;
     public event Action? StepBrowseRequested;
+    public event Action? StepTemplateRequested;
     public event Action? StepAnalyzeRequested;
     public event Action? StepExportRequested;
     public event Action? StepCancelRequested;
@@ -255,14 +256,16 @@ internal sealed partial class CrystalShell : UserControl
         SetStepStatus("模式已切换；请确认 Excel 数据列与反应类型相符，然后重新绘图。");
     }
 
+    public string SelectedStepMode => Part<ComboBox>("StepMode").SelectedIndex switch
+    {
+        1 => "ORR",
+        2 => "OER",
+        _ => "HER"
+    };
+
     public StepDiagramRequest ReadStepRequest(string inputPath)
     {
-        var mode = Part<ComboBox>("StepMode").SelectedIndex switch
-        {
-            1 => "ORR",
-            2 => "OER",
-            _ => "HER"
-        };
+        var mode = SelectedStepMode;
         if (mode == "HER")
             return new StepDiagramRequest(inputPath, mode, 0, 0, "RHE");
 
@@ -764,6 +767,7 @@ internal sealed partial class CrystalShell : UserControl
     private void OnCheckMatplotlib(object? sender, RoutedEventArgs e) => MatplotlibCheckRequested?.Invoke();
     private void OnCheckOpenpyxl(object? sender, RoutedEventArgs e) => OpenpyxlCheckRequested?.Invoke();
     private void OnStepBrowse(object? sender, RoutedEventArgs e) => StepBrowseRequested?.Invoke();
+    private void OnStepTemplate(object? sender, RoutedEventArgs e) => StepTemplateRequested?.Invoke();
     private void OnStepAnalyze(object? sender, RoutedEventArgs e) => StepAnalyzeRequested?.Invoke();
     private void OnStepExport(object? sender, RoutedEventArgs e) => StepExportRequested?.Invoke();
     private void OnStepCancel(object? sender, RoutedEventArgs e) => StepCancelRequested?.Invoke();

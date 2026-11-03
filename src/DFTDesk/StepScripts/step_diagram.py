@@ -30,6 +30,75 @@ def _number(value):
     return None
 
 
+def create_input_template(outdir, mode):
+    """Create a fill-in Excel workbook with headers accepted by the parser."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Alignment, Font, PatternFill
+    from openpyxl.utils import get_column_letter
+
+    oxygen = mode in ("ORR", "OER")
+    headers = (["Material", "DG_OH", "DG_O", "DG_OOH"] if oxygen
+               else ["Material", "State", "DeltaG"])
+    name = "DFTDesk_ORR_OER_Template.xlsx" if oxygen else "DFTDesk_HER_Template.xlsx"
+    book = Workbook()
+    data = book.active
+    data.title = "ORR_OER" if oxygen else "HER"
+    data.append(headers)
+    data.freeze_panes = "A2"
+    data.sheet_view.showGridLines = False
+    data.auto_filter.ref = f"A1:{get_column_letter(len(headers))}101"
+    for column, header in enumerate(headers, start=1):
+        letter = get_column_letter(column)
+        data.column_dimensions[letter].width = 29 if column == 1 else 22
+        cell = data.cell(1, column)
+        cell.fill = PatternFill("solid", fgColor="243F72")
+        cell.font = Font(name="Arial", size=11, bold=True, color="FFFFFF")
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+    data.row_dimensions[1].height = 28
+    for row in range(2, 102):
+        data.row_dimensions[row].height = 22
+        for column in range(1, len(headers) + 1):
+            cell = data.cell(row, column)
+            cell.fill = PatternFill("solid", fgColor="FFF5D6")
+            cell.font = Font(name="Arial", size=10, color="172B4D")
+            cell.alignment = Alignment(vertical="center")
+            if column > 1 and (oxygen or column == 3):
+                cell.number_format = "0.0000"
+
+    guide = book.create_sheet("使用说明")
+    guide.sheet_view.showGridLines = False
+    guide.column_dimensions["A"].width = 102
+    guide["A1"] = "DFTDesk 自由能台阶图 Excel 输入说明"
+    guide["A1"].font = Font(name="Arial", size=14, bold=True, color="243F72")
+    guide.row_dimensions[1].height = 30
+    rows = [
+        "1. 仅在第一个工作表黄色区域填写数据；第 1 行英文列名保持不变。",
+        "2. 每个数据项使用单独单元格。自由能直接填写数值（eV），不要输入 eV 单位文字。",
+        ("3. ORR 与 OER 共用此模板；每行一个催化剂，Material 必须唯一。"
+         if oxygen else
+         "3. HER：同一 Material 可以连续多行填写不同 State；DeltaG 是该中间态相对初态的自由能。"),
+        ("4. DG_OH / DG_O / DG_OOH 必须是 U=0 V vs RHE 下已完成校正的吸附吉布斯自由能；不要直接填写未修正的 VASP 总能。"
+         if oxygen else
+         "4. HER 程序自动补 0 eV 初态与终态，表中只填写实际中间态。"),
+        "5. 多个催化剂可以填在同一表中；其余黄色行留空即可，保存后拖入软件绘图。",
+        "6. 此说明页不参与计算；不需要删除。",
+    ]
+    for i, line in enumerate(rows, 3):
+        guide.cell(i, 1, line)
+        guide.cell(i, 1).font = Font(name="Arial", size=10, color="263447")
+        guide.row_dimensions[i].height = 24
+    guide.cell(11, 1, "示例（仅说明，未填入正式数据页）")
+    guide.cell(11, 1).font = Font(name="Arial", bold=True, color="243F72")
+    guide.cell(12, 1, ("Catalyst_A | 1.60 | 2.80 | 3.90" if oxygen
+                        else "Catalyst_A | *H | 0.24"))
+    guide.cell(13, 1, ("Catalyst_B | 1.48 | 2.60 | 3.83" if oxygen
+                        else "Catalyst_A | *H-H | 0.12"))
+    path = Path(outdir) / name
+    book.save(path)
+    book.close()
+    return str(path)
+
+
 def _states_from_template(sheet):
     from openpyxl import load_workbook
     # sheet is a cached-value worksheet; a second formula worksheet supplies raw B/E.
@@ -432,7 +501,7 @@ def export_profiles(profiles, outdir, metrics=None):
     return str(csv_path), str(xlsx_path), str(dat_path)
 
 
-def draw_profiles(profiles, outdir, mode="HER"):
+def draw_profiles(profiles, outdir, mode="HER", metrics=None):
     """Origin-inspired horizontal energy levels, grouped by comparable pathways."""
     import matplotlib
     matplotlib.use("Agg")
@@ -444,6 +513,7 @@ def draw_profiles(profiles, outdir, mode="HER"):
             plt.rcParams["font.sans-serif"] = [name]
             break
     plt.rcParams["axes.unicode_minus"] = False
+    plt.rcParams["svg.fonttype"] = "none"  # Editable text labels in Origin/Inkscape
 
     # An Origin project may contain both a shared-intermediate comparison and
     # detailed reaction-coordinate pathways. Infer both without guessing states.
@@ -478,25 +548,53 @@ def draw_profiles(profiles, outdir, mode="HER"):
 
     colors = ["#2F66C5", "#09958C", "#42A464", "#C65A7A", "#B37D31"]
     palette = {profile[0][0]: colors[i % len(colors)] for i, profile in enumerate(profiles)}
-    fig, axes = plt.subplots(len(panels), 1,
-                             figsize=(10.6, max(3.9, 3.7 * len(panels))),
-                             squeeze=False)
+    che_metrics = ({item["Material"]: item for item in metrics or []}
+                   if mode in ("ORR", "OER") else {})
+    panel_height = max(4.1, 3.8 * len(panels),
+                       (2.1 + .66 * len(che_metrics)) if che_metrics else 0)
+    if che_metrics:
+        fig = plt.figure(figsize=(13.6, panel_height))
+        grid = fig.add_gridspec(len(panels), 2, width_ratios=(3.65, 1.55),
+                               wspace=.24, hspace=.35)
+        axes = [fig.add_subplot(grid[i, 0]) for i in range(len(panels))]
+        summaries = [fig.add_subplot(grid[i, 1]) for i in range(len(panels))]
+    else:
+        fig, grid_axes = plt.subplots(len(panels), 1,
+                                     figsize=(10.6, panel_height), squeeze=False)
+        axes = [grid_axes[i][0] for i in range(len(panels))]
+        summaries = [None] * len(panels)
     for panel_index, (title, paths) in enumerate(panels):
-        ax = axes[panel_index][0]
+        ax = axes[panel_index]
         all_energies = []
         for profile in paths:
             material = profile[0][0]
             levels = [float(row[2]) for row in profile]
             all_energies.extend(levels)
             color = palette[material]
+            metadata = che_metrics.get(material)
+            pds_step = metadata["PDS_step"] if metadata else None
             for index, energy in enumerate(levels):
                 ax.hlines(energy, index - .31, index + .31,
                           color=color, lw=2.6, zorder=3,
                           label=material if index == 0 else None)
                 if index + 1 < len(levels):
+                    is_pds = pds_step == index + 1
                     ax.plot([index + .31, index + .69],
                             [energy, levels[index + 1]],
-                            color=color, lw=1.1, ls=(0, (4, 3)), zorder=2)
+                            color=color, lw=3.4 if is_pds else 1.1,
+                            ls="-" if is_pds else (0, (4, 3)),
+                            zorder=5 if is_pds else 2)
+                    if is_pds:
+                        midpoint = (energy + levels[index + 1]) / 2
+                        ax.scatter([index + .5], [midpoint], s=67, marker="D",
+                                   color=color, edgecolor="white", linewidth=.9,
+                                   zorder=6)
+                        if len(paths) == 1:
+                            ax.annotate("PDS", (index + .5, midpoint),
+                                        xytext=(9, 11), textcoords="offset points",
+                                        fontsize=9, fontweight="bold", color=color,
+                                        bbox=dict(boxstyle="round,pad=.25",
+                                                  fc="white", ec=color, lw=1))
             if len(paths) == 1:
                 for index, energy in enumerate(levels[1:-1], 1):
                     ax.annotate(f"{energy:+.2f}", (index, energy),
@@ -515,6 +613,32 @@ def draw_profiles(profiles, outdir, mode="HER"):
             ax.legend(loc="lower left", frameon=False, fontsize=9, ncol=min(3, len(paths)))
         ax.spines[["top", "right"]].set_visible(False)
         ax.tick_params(direction="in", length=4)
+        sidebar = summaries[panel_index]
+        if sidebar is not None:
+            sidebar.set_axis_off()
+            sidebar.text(.03, .99, f"{mode} | CHE 指标",
+                         va="top", fontsize=13, fontweight="bold", color="#243F72",
+                         transform=sidebar.transAxes)
+            count = max(len(paths), 1)
+            pitch = .88 / count
+            for i, profile in enumerate(paths):
+                material = profile[0][0]
+                info = che_metrics.get(material)
+                if not info:
+                    continue
+                short = count > 7
+                desc = (f"{material}\nη = {info['Eta_V']:.3f} V · PDS 第 {info['PDS_step']} 步"
+                        if short else
+                        f"{material}\nη = {info['Eta_V']:.3f} V\nPDS：第 {info['PDS_step']} 步")
+                sidebar.text(.03, .90 - i * pitch, desc, ha="left", va="top",
+                             fontsize=8.6 if short else 10.1, linespacing=1.32,
+                             fontweight="semibold", color=palette[material],
+                             bbox=dict(boxstyle="round,pad=.52", fc="#F5F7FC",
+                                       ec=palette[material], lw=1.15, alpha=.98),
+                             transform=sidebar.transAxes)
+            sidebar.text(.03, .02, "PDS = 热力学电位决定步骤\nRDS 需另算动力学能垒",
+                         fontsize=8, color="#626B7D", transform=sidebar.transAxes,
+                         va="bottom")
     fig.tight_layout()
     png = str(Path(outdir) / "step_diagram.png")
     svg = str(Path(outdir) / "step_diagram.svg")
@@ -525,14 +649,23 @@ def draw_profiles(profiles, outdir, mode="HER"):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--action", choices=("inspect", "analyze"), default="analyze")
-    parser.add_argument("--input", required=True)
+    parser.add_argument("--action", choices=("inspect", "analyze", "template"), default="analyze")
+    parser.add_argument("--input")
     parser.add_argument("--outdir")
     parser.add_argument("--mode", choices=("HER", "ORR", "OER"), default="HER")
     parser.add_argument("--potential", type=float, default=0.0)
     parser.add_argument("--ph", type=float, default=0.0)
     parser.add_argument("--reference", choices=("RHE", "SHE"), default="RHE")
     args = parser.parse_args()
+    if args.action == "template":
+        if not args.outdir:
+            raise ValueError("生成 Excel 模板需要指定输出目录。")
+        Path(args.outdir).mkdir(parents=True, exist_ok=True)
+        template_path = create_input_template(args.outdir, args.mode)
+        print(json.dumps({"Template": template_path}, ensure_ascii=False))
+        return
+    if not args.input:
+        raise ValueError("请先选择 Excel 原始数据文件。")
     input_path = Path(args.input)
     if not input_path.is_file():
         raise FileNotFoundError(str(input_path))
@@ -558,7 +691,7 @@ def main():
         if not args.outdir:
             raise ValueError("缺少输出目录。")
         result["Csv"], result["Xlsx"], result["Dat"] = export_profiles(profiles, args.outdir, metrics)
-        result["Png"], result["Svg"] = draw_profiles(profiles, args.outdir, args.mode)
+        result["Png"], result["Svg"] = draw_profiles(profiles, args.outdir, args.mode, metrics)
     print(json.dumps(result, ensure_ascii=False))
 
 

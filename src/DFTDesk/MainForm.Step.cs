@@ -15,6 +15,35 @@ internal sealed partial class MainForm
     private CancellationTokenSource? _stepCancellation;
     private bool _stepBusy;
 
+    private async Task SaveStepTemplateAsync()
+    {
+        if (_stepBusy) return;
+        var mode = _shell.SelectedStepMode;
+        var name = mode == "HER" ? "DFTDesk_HER_Template.xlsx" : "DFTDesk_ORR_OER_Template.xlsx";
+        using var dialog = new SaveFileDialog
+        {
+            Title = "保存可直接填写的台阶图 Excel 模板",
+            Filter = "Excel 工作簿|*.xlsx",
+            DefaultExt = "xlsx",
+            AddExtension = true,
+            FileName = name,
+            OverwritePrompt = true,
+        };
+        if (dialog.ShowDialog() != DialogResult.OK) return;
+        try
+        {
+            _shell.SetStepStatus("正在生成 " + mode + " 标准 Excel 输入模板…");
+            await StepDiagramAnalysis.CreateTemplateAsync(
+                mode, dialog.FileName, _shell.PythonExecutablePath);
+            _shell.SetStepStatus("模板已保存：" + dialog.FileName +
+                "。请在第一个工作表从第 2 行填入数据，列名保持不变。");
+        }
+        catch (Exception ex)
+        {
+            _shell.SetStepStatus("模板生成失败：" + ex.Message);
+        }
+    }
+
     private void BrowseStepFile()
     {
         if (_stepBusy) return;

@@ -1,6 +1,6 @@
-# DFTDesk 2.3.1 — Windows 科研结构工作台
+# DFTDesk 2.3.2 — Windows 科研结构工作台
 
-**DFTDesk 2.3.1 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.2 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -78,7 +78,7 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 
 ## 绘制台阶图（2.2：HER / ORR / OER）
 
-左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm），并新增 HER、ORR、OER 三种专用模式。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
+左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm），并新增 HER、ORR、OER 三种专用模式。模式右侧的「下载当前模式 Excel 模板」会生成可直接填写的标准工作簿：HER 为 Material/State/DeltaG 三列，ORR/OER 为 Material/DG_OH/DG_O/DG_OOH 四列。第一个工作表从第 2 行填写，不改动表头，说明页不参与计算。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
 
 点击「绘制台阶图」后可预览可比催化剂叠加的能量平台、虚线连接及能量标注，并区分完整中间态路径；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
 
@@ -89,7 +89,7 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 - 四电子 CHE、298.15 K、反应总能 4.92 eV；台阶图的电位统一输入为 V vs RHE，不显示电位参照下拉框，且不重复施加 pH 修正。pH 输入用于记录溶液条件。
 - OER 前进步骤（0 V）：`ΔG_OH, ΔG_O−ΔG_OH, ΔG_OOH−ΔG_O, 4.92−ΔG_OOH`，`U_L = max(ΔG_i)`，`η = U_L−1.23`；ORR 为逆序还原反应，`U_L = min(−ΔG_i)`，`η = 1.23−U_L`。
 - 在 U 下逐个一电子步骤修正 `−U_RHE`（OER）、`+U_RHE`（ORR）。ORR/OER 终态能量随电位变动，不应自动重置零点。
-- 多催化剂按相同中间态叠加绘图；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步。
+- 多催化剂按相同中间态叠加绘图；**图上以粗线和菱形突出 PDS，右侧逐个催化剂显示 η 和 PDS 步数**；导出 XLSX 的 **CHE Metrics、CHE Four Steps、Reaction Profiles** 三个表，兼有 CSV、Origin DAT、PNG、SVG。PDS 表示热力学潜在决定步骤，不是动力学活化能最高的一步（RDS 需要动力学能垒）。
 
 ### ORR 原始多结构模板（2.2.1 修复）
 

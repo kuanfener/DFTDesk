@@ -26,6 +26,55 @@ def run_script(source, outdir=None, success=True, extra=None):
 
 
 class TestStepDiagram(unittest.TestCase):
+    def test_generated_fill_in_templates_and_visible_che_labels(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            oxygen_template = subprocess.run(
+                [sys.executable, str(SCRIPT), "--action", "template",
+                 "--mode", "ORR", "--outdir", str(root)],
+                capture_output=True, text=True, encoding="utf-8", check=True)
+            path = Path(json.loads(oxygen_template.stdout)["Template"])
+            self.assertEqual("DFTDesk_ORR_OER_Template.xlsx", path.name)
+            book = load_workbook(path)
+            self.assertEqual(["Material", "DG_OH", "DG_O", "DG_OOH"],
+                             [cell.value for cell in book.active[1]])
+            self.assertIsNone(book.active["A2"].value)
+            self.assertIn("使用说明", book.sheetnames)
+            for line, values in enumerate([
+                ("FeN4", 1.60, 2.80, 3.90),
+                ("FeN4-defect", 1.48, 2.60, 3.83),
+            ], 2):
+                for col, value in enumerate(values, 1):
+                    book.active.cell(line, col).value = value
+            book.save(path)
+            book.close()
+            for mode in ("ORR", "OER"):
+                result = run_script(path, root / mode, extra=["--mode", mode])
+                self.assertEqual(2, result["SeriesCount"])
+                svg = Path(result["Svg"]).read_text(encoding="utf-8")
+                self.assertIn("PDS", svg)
+                self.assertIn("η = ", svg)
+                self.assertIn("FeN4", svg)
+
+            her_result = subprocess.run(
+                [sys.executable, str(SCRIPT), "--action", "template",
+                 "--mode", "HER", "--outdir", str(root)],
+                capture_output=True, text=True, encoding="utf-8", check=True)
+            her_path = Path(json.loads(her_result.stdout)["Template"])
+            her_book = load_workbook(her_path)
+            self.assertEqual(["Material", "State", "DeltaG"],
+                             [cell.value for cell in her_book.active[1]])
+            self.assertIsNone(her_book.active["A2"].value)
+            for line, values in enumerate([
+                ("Pt", "*H", -0.15), ("Pt", "*H-H", 0.06),
+                ("Fe", "*H", 0.22),
+            ], 2):
+                for col, value in enumerate(values, 1):
+                    her_book.active.cell(line, col).value = value
+            her_book.save(her_path)
+            her_book.close()
+            self.assertEqual(2, run_script(her_path, extra=["--mode", "HER"])["SeriesCount"])
+
     def test_original_her_layout_and_exports(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

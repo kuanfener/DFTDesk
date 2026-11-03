@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
@@ -55,6 +56,92 @@ internal static class StepDiagramAnalysis
         {
             if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
             throw;
+        }
+    }
+
+    public static async Task CreateTemplateAsync(string mode, string destination, string python)
+    {
+        if (mode is not ("HER" or "ORR" or "OER"))
+            throw new ArgumentException("未知的反应模式。", nameof(mode));
+        var folder = Path.Combine(Path.GetTempPath(), "DFTDesk-STEP-TEMPLATE-" +
+            Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(folder);
+        try
+        {
+            var script = Path.Combine(folder, "step_diagram.py");
+            using (var input = typeof(StepDiagramAnalysis).Assembly.GetManifestResourceStream(Resource)
+                   ?? throw new InvalidOperationException("台阶图脚本未包含在可执行文件中。"))
+            using (var output = new FileStream(script, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                await input.CopyToAsync(output);
+
+            var start = new ProcessStartInfo
+            {
+                FileName = string.IsNullOrWhiteSpace(python) ? "python" : python.Trim().Trim('"'),
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8,
+            };
+            start.Environment["PYTHONIOENCODING"] = "utf-8";
+            foreach (var arg in new[]
+            {
+                "-u", script, "--action", "template", "--mode", mode, "--outdir", folder
+            }) start.ArgumentList.Add(arg);
+            using var process = new Process { StartInfo = start };
+            try
+            {
+                if (!process.Start()) throw new InvalidOperationException("无法启动 Excel 模板生成引擎。");
+            }
+            catch (Win32Exception ex)
+            {
+                throw new InvalidOperationException("无法启动 Python，请先在「工作引擎」中配置 python.exe。", ex);
+            }
+            var stdout = process.StandardOutput.ReadToEndAsync();
+            var stderr = process.StandardError.ReadToEndAsync();
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+            try
+            {
+                await process.WaitForExitAsync(timeout.Token);
+            }
+            catch (OperationCanceledException)
+            {
+                if (!process.HasExited)
+                {
+                    try { process.Kill(entireProcessTree: true); }
+                    catch (InvalidOperationException) { }
+                    await process.WaitForExitAsync(CancellationToken.None);
+                }
+                throw new TimeoutException("Excel 模板生成超时。");
+            }
+            var outputText = (await stdout).Trim();
+            var errorText = (await stderr).Trim();
+            if (process.ExitCode != 0)
+                throw new InvalidOperationException(
+                    "Python 模板生成失败：" + (errorText.Length > 1200 ? errorText[^1200..] : errorText));
+            string? reportedPath;
+            try
+            {
+                using var doc = JsonDocument.Parse(outputText);
+                reportedPath = doc.RootElement.GetProperty("Template").GetString();
+            }
+            catch (Exception ex) when (ex is JsonException or KeyNotFoundException)
+            {
+                throw new InvalidOperationException("模板生成引擎返回数据错误。", ex);
+            }
+            var expected = Path.Combine(folder, mode == "HER"
+                ? "DFTDesk_HER_Template.xlsx" : "DFTDesk_ORR_OER_Template.xlsx");
+            if (reportedPath is null ||
+                !string.Equals(Path.GetFullPath(reportedPath), Path.GetFullPath(expected),
+                               StringComparison.OrdinalIgnoreCase) ||
+                !File.Exists(expected) || new FileInfo(expected).Length == 0)
+                throw new IOException("Excel 模板文件缺失或不符合所选模式。");
+            File.Copy(expected, destination, overwrite: true);
+        }
+        finally
+        {
+            if (Directory.Exists(folder)) Directory.Delete(folder, recursive: true);
         }
     }
 

@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.1"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.2"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.1" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.2" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -415,17 +415,22 @@
           <StackPanel x:Name="StepPage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="绘制台阶图"/>
             <TextBlock Classes="muted" TextWrapping="Wrap"
-                       Text="HER 兼容原始 Excel 自由能模板；ORR / OER 采用四电子 CHE 模型，按吸附自由能自动计算四步反应、限制电位及理论过电位。"/>
+                       Text="可下载 HER / ORR / OER 标准 Excel 输入模板；四电子 CHE 模型自动计算反应步骤、限制电位、理论过电位 η，并在图中高亮 PDS 决定步骤。"/>
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入原始自由能数据"/>
                 <TextBlock Classes="label" Text="反应模式"/>
-                <ComboBox x:Name="StepMode" SelectedIndex="0" Width="320"
-                          HorizontalAlignment="Left" SelectionChanged="OnStepModeChanged">
-                  <ComboBoxItem Content="HER（模板自由能台阶）"/>
-                  <ComboBoxItem Content="ORR（四电子氧还原）"/>
-                  <ComboBoxItem Content="OER（四电子析氧）"/>
-                </ComboBox>
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                  <ComboBox x:Name="StepMode" SelectedIndex="0" Width="320"
+                            HorizontalAlignment="Left" SelectionChanged="OnStepModeChanged">
+                    <ComboBoxItem Content="HER（模板自由能台阶）"/>
+                    <ComboBoxItem Content="ORR（四电子氧还原）"/>
+                    <ComboBoxItem Content="OER（四电子析氧）"/>
+                  </ComboBox>
+                  <Button x:Name="StepTemplateButton" Content="下载当前模式 Excel 模板"
+                          Click="OnStepTemplate" ToolTip.Tip="保存标准列名的空白 Excel，填入数据即可直接绘图"/>
+                </StackPanel>
+                <TextBlock Classes="caption" Text="先下载对应模式的 Excel 模板，再从第 2 行填写真实自由能；支持多催化剂。"/>
                 <StackPanel x:Name="StepCheOptions" Spacing="9" IsVisible="False">
                   <Grid ColumnDefinitions="*,12,*">
                     <StackPanel Spacing="5">

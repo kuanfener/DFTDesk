@@ -80,6 +80,7 @@ internal sealed partial class MainForm
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
         _shell.StepBrowseRequested += BrowseStepFile;
+        _shell.StepTemplateRequested += () => _ = SaveStepTemplateAsync();
         _shell.StepFileDropped += SetStepFile;
         _shell.StepAnalyzeRequested += () => _ = AnalyzeStepAsync();
         _shell.StepExportRequested += ExportStep;

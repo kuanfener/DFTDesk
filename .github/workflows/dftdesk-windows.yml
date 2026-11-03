@@ -43,7 +43,19 @@ jobs:
       - name: Test pymatgen surface-adsorbate Pourbaix mapping and exports
         run: python -m unittest discover -s tests -p test_surface_pourbaix.py
 
-      - name: Build DFTDesk 2.3.1 surface Pourbaix UI
+      - name: Generate downloadable HER and ORR/OER Excel input templates
+        run: |
+          python src/DFTDesk/StepScripts/step_diagram.py --action template --mode HER --outdir dist/step-templates
+          python src/DFTDesk/StepScripts/step_diagram.py --action template --mode ORR --outdir dist/step-templates
+
+      - name: Upload fill-in Excel templates
+        uses: actions/upload-artifact@v7
+        with:
+          name: DFTDesk-step-templates
+          path: dist/step-templates/*.xlsx
+          if-no-files-found: error
+
+      - name: Build DFTDesk 2.3.2 step diagram templates and annotations UI
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets
