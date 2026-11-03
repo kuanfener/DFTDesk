@@ -48,11 +48,12 @@ internal sealed partial class MainForm
         };
         _avaloniaWindow.Closing += (_, e) =>
         {
-            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy) return;
+            if (!_busy && !_clusterBusy && !_dosBusy && !_cohpBusy && !_stepBusy) return;
             _cancellation?.Cancel();
             _clusterCancellation?.Cancel();
             _dosCancellation?.Cancel();
             _cohpCancellation?.Cancel();
+            _stepCancellation?.Cancel();
             e.Cancel = true;
             Log("正在取消任务，请等待运行结束后关闭窗口。");
         };
@@ -77,6 +78,13 @@ internal sealed partial class MainForm
         _shell.HomeFilesDropped += paths => AddFiles(paths);
         _shell.FormatChosen += target => _ = StartBatchAsync(target);
         _shell.AseCheckRequested += () => _ = CheckAseAsync();
+        _shell.StepBrowseRequested += BrowseStepFile;
+        _shell.StepFileDropped += SetStepFile;
+        _shell.StepAnalyzeRequested += () => _ = AnalyzeStepAsync();
+        _shell.StepExportRequested += ExportStep;
+        _shell.StepCancelRequested += () => _stepCancellation?.Cancel();
+        _shell.DosFileDropped += SetDosFile;
+        _shell.CohpFileDropped += SetCohpFile;
         _shell.DosBrowseRequested += BrowseDosFile;
         _shell.DosAnalyzeRequested += () => _ = AnalyzeDosAsync();
         _shell.DosExportRequested += ExportDos;

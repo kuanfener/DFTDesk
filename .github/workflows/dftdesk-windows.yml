@@ -37,7 +37,10 @@ jobs:
       - name: Test LOBSTER COHP and ICOHP parsing, Excel/Origin/image export
         run: python -m unittest discover -s tests -p test_cohp_analyzer.py
 
-      - name: Build DFTDesk 2.0.0 analysis UI
+      - name: Test Excel HER reaction energy step plotting
+        run: python -m unittest discover -s tests -p test_step_diagram.py
+
+      - name: Build DFTDesk 2.1.0 analysis UI
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

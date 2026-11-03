@@ -26,9 +26,22 @@ internal sealed partial class MainForm
             Multiselect = false,
         };
         if (dialog.ShowDialog() != DialogResult.OK) return;
+        SetCohpFile(dialog.FileName);
+    }
+
+    private void SetCohpFile(string path)
+    {
+        if (_cohpBusy) return;
+        if (!File.Exists(path) ||
+            !(Path.GetFileName(path).StartsWith("COHPCAR", StringComparison.OrdinalIgnoreCase) ||
+              Path.GetFileName(path).StartsWith("ICOHPLIST", StringComparison.OrdinalIgnoreCase)))
+        {
+            _shell.SetCohpStatus("请拖入 COHPCAR.lobster 或 ICOHPLIST.lobster 文件。");
+            return;
+        }
         DisposeCohpResult();
-        _cohpInputPath = dialog.FileName;
-        _shell.SetCohpInput(dialog.FileName);
+        _cohpInputPath = path;
+        _shell.SetCohpInput(path);
         _ = InspectCohpAsync();
     }
 

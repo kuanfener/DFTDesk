@@ -23,9 +23,23 @@ internal sealed partial class MainForm
         };
         if (dialog.ShowDialog() != DialogResult.OK) return;
 
+        SetDosFile(dialog.FileName);
+    }
+
+    private void SetDosFile(string path)
+    {
+        if (_dosBusy) return;
+        if (!File.Exists(path) ||
+            !(Path.GetFileName(path).StartsWith("DOSCAR", StringComparison.OrdinalIgnoreCase) ||
+              Path.GetFileName(path).StartsWith("vasprun.xml", StringComparison.OrdinalIgnoreCase) ||
+              Path.GetExtension(path).Equals(".xml", StringComparison.OrdinalIgnoreCase)))
+        {
+            _shell.SetDosStatus("请拖入 DOSCAR 或 vasprun.xml 文件。");
+            return;
+        }
         DisposeDosResult();
-        _dosInputPath = dialog.FileName;
-        _shell.SetDosInput(dialog.FileName);
+        _dosInputPath = path;
+        _shell.SetDosInput(path);
         _ = InspectDosAsync();
     }
 

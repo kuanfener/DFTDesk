@@ -18,6 +18,11 @@
       <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
       <Setter Property="RenderTransform" Value="scale(1.015)"/>
     </Style>
+    <Style Selector="Border.import-drop.over">
+      <Setter Property="Background" Value="{DynamicResource AccentSoftBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+      <Setter Property="RenderTransform" Value="scale(1.015)"/>
+    </Style>
     <Style Selector="Button.theme-tab">
       <Setter Property="Padding" Value="13,8"/>
       <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
@@ -68,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.0.0"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.1.0"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -105,6 +110,14 @@
               <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
                 <PathIcon Classes="navicon" Data="{StaticResource Icon.Engine}" Width="17" Height="17"/>
                 <TextBlock Text="团簇生成" VerticalAlignment="Center"/>
+              </StackPanel>
+            </Border>
+          </ListBoxItem>
+          <ListBoxItem>
+            <Border Background="Transparent" Padding="12,9">
+              <StackPanel Classes="navitem" Orientation="Horizontal" Spacing="12">
+                <PathIcon Classes="navicon" Data="{StaticResource Icon.Tune}" Width="17" Height="17"/>
+                <TextBlock Text="绘制台阶图" VerticalAlignment="Center"/>
               </StackPanel>
             </Border>
           </ListBoxItem>
@@ -163,14 +176,14 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.0" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.1" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="晶体结构转换 · 团簇生成 · DOS / COHP / ICOHP 分析。输入文件均在本机处理。"/>
+                           Text="晶体结构转换 · 团簇生成 · 自动绘制台阶图 · DOS / COHP / ICOHP 分析。输入文件均在本机处理。"/>
               </StackPanel>
             </Border>
             <TextBlock Classes="h2" Text="开始使用"/>
-            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto">
+            <Grid ColumnDefinitions="*,16,*" RowDefinitions="Auto,16,Auto,16,Auto">
               <Border Grid.Column="0" Classes="card">
                 <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="结构文件格式转换"/>
@@ -189,13 +202,21 @@
               </Border>
               <Border Grid.Row="2" Grid.Column="0" Classes="card">
                 <StackPanel Spacing="10">
+                  <TextBlock Classes="h2" Text="绘制台阶图"/>
+                  <TextBlock Classes="muted" TextWrapping="Wrap"
+                             Text="导入 Excel 自由能数据，自动生成反应台阶图；导出 PNG、SVG、Excel、Origin DAT。"/>
+                  <Button HorizontalAlignment="Left" Content="进入台阶图工具" Click="OnGoStep"/>
+                </StackPanel>
+              </Border>
+              <Border Grid.Row="2" Grid.Column="2" Classes="card">
+                <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="DOS / PDOS 分析"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
                              Text="VASP DOSCAR / vasprun.xml；元素和轨道投影、自旋分辨、d 带中心及 Excel / Origin 导出。"/>
                   <Button HorizontalAlignment="Left" Content="进入 DOS 分析" Click="OnGoDos"/>
                 </StackPanel>
               </Border>
-              <Border Grid.Row="2" Grid.Column="2" Classes="card">
+              <Border Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="3" Classes="card">
                 <StackPanel Spacing="10">
                   <TextBlock Classes="h2" Text="COHP / ICOHP 分析"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
@@ -213,7 +234,7 @@
               </StackPanel>
             </Border>
             <TextBlock Classes="caption" TextWrapping="Wrap"
-                       Text="使用提醒：团簇结果为几何初猜，需经过 VASP 优化；结构转换后请核对原子顺序与约束。DOS/PDOS 推荐使用收敛后的静态计算结果。"/>
+                       Text="使用提醒：团簇结果为几何初猜，需经过 VASP 优化；台阶图的自由能和反应顺序应以原始计算数据为准。DOS/PDOS 推荐使用收敛后的静态计算结果。"/>
           </StackPanel>
 
           <StackPanel x:Name="ConversionPage" Spacing="16" IsVisible="False">
@@ -238,7 +259,7 @@
                     <StackPanel Spacing="7" HorizontalAlignment="Center">
                       <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}"
                                  TextAlignment="Center" HorizontalAlignment="Center"/>
-                      <TextBlock Text="点击云朵添加结构文件，或将文件拖入此处"
+                      <TextBlock Text="点击或拖入添加文件"
                                  FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
                       <TextBlock Classes="caption" Text="支持 POSCAR、CONTCAR、CIF；可多选"
                                  HorizontalAlignment="Center"/>
@@ -371,6 +392,48 @@
                        Text="注意：输出仅为初始构型，需要进行 VASP 结构弛豫和真空层收敛测试；小团簇的晶面仅指局部几何取向。"/>
           </StackPanel>
 
+          <StackPanel x:Name="StepPage" Spacing="16" IsVisible="False">
+            <TextBlock Classes="h1" Text="绘制台阶图"/>
+            <TextBlock Classes="muted" TextWrapping="Wrap"
+                       Text="从 Excel 中识别各催化剂及中间态自由能，自动绘制反应台阶图。兼容提供的 HER 原始数据模板，也支持 Material / State / DeltaG 三列表格。"/>
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <TextBlock Classes="h2" Text="导入原始自由能数据"/>
+                <Border x:Name="StepDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
+                        BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
+                  <Button Classes="ghost" MinHeight="130" Click="OnStepBrowse"
+                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                      <TextBlock Classes="caption" Text="支持 Excel .xlsx / .xlsm"/>
+                    </StackPanel>
+                  </Button>
+                </Border>
+                <TextBlock x:Name="StepInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 Excel 数据"/>
+                <StackPanel Orientation="Horizontal" Spacing="9">
+                  <Button x:Name="StepAnalyzeButton" Classes="accent" Content="绘制台阶图" Click="OnStepAnalyze"/>
+                  <Button x:Name="StepExportButton" Content="导出 PNG / SVG / Excel / Origin DAT / CSV"
+                          Click="OnStepExport" IsEnabled="False"/>
+                  <Button x:Name="StepCancelButton" Content="取消" Click="OnStepCancel" IsEnabled="False"/>
+                </StackPanel>
+                <TextBlock x:Name="StepStatus" Classes="muted" TextWrapping="Wrap"
+                           Text="请先点击或拖入添加文件，然后点击「绘制台阶图」。"/>
+              </StackPanel>
+            </Border>
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <TextBlock Classes="h2" Text="自由能台阶图预览"/>
+                <TextBlock x:Name="StepPlotPlaceholder" Classes="caption" Text="绘制完成后在此显示各体系的自由能台阶图。"/>
+                <Image x:Name="StepPlotImage" Height="520" Stretch="Uniform" IsVisible="False"/>
+                <TextBlock x:Name="StepSummary" Classes="caption" TextWrapping="Wrap"/>
+                <TextBlock Classes="caption" TextWrapping="Wrap"
+                           Text="Excel/CSV/Origin DAT 保留每个中间态自由能。Origin DAT 可直接导入现有 .opju 工程；不会自动修改 Origin 原生工程模板。"/>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+
           <StackPanel x:Name="DosPage" Spacing="16" IsVisible="False">
             <TextBlock Classes="h1" Text="DOS / PDOS 分析"/>
             <TextBlock Classes="muted" TextWrapping="Wrap"
@@ -378,7 +441,18 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 VASP 电子态密度"/>
-                <Button Classes="accent" HorizontalAlignment="Left" Content="选择 DOSCAR / vasprun.xml" Click="OnDosBrowse"/>
+                <Border x:Name="DosDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
+                        BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
+                  <Button Classes="ghost" MinHeight="130" Click="OnDosBrowse"
+                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                      <TextBlock Classes="caption" Text="支持 DOSCAR / vasprun.xml"/>
+                    </StackPanel>
+                  </Button>
+                </Border>
                 <TextBlock x:Name="DosInputFile" Classes="muted" TextWrapping="Wrap" Text="尚未导入 DOS 数据"/>
                 <TextBlock x:Name="DosMetadataStatus" Classes="caption" TextWrapping="Wrap"
                            Text="DOSCAR 按元素分辨 PDOS 需要同目录 POSCAR 或 CONTCAR；优先推荐 vasprun.xml。"/>
@@ -441,8 +515,18 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="导入 LOBSTER 数据"/>
-                <Button Classes="accent" HorizontalAlignment="Left"
-                        Content="选择 COHPCAR / ICOHPLIST" Click="OnCohpBrowse"/>
+                <Border x:Name="CohpDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
+                        Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
+                        BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
+                  <Button Classes="ghost" MinHeight="130" Click="OnCohpBrowse"
+                          HorizontalContentAlignment="Center" HorizontalAlignment="Stretch">
+                    <StackPanel Spacing="6" HorizontalAlignment="Center">
+                      <TextBlock Text="☁" FontSize="42" Foreground="{DynamicResource AccentBrush}" TextAlignment="Center"/>
+                      <TextBlock Text="点击或拖入添加文件" FontSize="15" FontWeight="SemiBold" TextAlignment="Center"/>
+                      <TextBlock Classes="caption" Text="支持 COHPCAR.lobster / ICOHPLIST.lobster"/>
+                    </StackPanel>
+                  </Button>
+                </Border>
                 <TextBlock x:Name="CohpInputFile" Classes="muted" TextWrapping="Wrap"
                            Text="尚未导入 COHP 数据"/>
                 <TextBlock x:Name="CohpMetadataStatus" Classes="caption" TextWrapping="Wrap"
@@ -647,7 +731,7 @@
                 <StackPanel Spacing="9">
                   <TextBlock Classes="h2" Text="NumPy"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
-                             Text="数值数组、DOS 积分和 d 带中心等计算。"/>
+                             Text="数值数组、DOS 积分、d 带中心及自由能数据处理。"/>
                   <Button Classes="accent" HorizontalAlignment="Left"
                           Content="单独检测 NumPy" Click="OnCheckNumpy"/>
                   <TextBlock x:Name="NumpyHealthText" Classes="caption" TextWrapping="Wrap"
@@ -658,7 +742,7 @@
                 <StackPanel Spacing="9">
                   <TextBlock Classes="h2" Text="Matplotlib"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
-                             Text="DOS、COHP/ICOHP 曲线绘制和 PNG / SVG 导出。"/>
+                             Text="DOS、COHP/ICOHP 和自由能台阶图绘制，PNG / SVG 导出。"/>
                   <Button Classes="accent" HorizontalAlignment="Left"
                           Content="单独检测 Matplotlib" Click="OnCheckMatplotlib"/>
                   <TextBlock x:Name="MatplotlibHealthText" Classes="caption" TextWrapping="Wrap"
@@ -669,7 +753,7 @@
                 <StackPanel Spacing="9">
                   <TextBlock Classes="h2" Text="openpyxl"/>
                   <TextBlock Classes="muted" TextWrapping="Wrap"
-                             Text="将 DOS 与 COHP/ICOHP 数值数据导出为可编辑 Excel（.xlsx）工作簿。"/>
+                             Text="处理输入 Excel，并将 DOS、COHP/ICOHP 和台阶图数据导出为可编辑工作簿。"/>
                   <Button Classes="accent" HorizontalAlignment="Left"
                           Content="单独检测 openpyxl" Click="OnCheckOpenpyxl"/>
                   <TextBlock x:Name="OpenpyxlHealthText" Classes="caption" TextWrapping="Wrap"
@@ -685,7 +769,7 @@
             <Border Classes="card">
               <StackPanel Spacing="12">
                 <TextBlock Classes="h2" Text="DFTDesk"/>
-                <TextBlock Text="DFT 计算工作台 · 结构转换、团簇生成、DOS / COHP / ICOHP 分析"/>
+                <TextBlock Text="DFT 计算工作台 · 结构转换、团簇生成、台阶图、DOS / COHP / ICOHP 分析"/>
                 <TextBlock Classes="caption" Text="DFTDesk 使用 MIT 许可；部分界面、轮盘及 Windows 文件组件源自上游开源项目，许可与原作者版权信息请见随附 LICENSE.txt 和源码中的第三方声明。"/>
                 <TextBlock Classes="h2" Text="第三方开源组件"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"

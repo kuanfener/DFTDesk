@@ -1,14 +1,14 @@
-# DFTDesk 2.0.0 — Windows 科研结构工作台
+# DFTDesk 2.1.0 — Windows 科研结构工作台
 
-**DFTDesk 2.0.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.1.0 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
 - 拖入 POSCAR、CONTCAR、`.vasp`、`.poscar` 或 `.cif` 文件，选择 CIF / POSCAR 输出格式。
-- 在转换页面点击云朵导入或拖放结构文件；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 左键拖动呼出轮盘。已移除 Ctrl + Alt + Space。
+- 在结构转换、台阶图、DOS 与 COHP 分析页面点击云朵或拖放文件（提示统一为「点击或拖入添加文件」）；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 左键拖动呼出轮盘。已移除 Ctrl + Alt + Space。
 - 导出 POSCAR 默认 **Cartesian**，可在「结构文件格式转换」页面取消勾选切换 Direct。
 - 输出前先生成临时文件，成功后以不覆盖已有文件的方式命名；失败时清理临时输出文件。
-- 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」八个入口。
+- 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」九个入口。
 - 「DOS 分析」支持导入 VASP DOSCAR 或 vasprun.xml，选择元素、s/p/d 轨道、自旋与能量区间，生成 TDOS/PDOS 曲线，计算 DOS 积分及 d 带中心，输出 CSV/Excel XLSX/Origin DAT/PNG/SVG。
 - 「团簇生成」支持普通团簇、FCC(111)/(100)/(110) 局部取向和完整二十面体壳层魔数；批量输出 POSCAR 和 CIF；输出 POSCAR 默认 Cartesian；保留可选 Direct、真空厚度与晶格常数覆盖。
 - 界面仅保留 DFTDesk Soft 风格；主题页统一管理浅色/深色、强调色、圆角、轮盘透明度、动画和实际窗口尺寸。**轮盘不透明度右侧显示实时轮盘预览**，滑块和强调色调整时立即刷新，与资源管理器实际轮盘使用同一渲染器。侧边栏展开/收起宽度为 230 / 64。保留上游 MIT 版权信息。
@@ -30,13 +30,13 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 工作引擎页有五张分开的状态卡片：**ASE、pymatgen、NumPy、Matplotlib、openpyxl**。每张卡片有各自的「单独检测」按钮和版本/错误状态；五项共用上方设置的 Python 路径，互相不合并。更改路径时旧状态会标记需要重新检查。
 
-首页「开始使用」新增独立的 DOS 与 COHP/ICOHP 快捷卡片，四个功能分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
+首页「开始使用」提供结构转换、团簇生成、台阶图、DOS 与 COHP/ICOHP 五个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
-## 团簇生成（新增）
+## 团簇生成
 
 在「团簇生成」页面输入元素和原子数（例如 `Pt` 与 `4,5,6,13`），选择「普通团簇」或「FCC 晶面取向团簇」。晶面可填写 `all`（111/100/110）、指定晶面，或 `ico`（13/55/147/309/561/923 原子完整壳层）。晶格常数自动估算，也可手动覆盖；真空层每侧默认 12 Å。程序为每次运行新建结果文件夹，且每个构型同时输出 POSCAR 和 CIF。所有团簇都只是初猜，需要 VASP 结构弛豫。
 
-## DOS / PDOS 分析（新增）
+## DOS / PDOS 分析
 
 在「DOS 分析」选择收敛后的 VASP DOSCAR 或 vasprun.xml：
 
@@ -61,7 +61,7 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 
 项目自动化测试验证输入格式识别、缺失 Python 的错误反馈、ASE 往返转换、Direct/Cartesian、同名输出保护、团簇模式与临时文件清理。CI 专门安装 ASE、pymatgen、NumPy、Matplotlib、openpyxl，运行结构、合成 DOSCAR 与 LOBSTER COHP/ICOHP 导入、绘图及 CSV/XLSX/DAT/PNG/SVG 导出集成测试。
 
-## COHP / ICOHP 分析（2.0.0 新增）
+## COHP / ICOHP 分析
 
 左侧「COHP / ICOHP 分析」是独立页面，与 VASP DOS 分析互不干扰。导入 LOBSTER 的 `COHPCAR.lobster` 或 `ICOHPLIST.lobster`（支持 `.gz`，识别 LCFO 名称）：同一目录存在对应配套文件时会自动合并读取。
 
@@ -69,6 +69,12 @@ dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained
 - **ICOHPLIST**：统计各键的键长、等价键数和上/下自旋 **ICOHP(Ef)**；仅导入 ICOHPLIST 时仍可导出键列表，但无法绘制能量曲线。
 - 结果包含 **CSV、Excel（.xlsx）、Origin 可读制表符（.dat）**，有 COHPCAR 时额外生成 **PNG / SVG**。Excel 中包含 ICOHP(Ef) 汇总页及完整曲线页，曲线保持 LOBSTER 原始符号。Origin DAT 是数据导入文件，不是只能用 Origin 创建的原生工程 `.opju`。
 - LOBSTER COHP 的负值一般对应成键、正值对应反键；**ICOHP(Ef) 是 LOBSTER 已积分的物理量，不应与普通 DOS 积分混淆**。比较不同键时请注意是否以每键均值还是等价键总和表示。
+
+## 绘制台阶图（2.1 新增）
+
+左侧「绘制台阶图」紧跟「团簇生成」；支持点击云朵选取或拖入 Excel 原始自由能文件（.xlsx、.xlsm）。数据引擎支持提供的碱性 HER 模板：B 列 DFT 能量、E 列自由能校正、G 列气相参照和 I 列相对自由能；同一催化剂可分为多个计算阶段并在一条路径中展示。也支持列名为 Material、State、DeltaG 的简化长表。
+
+点击「绘制台阶图」后可预览每种材料的能量平台、虚线连接及能量标注；一键导出 PNG、SVG、CSV、Excel XLSX 和 Origin DAT。软件不会更改原 Excel，不会把用户的 Origin .opju 原生工程提交至 GitHub。DAT 可导入用户自己的 .opju 并继续编辑；自动原生 .opju 绘制仍需 Origin。
 
 ## DOS 新增 Excel 与 Origin 导出
 

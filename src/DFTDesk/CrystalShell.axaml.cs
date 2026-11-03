@@ -66,6 +66,13 @@ internal sealed partial class CrystalShell : UserControl
     public event Action? NumpyCheckRequested;
     public event Action? MatplotlibCheckRequested;
     public event Action? OpenpyxlCheckRequested;
+    public event Action<string>? DosFileDropped;
+    public event Action<string>? CohpFileDropped;
+    public event Action<string>? StepFileDropped;
+    public event Action? StepBrowseRequested;
+    public event Action? StepAnalyzeRequested;
+    public event Action? StepExportRequested;
+    public event Action? StepCancelRequested;
     public event Action? DosBrowseRequested;
     public event Action? DosAnalyzeRequested;
     public event Action? DosExportRequested;
@@ -85,7 +92,7 @@ internal sealed partial class CrystalShell : UserControl
         _pages =
         [
             Part<Control>("HomePage"), Part<Control>("ConversionPage"),
-            Part<Control>("ClusterPage"), Part<Control>("DosPage"),
+            Part<Control>("ClusterPage"), Part<Control>("StepPage"), Part<Control>("DosPage"),
             Part<Control>("CohpPage"), Part<Control>("ThemePage"), Part<Control>("WorkEnginePage"),
             Part<Control>("AboutPage")
         ];
@@ -132,6 +139,22 @@ internal sealed partial class CrystalShell : UserControl
             }
             e.Handled = true;
         });
+        ConfigureFileDrop("DosDropZone", files =>
+            DosFileDropped?.Invoke(files.FirstOrDefault(path =>
+                Path.GetFileName(path).StartsWith("DOSCAR", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetFileName(path).StartsWith("vasprun.xml", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetExtension(path).Equals(".xml", StringComparison.OrdinalIgnoreCase))
+                ?? files[0]));
+        ConfigureFileDrop("CohpDropZone", files =>
+            CohpFileDropped?.Invoke(files.FirstOrDefault(path =>
+                Path.GetFileName(path).StartsWith("COHPCAR", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetFileName(path).StartsWith("ICOHPLIST", StringComparison.OrdinalIgnoreCase))
+                ?? files[0]));
+        ConfigureFileDrop("StepDropZone", files =>
+            StepFileDropped?.Invoke(files.FirstOrDefault(path =>
+                Path.GetExtension(path).Equals(".xlsx", StringComparison.OrdinalIgnoreCase) ||
+                Path.GetExtension(path).Equals(".xlsm", StringComparison.OrdinalIgnoreCase))
+                ?? files[0]));
         Part<TextBox>("OutputDirectory").PropertyChanged += (_, e) =>
         {
             if (e.Property == TextBox.TextProperty)
@@ -169,6 +192,37 @@ internal sealed partial class CrystalShell : UserControl
         };
     }
 
+    private void ConfigureFileDrop(string name, Action<string[]> onFiles)
+    {
+        var zone = Part<Border>(name);
+        DragDrop.SetAllowDrop(zone, true);
+        DragDrop.AddDragEnterHandler(zone, (_, e) =>
+        {
+            var files = DftDonutFactory.Files(e.DataTransfer);
+            e.DragEffects = files.Length > 0 ? DragDropEffects.Copy : DragDropEffects.None;
+            zone.Classes.Set("over", files.Length > 0);
+            e.Handled = true;
+        });
+        DragDrop.AddDragOverHandler(zone, (_, e) =>
+        {
+            e.DragEffects = DftDonutFactory.Files(e.DataTransfer).Length > 0
+                ? DragDropEffects.Copy : DragDropEffects.None;
+            e.Handled = true;
+        });
+        DragDrop.AddDragLeaveHandler(zone, (_, _) => zone.Classes.Set("over", false));
+        DragDrop.AddDropHandler(zone, (_, e) =>
+        {
+            zone.Classes.Set("over", false);
+            var files = DftDonutFactory.Files(e.DataTransfer);
+            if (files.Length > 0)
+            {
+                e.DragEffects = DragDropEffects.Copy;
+                onFiles(files);
+            }
+            e.Handled = true;
+        });
+    }
+
     private string _savedMode = "System";
     private T Part<T>(string name) where T : Control =>
         this.FindControl<T>(name) ?? throw new InvalidOperationException($"Missing DFTDesk control: {name}");
@@ -196,6 +250,45 @@ internal sealed partial class CrystalShell : UserControl
             _ => throw new ArgumentException("未知的 Python 依赖：" + package),
         };
         Part<TextBlock>(control).Text = text;
+    }
+
+    public void SetStepInput(string path)
+    {
+        Part<TextBlock>("StepInputFile").Text = path;
+        ClearStepPreview();
+    }
+
+    public void SetStepBusy(bool busy)
+    {
+        Part<Button>("StepAnalyzeButton").IsEnabled = !busy;
+        Part<Button>("StepCancelButton").IsEnabled = busy;
+        if (busy) Part<Button>("StepExportButton").IsEnabled = false;
+    }
+
+    public void SetStepStatus(string text) => Part<TextBlock>("StepStatus").Text = text;
+
+    public void SetStepPreview(StepDiagramData result)
+    {
+        var image = Part<Image>("StepPlotImage");
+        var previous = image.Source as Bitmap;
+        image.Source = new Bitmap(result.Png);
+        previous?.Dispose();
+        image.IsVisible = true;
+        Part<TextBlock>("StepPlotPlaceholder").IsVisible = false;
+        Part<TextBlock>("StepSummary").Text = result.Summary;
+        Part<Button>("StepExportButton").IsEnabled = true;
+    }
+
+    public void ClearStepPreview()
+    {
+        var image = Part<Image>("StepPlotImage");
+        var previous = image.Source as Bitmap;
+        image.Source = null;
+        previous?.Dispose();
+        image.IsVisible = false;
+        Part<TextBlock>("StepPlotPlaceholder").IsVisible = true;
+        Part<TextBlock>("StepSummary").Text = "";
+        Part<Button>("StepExportButton").IsEnabled = false;
     }
 
     public void SetDosInput(string path)
@@ -564,6 +657,10 @@ internal sealed partial class CrystalShell : UserControl
     private void OnCheckNumpy(object? sender, RoutedEventArgs e) => NumpyCheckRequested?.Invoke();
     private void OnCheckMatplotlib(object? sender, RoutedEventArgs e) => MatplotlibCheckRequested?.Invoke();
     private void OnCheckOpenpyxl(object? sender, RoutedEventArgs e) => OpenpyxlCheckRequested?.Invoke();
+    private void OnStepBrowse(object? sender, RoutedEventArgs e) => StepBrowseRequested?.Invoke();
+    private void OnStepAnalyze(object? sender, RoutedEventArgs e) => StepAnalyzeRequested?.Invoke();
+    private void OnStepExport(object? sender, RoutedEventArgs e) => StepExportRequested?.Invoke();
+    private void OnStepCancel(object? sender, RoutedEventArgs e) => StepCancelRequested?.Invoke();
     private void OnDosBrowse(object? sender, RoutedEventArgs e) => DosBrowseRequested?.Invoke();
     private void OnDosAnalyze(object? sender, RoutedEventArgs e) => DosAnalyzeRequested?.Invoke();
     private void OnDosExport(object? sender, RoutedEventArgs e) => DosExportRequested?.Invoke();
@@ -678,12 +775,14 @@ internal sealed partial class CrystalShell : UserControl
         Part<ListBox>("Navigation").SelectedIndex = 1;
     private void OnGoCluster(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 2;
-    private void OnGoDos(object? sender, RoutedEventArgs e) =>
+    private void OnGoStep(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 3;
-    private void OnGoCohp(object? sender, RoutedEventArgs e) =>
+    private void OnGoDos(object? sender, RoutedEventArgs e) =>
         Part<ListBox>("Navigation").SelectedIndex = 4;
+    private void OnGoCohp(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("Navigation").SelectedIndex = 5;
     private void OnGoEngine(object? sender, RoutedEventArgs e) =>
-        Part<ListBox>("Navigation").SelectedIndex = 6;
+        Part<ListBox>("Navigation").SelectedIndex = 7;
 
     private void OnClusterModeChanged(object? sender, SelectionChangedEventArgs e)
     {
