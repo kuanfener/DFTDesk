@@ -12,6 +12,7 @@
     <Compile Include="../../src/DFTDesk/AseConversion.cs" Link="AseConversion.cs" />
     <Compile Include="../../src/DFTDesk/ClusterGeneration.cs" Link="ClusterGeneration.cs" />
     <Compile Include="../../src/DFTDesk/PythonPackageProbe.cs" Link="PythonPackageProbe.cs" />
+    <Compile Include="../../src/DFTDesk/OriginProProbe.cs" Link="OriginProProbe.cs" />
     <EmbeddedResource Include="../../src/DFTDesk/ClusterScripts/cluster_generator.py" LogicalName="DFTDesk.ClusterScripts.cluster_generator.py" />
     <Using Include="Xunit" />
   </ItemGroup>
