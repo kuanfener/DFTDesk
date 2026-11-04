@@ -43,6 +43,8 @@ internal sealed partial class CrystalShell : UserControl
     private double _opacity = 96;
     private int _windowWidth = 1080;
     private int _windowHeight = 760;
+    private bool _startWithWindows;
+    private bool _minimizeToTray = true;
     private bool _reduced;
     private bool _collapsed;
     private bool _initializing = true;
@@ -170,6 +172,8 @@ internal sealed partial class CrystalShell : UserControl
             }
         };
         BuildSwatches();
+        Part<CheckBox>("LaunchAtLoginOption").IsChecked = _startWithWindows;
+        Part<CheckBox>("MinimizeToTrayOption").IsChecked = _minimizeToTray;
         LoadSettings();
         LoadEngineSettings();
         _initializing = false;
@@ -235,6 +239,7 @@ internal sealed partial class CrystalShell : UserControl
     public DrawingColor CurrentAccent => ToDrawing(_accent);
     public double CurrentOpacity => _opacity / 100;
     public (int Width, int Height) StartupWindowSize => (_windowWidth, _windowHeight);
+    public bool MinimizeToTrayEnabled => _minimizeToTray;
     public string PythonExecutablePath => Part<TextBox>("AsePythonExecutable").Text?.Trim() is { Length: > 0 } executable
         ? executable : "python";
     public void SetAseStatus(string text)
@@ -857,6 +862,8 @@ internal sealed partial class CrystalShell : UserControl
         public double CornerRadius { get; set; } = 16;
         public double Opacity { get; set; } = 96;
         public bool ReduceMotion { get; set; }
+        public bool StartWithWindows { get; set; }
+        public bool MinimizeToTray { get; set; } = true;
         public int WindowWidth { get; set; } = 1080;
         public int WindowHeight { get; set; } = 760;
     }
@@ -873,6 +880,8 @@ internal sealed partial class CrystalShell : UserControl
             _radius = Math.Clamp(saved.CornerRadius, 0, 28);
             _opacity = Math.Clamp(saved.Opacity, 30, 100);
             _reduced = saved.ReduceMotion;
+            _startWithWindows = saved.StartWithWindows;
+            _minimizeToTray = saved.MinimizeToTray;
             _windowWidth = Math.Clamp(saved.WindowWidth, 820, 3840);
             _windowHeight = Math.Clamp(saved.WindowHeight, 560, 2160);
             Part<TextBox>("WindowWidthInput").Text = _windowWidth.ToString();
@@ -886,6 +895,8 @@ internal sealed partial class CrystalShell : UserControl
             Part<Slider>("CornerSlider").Value = _radius;
             Part<Slider>("OpacitySlider").Value = _opacity;
             Part<CheckBox>("ReduceMotionOption").IsChecked = _reduced;
+            Part<CheckBox>("LaunchAtLoginOption").IsChecked = _startWithWindows;
+            Part<CheckBox>("MinimizeToTrayOption").IsChecked = _minimizeToTray;
         }
         catch (Exception) { /* A corrupt optional theme file falls back to DFTDesk Soft. */ }
     }
@@ -902,6 +913,8 @@ internal sealed partial class CrystalShell : UserControl
                 CornerRadius = _radius,
                 Opacity = _opacity,
                 ReduceMotion = _reduced,
+                StartWithWindows = _startWithWindows,
+                MinimizeToTray = _minimizeToTray,
                 WindowWidth = _windowWidth,
                 WindowHeight = _windowHeight,
             }, new JsonSerializerOptions { WriteIndented = true }));
@@ -1052,10 +1065,32 @@ internal sealed partial class CrystalShell : UserControl
         WindowSizeRequested?.Invoke(width, height);
         SaveSettings();
     }
-    private void OnThemeSave(object? sender, RoutedEventArgs e) => SaveSettings();
+    private void OnThemeSave(object? sender, RoutedEventArgs e)
+    {
+        var launchAtLogin = Part<CheckBox>("LaunchAtLoginOption").IsChecked == true;
+        var minimizeToTray = Part<CheckBox>("MinimizeToTrayOption").IsChecked == true;
+        try
+        {
+            WindowsStartupRegistration.SetEnabled(launchAtLogin);
+        }
+        catch (Exception ex)
+        {
+            Part<TextBlock>("StartupStatus").Text = "无法保存 Windows 开机启动项：" + ex.Message;
+            return;
+        }
+        _startWithWindows = launchAtLogin;
+        _minimizeToTray = minimizeToTray;
+        SaveSettings();
+        Part<TextBlock>("StartupStatus").Text = "设置已保存。开机启动：" +
+            (_startWithWindows ? "开启" : "关闭") + "；最小化到托盘：" +
+            (_minimizeToTray ? "开启" : "关闭") + "。";
+    }
     private void OnThemeCancel(object? sender, RoutedEventArgs e)
     {
         LoadSettings();
+        Part<CheckBox>("LaunchAtLoginOption").IsChecked = _startWithWindows;
+        Part<CheckBox>("MinimizeToTrayOption").IsChecked = _minimizeToTray;
+        Part<TextBlock>("StartupStatus").Text = "已恢复上次保存的启动与托盘设置。";
         ApplyTheme();
         WindowSizeRequested?.Invoke(_windowWidth, _windowHeight);
     }

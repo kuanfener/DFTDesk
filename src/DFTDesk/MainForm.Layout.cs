@@ -58,10 +58,27 @@ internal sealed partial class MainForm
             e.Cancel = true;
             Log("正在取消任务，请等待运行结束后关闭窗口。");
         };
+        _avaloniaWindow.PropertyChanged += (_, e) =>
+        {
+            if (e.Property == Avalonia.Controls.Window.WindowStateProperty &&
+                _avaloniaWindow.WindowState == Avalonia.Controls.WindowState.Minimized &&
+                CanMinimizeToTray)
+                HideToTray();
+        };
         _avaloniaWindow.Closed += (_, _) => Close();
         Shown += (_, _) =>
         {
-            _avaloniaWindow.Show();
+            if (_startHiddenInTray && CanMinimizeToTray)
+            {
+                _avaloniaWindow.ShowInTaskbar = false;
+                _avaloniaWindow.WindowState = Avalonia.Controls.WindowState.Minimized;
+                _avaloniaWindow.Show();
+                _avaloniaWindow.Hide();
+            }
+            else
+            {
+                _avaloniaWindow.Show();
+            }
             Hide();
         };
 

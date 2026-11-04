@@ -28,9 +28,13 @@ internal sealed partial class MainForm : Form
     private Label? _recentEmpty;
     private Label? _selectedCount;
 
-    public MainForm()
+    private readonly bool _startHiddenInTray;
+
+    public MainForm(bool startHiddenInTray = false)
     {
+        _startHiddenInTray = startHiddenInTray;
         BuildLayout();
+        InitializeTray();
 
         _popup.FormatChosen += target =>
         {
@@ -91,6 +95,7 @@ internal sealed partial class MainForm : Form
             _dragGraceTimer.Dispose();
             _global.Dispose();
             _popup.Dispose();
+            DisposeTray();
         };
         UpdateStatus();
     }

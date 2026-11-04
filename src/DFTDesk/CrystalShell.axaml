@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.6"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.7"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.6" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.7" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -762,7 +762,7 @@
           <!-- DFTDesk compact theme settings. -->
           <StackPanel x:Name="ThemePage" IsVisible="False" Spacing="16">
             <TextBlock Classes="h1" Text="主题"/>
-            <TextBlock Classes="muted" Text="自定义外观、颜色、圆角、透明度、动画和窗口大小。"/>
+            <TextBlock Classes="muted" Text="自定义外观、窗口大小和 Windows 启动行为。"/>
             <Border Classes="card">
               <StackPanel Spacing="18">
                 <Grid ColumnDefinitions="220,*" ColumnSpacing="16">
@@ -839,6 +839,20 @@
                 <Border Height="1" Background="{DynamicResource SubtleBorderBrush}"/>
                 <Grid ColumnDefinitions="220,*" ColumnSpacing="16">
                   <StackPanel Spacing="4">
+                    <TextBlock Classes="h2" Text="Windows 启动"/>
+                    <TextBlock Classes="caption" TextWrapping="Wrap"
+                               Text="开机登录后是否启动 DFTDesk，以及点击最小化按钮后的行为。"/>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="9" VerticalAlignment="Center">
+                    <CheckBox x:Name="LaunchAtLoginOption" Content="登录 Windows 后自动启动（默认关闭）"/>
+                    <CheckBox x:Name="MinimizeToTrayOption" Content="最小化到系统托盘（默认开启）"/>
+                    <TextBlock x:Name="StartupStatus" Classes="caption" TextWrapping="Wrap"
+                               Text="自动启动会为当前用户设置开机启动项，无需管理员权限；右下角托盘图标可恢复窗口或退出。"/>
+                  </StackPanel>
+                </Grid>
+                <Border Height="1" Background="{DynamicResource SubtleBorderBrush}"/>
+                <Grid ColumnDefinitions="220,*" ColumnSpacing="16">
+                  <StackPanel Spacing="4">
                     <TextBlock Classes="h2" Text="窗口大小"/>
                     <TextBlock Classes="caption" TextWrapping="Wrap"
                                Text="调整 DFTDesk 主窗口的宽高（像素）。"/>
@@ -873,7 +887,7 @@
               <StackPanel Spacing="10">
                 <TextBlock Classes="h2" Text="Python 环境"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
-                           Text="以下五个工具独立显示、独立检测，使用同一个 Python 环境。更改环境路径后，可按需逐个检查。"/>
+                           Text="以下六个工具独立显示、独立检测，使用同一个 Python 环境。更改环境路径后，可按需逐个检查。"/>
                 <TextBlock Classes="label" Text="Python 可执行文件"/>
                 <TextBox x:Name="AsePythonExecutable" Text="python"
                          PlaceholderText="python 或 C:\Python311\python.exe"

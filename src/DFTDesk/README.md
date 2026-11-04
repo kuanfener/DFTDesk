@@ -1,6 +1,13 @@
-# DFTDesk 2.3.6 — Windows 科研结构工作台
+# DFTDesk 2.3.7 — Windows 科研结构工作台
 
-**DFTDesk 2.3.6 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.7 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+
+## v2.3.7 Windows 启动与托盘
+
+- 「主题 → Windows 启动」新增「登录 Windows 后自动启动」（默认关闭）和「最小化到系统托盘」（默认开启），修改后按「保存设置」生效。
+- 自启写入当前用户 `HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run` 的 `DFTDesk` 项，使用已安装的 `DFTDesk.exe` 完整路径和 `--tray` 参数；无需管理员权限，不会为所有用户配置开机启动。关闭该选项时删除此项。
+- 最小化时隐藏桌面窗口，仅保留 Windows 通知区域的 DFTDesk 图标；双击图标恢复，右键菜单可「打开 DFTDesk」或「退出 DFTDesk」。点击窗口右上角关闭按钮仍会正常退出。
+- 已配置自启后如移动或更换 EXE 位置，请重新保存设置以刷新启动路径。仅 Windows 支持此功能。
 
 ## 主要功能
 
@@ -28,13 +35,13 @@ python -c "import ase,sys; print(ase.__version__); print(sys.executable)"
 
 ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使下载的是自包含 Windows 单文件 EXE，使用结构转换 / DOS 分析仍需本地 Python 环境。ASE 采用 LGPL-2.1-or-later，详情见项目第三方许可说明。
 
-## 工作引擎（五项独立检测）
+## 工作引擎（六项独立检测）
 
-工作引擎页有五张分开的状态卡片：**ASE、pymatgen、NumPy、Matplotlib、openpyxl**。每张卡片有各自的「单独检测」按钮和版本/错误状态；五项共用上方设置的 Python 路径，互相不合并。更改路径时旧状态会标记需要重新检查。
+工作引擎页有六张分开的状态卡片：**ASE、pymatgen、NumPy、Matplotlib、openpyxl、OriginPro**。每张卡片有各自的「单独检测」按钮和版本/错误状态；六项共用上方设置的 Python 路径，互相不合并。更改路径时旧状态会标记需要重新检查。
 
 首页「开始使用」提供结构转换、团簇生成、台阶图、表面 Pourbaix、DOS 与 COHP/ICOHP 六个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
-## 文件导入与删除（2.3.6）
+## 文件导入与删除（2.3.7）
 
 台阶图、表面 Pourbaix、DOS、COHP/ICOHP 的导入区沿用结构转换的云朵卡片交互：初始显示云朵；点击或拖入后原位置显示完整文件路径和「更换文件」「删除文件」按钮；删除后恢复云朵，同时清理当前数据预览与可选项。文件已导入时仍可把新文件拖到卡片上替换。结构转换继续支持多文件列表。
 
@@ -137,7 +144,7 @@ DFTDesk 自身以 MIT 授权；图形界面、轮盘及 Windows 支持组件部�
 **保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。
 
 
-### OriginPro 运行环境检测（2.3.6）
+### OriginPro 运行环境检测（2.3.7）
 
 「工作引擎」现有 ASE、pymatgen、NumPy、Matplotlib、openpyxl 检测旁增加 **OriginPro** 检测卡片。此检测先检查当前配置 Python 的 `originpro` 包版本，再通过独立限时进程验证 Windows Origin 自动化连接（不会打开或更改个人 `.opju` 项目）；若安装了 Python 包但无法连接 Origin，会明确区分错误原因。导出原生 `.opju` 前自动执行相同检查，失败时不输出冒充有效工程的文件。只有原生 OPJU 功能要求 Origin 2021+，其余 DFTDesk 模块不依赖它。
 

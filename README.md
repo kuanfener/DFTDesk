@@ -1,4 +1,4 @@
-# DFTDesk v2.3.6
+# DFTDesk v2.3.7
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -8,14 +8,20 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## v2.3.6 最新更新
+## v2.3.7 最新更新
+
+- **开机自动启动（可选）**：在「主题 → Windows 启动」勾选「登录 Windows 后自动启动」，点击「保存设置」后使用当前用户的 Windows 启动项，无需管理员权限；**默认关闭**。自动启动时优先在系统托盘后台运行。
+- **最小化到系统托盘**：默认开启；点击最小化按钮后窗口隐藏到任务栏右下角通知区域。双击 DFTDesk 图标恢复窗口，或右键选择「打开 DFTDesk」「退出 DFTDesk」。关闭窗口的 **×** 仍代表正常退出；如需保留后台运行，请使用最小化按钮。
+- **持久化选项**：开机自启与托盘行为随主题设置保存。关闭「最小化到系统托盘」后，最小化窗口会保留在任务栏；如果移动了 `DFTDesk.exe`，请重新保存开机自启选项以更新启动路径。
+
+## v2.3.6 更新记录
 
 - **OriginPro 连接检测**：工作引擎新增第六张检测卡片，先检查所选 Python 的 `originpro` 包，再检查是否能连接本机 Origin 自动化接口；错误信息区分“缺少 Python 包”和“Origin 连接失败”。
 - **原生 Origin 工程安全导出**：绘制 HER / ORR / OER 台阶图时，选用自己的 Origin `.opju` 模板进行原生工程导出，会先自动检查 Origin 环境；不满足条件则停止导出，不会生成无效的 OPJU 文件。原模板保留，输出另存为新工程。
 - **Origin 2024 适配**：面向 Windows 本机 Origin 2021+；Origin 2024 可以使用，但实际 COM 连接需要在用户电脑上确认。非 OPJU 功能不要求安装 Origin。
 - **构建与验证**：Windows CI 已通过 .NET 测试、ASE/DOS/COHP、HER/ORR/OER、表面 Pourbaix、原生 OPJU 的模拟映射测试、EXE 打包及独立启动检查。
 
-**[下载 DFTDesk v2.3.6（Windows x64）](https://github.com/kuanfener/DFTDesk/actions/runs/41753024792)** · [查看源码](https://github.com/kuanfener/DFTDesk)
+**[下载最新版 DFTDesk（Windows x64）](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)** · [查看源码](https://github.com/kuanfener/DFTDesk)
 
 ## 下载 Windows 版本
 
@@ -38,20 +44,20 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.6 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.7 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
 | 表面 Pourbaix 图 | 用 pymatgen 解析 * / *OH / *O / *OOH 组成，并用四电子 CHE 绘制 pH–SHE 电位稳定区；支持同 Excel 多催化剂与可编辑数据导出 |
 | DOS 分析 | VASP DOSCAR、vasprun.xml：TDOS/PDOS、元素 s/p/d、自旋、DOS 积分、d 带中心 |
 | COHP / ICOHP 分析 | LOBSTER COHPCAR、ICOHPLIST：多键曲线、自旋分辨、ICOHP(Ef) 键强度 |
-| 主题 | 明暗模式、强调色、圆角、窗口尺寸、环形轮盘不透明度与实时预览 |
+| 主题 | 明暗模式、强调色、圆角、窗口尺寸、环形轮盘预览、开机自启和托盘最小化 |
 | 工作引擎 | **ASE、pymatgen、NumPy、Matplotlib、openpyxl、OriginPro 六个独立状态卡片，逐个检测** |
 | 关于 | 软件版本、许可与开源链接 |
 
 首页将六个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
 
-### 统一的文件导入区（2.3.6）
+### 统一的文件导入区（2.3.7）
 
 - 结构转换、台阶图、表面 Pourbaix、DOS 和 COHP/ICOHP 均支持点击云朵或直接拖入文件。
 - 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：载入后云朵在同一个导入框内替换为清晰的完整文件路径，支持「更换文件」和「删除文件」；删除后恢复云朵，并清空该功能的旧预览和选择状态。
@@ -174,7 +180,7 @@ DFTDesk 采用 [MIT License](LICENSE)。部分 UI、轮盘和 Windows 组件复�
 **保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。
 
 
-### OriginPro 运行环境检测（2.3.6）
+### OriginPro 运行环境检测（2.3.7）
 
 「工作引擎」现有 ASE、pymatgen、NumPy、Matplotlib、openpyxl 检测旁增加 **OriginPro** 检测卡片。此检测先检查当前配置 Python 的 `originpro` 包版本，再通过独立限时进程验证 Windows Origin 自动化连接（不会打开或更改个人 `.opju` 项目）；若安装了 Python 包但无法连接 Origin，会明确区分错误原因。导出原生 `.opju` 前自动执行相同检查，失败时不输出冒充有效工程的文件。只有原生 OPJU 功能要求 Origin 2021+，其余 DFTDesk 模块不依赖它。
 

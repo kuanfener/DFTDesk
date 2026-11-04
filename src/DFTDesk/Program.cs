@@ -11,7 +11,7 @@ namespace DFTDesk;
 internal static class Program
 {
     [STAThread]
-    private static void Main()
+    private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
         // Host the reused MIT-licensed Avalonia donut in this standalone WinForms shell.
@@ -20,7 +20,7 @@ internal static class Program
         AppBuilder.Configure<CrystalAvaloniaApp>()
             .UsePlatformDetect()
             .SetupWithoutStarting();
-        System.Windows.Forms.Application.Run(new MainForm());
+        System.Windows.Forms.Application.Run(new MainForm(args.Any(arg => arg.Equals("--tray", StringComparison.OrdinalIgnoreCase))));
     }
 }
 
