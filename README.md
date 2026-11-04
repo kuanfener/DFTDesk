@@ -1,4 +1,4 @@
-# DFTDesk 2.3.6
+# DFTDesk v2.3.6
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -7,6 +7,15 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 ![DFTDesk](src/DFTDesk/Assets/Icons/dftdesk.png)
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
+
+## v2.3.6 最新更新
+
+- **OriginPro 连接检测**：工作引擎新增第六张检测卡片，先检查所选 Python 的 `originpro` 包，再检查是否能连接本机 Origin 自动化接口；错误信息区分“缺少 Python 包”和“Origin 连接失败”。
+- **原生 Origin 工程安全导出**：绘制 HER / ORR / OER 台阶图时，选用自己的 Origin `.opju` 模板进行原生工程导出，会先自动检查 Origin 环境；不满足条件则停止导出，不会生成无效的 OPJU 文件。原模板保留，输出另存为新工程。
+- **Origin 2024 适配**：面向 Windows 本机 Origin 2021+；Origin 2024 可以使用，但实际 COM 连接需要在用户电脑上确认。非 OPJU 功能不要求安装 Origin。
+- **构建与验证**：Windows CI 已通过 .NET 测试、ASE/DOS/COHP、HER/ORR/OER、表面 Pourbaix、原生 OPJU 的模拟映射测试、EXE 打包及独立启动检查。
+
+**[下载 DFTDesk v2.3.6（Windows x64）](https://github.com/kuanfener/DFTDesk/actions/runs/41753024792)** · [查看源码](https://github.com/kuanfener/DFTDesk)
 
 ## 下载 Windows 版本
 
@@ -21,7 +30,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
    python -m pip install originpro
    ```
 
-5. 在软件「工作引擎」页面填写 **同一环境的 python.exe**，分别点击五张工具卡片上的检测按钮。
+5. 在软件「工作引擎」页面填写 **同一环境的 python.exe**，分别点击六张工具卡片上的检测按钮。
 
 > EXE 不捆绑 Python 或科学计算库；本地计算输入不会上传至服务器。
 
@@ -37,7 +46,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 | DOS 分析 | VASP DOSCAR、vasprun.xml：TDOS/PDOS、元素 s/p/d、自旋、DOS 积分、d 带中心 |
 | COHP / ICOHP 分析 | LOBSTER COHPCAR、ICOHPLIST：多键曲线、自旋分辨、ICOHP(Ef) 键强度 |
 | 主题 | 明暗模式、强调色、圆角、窗口尺寸、环形轮盘不透明度与实时预览 |
-| 工作引擎 | **ASE、pymatgen、NumPy、Matplotlib、openpyxl 五个独立状态卡片，逐个检测** |
+| 工作引擎 | **ASE、pymatgen、NumPy、Matplotlib、openpyxl、OriginPro 六个独立状态卡片，逐个检测** |
 | 关于 | 软件版本、许可与开源链接 |
 
 首页将六个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
@@ -71,7 +80,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 - 也支持更直接的 Material / State / DeltaG 三列表格；一个 Excel 可以包含多个体系。
 - 按 Origin 模板将可比的催化剂曲线叠加显示，并为具有更多中间态的体系单独绘制完整路径；使用水平能级线、虚线连接和自由能标注，预览后可**勾选所需格式**导出 **PNG、SVG、CSV、Excel XLSX、Origin DAT / 原生 OPJU**。
 - 原始数据如有修改，应保存 Excel 后再导入；当前由 Python 读取数值并绘制，不会修改原始文件。
-- 附带的 .opju 仅作为 Origin 图形参考。导出的 DAT 可在 Origin 中导入并用于已有模板，但 DFTDesk **不会自动修改或生成 Origin 原生 .opju**，也不会把 Origin 工程上传至公开仓库。
+- **Origin DAT** 是可导入 Origin 的制表符数据；**原生 Origin OPJU** 是在本机 Origin 自动化接口支持下，打开用户指定的原始工程、更新符合匹配条件的已有图形并另存新工程。导出前会自动检测 OriginPro；不会覆盖用户原模板，也不会将工程上传至公开仓库。
 
 #### ORR / OER 四电子 CHE 模式（2.2 新增）
 
@@ -118,7 +127,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 - 查询键长与各自旋 **ICOHP(Ef)**；仅有 ICOHPLIST 时仍能导出键强度表。
 - 输出 PNG、SVG、CSV、**Excel XLSX**、**Origin DAT / 原生 OPJU**（没有 COHPCAR 时不生成曲线图片）。
 
-Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲线工作表；**Origin DAT / 原生 OPJU 是可直接导入 Origin 继续画图的制表符数据文件**，不是原生 `.opju` 工程文件。原始 COHP/ICOHP 符号保留在数值导出中，负的 ICOHP 通常代表成键贡献。
+Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲线工作表；**Origin DAT** 是可在 Origin 中导入的制表符数据文件，**Origin OPJU** 是 Origin 原生工程文件，两者不能混淆。原始 COHP/ICOHP 符号保留在数值导出中，负的 ICOHP 通常代表成键贡献。
 
 ## 导出格式选择（2.3.1）
 
@@ -126,7 +135,7 @@ Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲�
 - 团簇生成：勾选 POSCAR、CIF 或两者，未勾选的格式不生成。
 - HER/ORR/OER 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：在每个工作区勾选 PNG、SVG、Excel、Origin DAT / 原生 OPJU、CSV 中需要的格式，再点「导出所选格式」；不再强制保存全部文件。纯 ICOHPLIST 数据无法导出不存在的曲线图像。
 
-## 工作引擎：五个独立检测项
+## 工作引擎：六个独立检测项
 
 | Python 库 | 用途 | 检测方式 |
 | --- | --- | --- |
@@ -135,8 +144,9 @@ Excel 是可以编辑的工作簿，COHP 文件含 ICOHP(Ef) 汇总和完整曲�
 | **NumPy** | 数组、积分和数值指标 | 单独检测 NumPy |
 | **Matplotlib** | DOS / COHP / 台阶图 / 表面 Pourbaix 及 PNG / SVG 导出 | 单独检测 Matplotlib |
 | **openpyxl** | Excel `.xlsx` 解析及工作簿写出 | 单独检测 openpyxl |
+| **OriginPro** | Windows Origin 2024 原生 `.opju` 自动化导出 | 检查 `originpro` 包及实际 Origin 自动化连接 |
 
-五项共享用户选择的 Python 可执行文件，但 **状态与检测相互独立**。更改 Python 路径后，旧检测结果会被标记为需要重新检测。
+六项共享用户选择的 Python 可执行文件，但 **状态与检测相互独立**。更改 Python 路径后，旧检测结果会被标记为需要重新检测。OriginPro 检测会短暂启动并关闭自动化 Origin 实例；建议先保存正在编辑的 Origin 工程。
 
 ## 源码构建与测试
 
@@ -151,7 +161,7 @@ python -m unittest discover -s tests -p test_surface_pourbaix.py
 dotnet publish src/DFTDesk/DFTDesk.csproj -c Release -r win-x64 --self-contained true -o dist/DFTDesk
 ```
 
-Windows CI 自动安装上述 Python 库，验证 ASE 转换、五个 Python 库的独立检测、DOS/COHP 数据处理、HER 模板、ORR/OER CHE 数值与终态、Excel/Origin 导出，并对独立 EXE 进行启动检查。
+Windows CI 自动安装科学计算所需 Python 库，验证 ASE 转换、基础 Python 包检测与 OriginPro 不可用时的错误提示、DOS/COHP 数据处理、HER 模板、ORR/OER CHE 数值与终态、Excel/Origin 导出，并对独立 EXE 进行启动检查。Origin 2024 的真实 COM 连接仍须在本机测试。
 
 ## 开源许可
 
