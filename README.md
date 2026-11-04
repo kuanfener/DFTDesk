@@ -1,4 +1,4 @@
-# DFTDesk 2.3.5
+# DFTDesk 2.3.6
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -29,7 +29,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.5 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.6 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
@@ -42,7 +42,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 首页将六个主要功能放在「开始使用」卡片中，顶部简介不重复放快捷按钮。
 
-### 统一的文件导入区（2.3.5）
+### 统一的文件导入区（2.3.6）
 
 - 结构转换、台阶图、表面 Pourbaix、DOS 和 COHP/ICOHP 均支持点击云朵或直接拖入文件。
 - 台阶图、表面 Pourbaix、DOS、COHP/ICOHP：载入后云朵在同一个导入框内替换为清晰的完整文件路径，支持「更换文件」和「删除文件」；删除后恢复云朵，并清空该功能的旧预览和选择状态。
@@ -162,3 +162,10 @@ DFTDesk 采用 [MIT License](LICENSE)。部分 UI、轮盘和 Windows 组件复�
 在「绘制台阶图」中勾选 **Origin OPJU（保留模板图）**。导出时选择你自己电脑上的原始 `.opju` 项目，再选择保存目录。此功能需要 Windows 本机安装 Origin 2021+（Origin 2024 支持），并在「工作引擎」配置已安装 `originpro` 的 Python。软件从原工程打开已有的 Book 和 Graph，向已有 Book 添加 `DFTDesk_Profiles` 工作表，将计算结果关联到已有绘图对象，并另存新 `.opju`；不会将原工程或原始数值上传到 GitHub，也不会覆盖原工程。
 
 **保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。
+
+
+### OriginPro 运行环境检测（2.3.6）
+
+「工作引擎」现有 ASE、pymatgen、NumPy、Matplotlib、openpyxl 检测旁增加 **OriginPro** 检测卡片。此检测先检查当前配置 Python 的 `originpro` 包版本，再通过独立限时进程验证 Windows Origin 自动化连接（不会打开或更改个人 `.opju` 项目）；若安装了 Python 包但无法连接 Origin，会明确区分错误原因。导出原生 `.opju` 前自动执行相同检查，失败时不输出冒充有效工程的文件。只有原生 OPJU 功能要求 Origin 2021+，其余 DFTDesk 模块不依赖它。
+
+在「工作引擎」指定的 Python 环境安装：`python -m pip install originpro`。Origin 2024 可用；连接检查可能短暂启动一个独立的 Origin 自动化实例。

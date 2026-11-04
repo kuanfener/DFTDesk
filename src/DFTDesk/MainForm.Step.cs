@@ -192,6 +192,18 @@ internal sealed partial class MainForm
 
             if (originTemplate != null)
             {
+                _shell.SetStepStatus("正在检测 OriginPro 包和 Origin 自动化接口…");
+                try
+                {
+                    var status = await OriginProProbe.ProbeAsync(
+                        _shell.PythonExecutablePath, _stepCancellation.Token);
+                    _shell.SetPythonPackageStatus("originpro", "OriginPro：可用 · " + status);
+                }
+                catch (Exception ex)
+                {
+                    _shell.SetPythonPackageStatus("originpro", "OriginPro：不可用 · " + ex.Message);
+                    throw;
+                }
                 _shell.SetStepStatus("正在通过本机 Origin 更新原始工程中的已有曲线并保存 OPJU…");
                 await StepDiagramAnalysis.ExportNativeOriginAsync(
                     data.Xlsx, originTemplate, originOutput,

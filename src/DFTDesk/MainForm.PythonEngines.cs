@@ -19,4 +19,19 @@ internal sealed partial class MainForm
             _shell.SetPythonPackageStatus(package, $"{package}：不可用 · {ex.Message}");
         }
     }
+    private async Task CheckOriginProAsync()
+    {
+        _shell.SetPythonPackageStatus("originpro",
+            "OriginPro：正在检查 Python 包和本机 Origin 自动化连接…");
+        try
+        {
+            var result = await OriginProProbe.ProbeAsync(_shell.PythonExecutablePath);
+            _shell.SetPythonPackageStatus("originpro", "OriginPro：可用 · " + result);
+        }
+        catch (Exception ex)
+        {
+            _shell.SetPythonPackageStatus("originpro", "OriginPro：不可用 · " + ex.Message);
+        }
+    }
+
 }

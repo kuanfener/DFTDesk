@@ -21,6 +21,16 @@ public sealed class PythonPackageProbeTests
     }
 
     [Fact]
+    public async Task OriginProCheckReportsInvalidInterpreterWithoutConnectingOrigin()
+    {
+        var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            OriginProProbe.ProbeAsync(
+                "DFTDESK_MISSING_ORIGIN_PYTHON_EXECUTABLE",
+                TestContext.Current.CancellationToken));
+        Assert.Contains("OriginPro Python 包不可用", error.Message);
+    }
+
+    [Fact]
     public async Task MissingModuleReportsOnlyRequestedDependency()
     {
         var error = await Assert.ThrowsAsync<InvalidOperationException>(() =>

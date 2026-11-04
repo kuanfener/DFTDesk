@@ -1,6 +1,6 @@
-# DFTDesk 2.3.5 — Windows 科研结构工作台
+# DFTDesk 2.3.6 — Windows 科研结构工作台
 
-**DFTDesk 2.3.5 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.6 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
 ## 主要功能
 
@@ -34,7 +34,7 @@ ASE、pymatgen、NumPy、Matplotlib、openpyxl 均**不随 EXE 打包**。即使
 
 首页「开始使用」提供结构转换、团簇生成、台阶图、表面 Pourbaix、DOS 与 COHP/ICOHP 六个快捷卡片，分别进入对应工作区；页面顶部保持简洁，不重复添加一排入口。
 
-## 文件导入与删除（2.3.5）
+## 文件导入与删除（2.3.6）
 
 台阶图、表面 Pourbaix、DOS、COHP/ICOHP 的导入区沿用结构转换的云朵卡片交互：初始显示云朵；点击或拖入后原位置显示完整文件路径和「更换文件」「删除文件」按钮；删除后恢复云朵，同时清理当前数据预览与可选项。文件已导入时仍可把新文件拖到卡片上替换。结构转换继续支持多文件列表。
 
@@ -135,3 +135,10 @@ DFTDesk 自身以 MIT 授权；图形界面、轮盘及 Windows 支持组件部�
 在「绘制台阶图」中勾选 **Origin OPJU（保留模板图）**。导出时选择你自己电脑上的原始 `.opju` 项目，再选择保存目录。此功能需要 Windows 本机安装 Origin 2021+（Origin 2024 支持），并在「工作引擎」配置已安装 `originpro` 的 Python。软件从原工程打开已有的 Book 和 Graph，向已有 Book 添加 `DFTDesk_Profiles` 工作表，将计算结果关联到已有绘图对象，并另存新 `.opju`；不会将原工程或原始数值上传到 GitHub，也不会覆盖原工程。
 
 **保真限制：** 为避免损坏原图版式，目前仅在原工程恰有一张图、其已有绘图曲线数量与催化剂数相同、且能唯一匹配时自动重绑。若 Origin 模板使用多条子曲线构成一个台阶图、存在多张候选图、固定文字标注或特殊图层关系，需要在 Origin 中根据提示核验或建立对应映射；当前 CI 没有 Origin 许可证，只能自动测试数据映射与安全检查，不能声称已对用户上传的原始 OPJU 做过视觉一致性验收。
+
+
+### OriginPro 运行环境检测（2.3.6）
+
+「工作引擎」现有 ASE、pymatgen、NumPy、Matplotlib、openpyxl 检测旁增加 **OriginPro** 检测卡片。此检测先检查当前配置 Python 的 `originpro` 包版本，再通过独立限时进程验证 Windows Origin 自动化连接（不会打开或更改个人 `.opju` 项目）；若安装了 Python 包但无法连接 Origin，会明确区分错误原因。导出原生 `.opju` 前自动执行相同检查，失败时不输出冒充有效工程的文件。只有原生 OPJU 功能要求 Origin 2021+，其余 DFTDesk 模块不依赖它。
+
+在「工作引擎」指定的 Python 环境安装：`python -m pip install originpro`。Origin 2024 可用；连接检查可能短暂启动一个独立的 Origin 自动化实例。

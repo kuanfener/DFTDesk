@@ -103,6 +103,7 @@ internal sealed partial class MainForm
         _shell.NumpyCheckRequested += () => _ = CheckPackageAsync("numpy", "numpy");
         _shell.MatplotlibCheckRequested += () => _ = CheckPackageAsync("matplotlib", "matplotlib");
         _shell.OpenpyxlCheckRequested += () => _ = CheckPackageAsync("openpyxl", "openpyxl");
+        _shell.OriginProCheckRequested += () => _ = CheckOriginProAsync();
         _shell.CohpBrowseRequested += BrowseCohpFile;
         _shell.CohpClearRequested += ClearCohpFile;
         _shell.CohpAnalyzeRequested += () => _ = AnalyzeCohpAsync();

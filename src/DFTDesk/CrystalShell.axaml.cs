@@ -66,6 +66,7 @@ internal sealed partial class CrystalShell : UserControl
     public event Action? NumpyCheckRequested;
     public event Action? MatplotlibCheckRequested;
     public event Action? OpenpyxlCheckRequested;
+    public event Action? OriginProCheckRequested;
     public event Action<string>? DosFileDropped;
     public event Action<string>? CohpFileDropped;
     public event Action<string>? StepFileDropped;
@@ -249,6 +250,7 @@ internal sealed partial class CrystalShell : UserControl
             "numpy" => "NumpyHealthText",
             "matplotlib" => "MatplotlibHealthText",
             "openpyxl" => "OpenpyxlHealthText",
+            "originpro" => "OriginProHealthText",
             _ => throw new ArgumentException("未知的 Python 依赖：" + package),
         };
         Part<TextBlock>(control).Text = text;
@@ -811,7 +813,7 @@ internal sealed partial class CrystalShell : UserControl
         _savedPythonExecutable = PythonExecutablePath;
         SaveEngineSettings();
         SetAseStatus("ASE：Python 环境已更新，请重新检测。");
-        foreach (var package in new[] { "pymatgen", "numpy", "matplotlib", "openpyxl" })
+        foreach (var package in new[] { "pymatgen", "numpy", "matplotlib", "openpyxl", "originpro" })
             SetPythonPackageStatus(package, package + "：Python 环境已更新，请重新检测。");
     }
 
@@ -819,6 +821,7 @@ internal sealed partial class CrystalShell : UserControl
     private void OnCheckNumpy(object? sender, RoutedEventArgs e) => NumpyCheckRequested?.Invoke();
     private void OnCheckMatplotlib(object? sender, RoutedEventArgs e) => MatplotlibCheckRequested?.Invoke();
     private void OnCheckOpenpyxl(object? sender, RoutedEventArgs e) => OpenpyxlCheckRequested?.Invoke();
+    private void OnCheckOriginPro(object? sender, RoutedEventArgs e) => OriginProCheckRequested?.Invoke();
     private void OnStepBrowse(object? sender, RoutedEventArgs e) => StepBrowseRequested?.Invoke();
     private void OnClearStepInput(object? sender, RoutedEventArgs e) => StepClearRequested?.Invoke();
     private void OnStepTemplate(object? sender, RoutedEventArgs e) => StepTemplateRequested?.Invoke();
