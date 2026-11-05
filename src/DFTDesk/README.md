@@ -2,7 +2,11 @@
 
 **DFTDesk 2.3.10 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
-## v2.3.10 轮盘快捷键与 Windows 文件复制
+## v2.3.10 默认 Direct 分数坐标与轮盘快捷键
+
+- 结构转换和团簇生成生成 POSCAR 时均默认 Direct 分数坐标，Cartesian 笛卡尔坐标保持可选。
+- 已保存旧版本 `engine.json` 的用户首次升级时默认转为 Direct；新版本中的手动选择将继续保存。
+- 本次只改坐标表示方式，原有元素稳定分组与坐标对应关系保持不变。
 
 - 在资源管理器先选中结构文件，按 Ctrl + 鼠标中键单击呼出 CIF / POSCAR 轮盘；左键选择输出格式，按 Esc 或点击其他位置可关闭。
 - 全局鼠标监听仅在文件管理器内识别该组合；原 Ctrl + 左键拖动触发已删除，Windows 的多选和 Ctrl + 拖动复制恢复原生行为。
@@ -30,11 +34,11 @@
 
 - 拖入 POSCAR、CONTCAR、`.vasp`、`.poscar` 或 `.cif` 文件，选择 CIF / POSCAR 输出格式。
 - 在结构转换、台阶图、DOS 与 COHP 分析页面点击云朵或拖放文件（提示统一为「点击或拖入添加文件」）；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 鼠标中键单击呼出轮盘（先选中结构文件）。Ctrl + 左键拖动由 Windows 正常处理，Ctrl + Alt + Space 仍不启用。
-- 导出 POSCAR 默认 **Cartesian**，可在「结构文件格式转换」页面取消勾选切换 Direct。
+- 导出 POSCAR 默认 **Direct（分数坐标）**，可在「结构文件格式转换」页面勾选切换 Cartesian。
 - 输出前先生成临时文件，成功后以不覆盖已有文件的方式命名；失败时清理临时输出文件。
 - 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「表面 Pourbaix 图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」十个入口。
 - 「DOS 分析」支持导入 VASP DOSCAR 或 vasprun.xml，选择元素、s/p/d 轨道、自旋与能量区间，生成 TDOS/PDOS 曲线，计算 DOS 积分及 d 带中心，输出 CSV/Excel XLSX/Origin DAT / 原生 OPJU/PNG/SVG。
-- 「团簇生成」支持普通团簇、FCC(111)/(100)/(110) 局部取向和完整二十面体壳层魔数；批量输出 POSCAR 和 CIF；输出 POSCAR 默认 Cartesian；保留可选 Direct、真空厚度与晶格常数覆盖。
+- 「团簇生成」支持普通团簇、FCC(111)/(100)/(110) 局部取向和完整二十面体壳层魔数；批量输出 POSCAR 和 CIF；输出 POSCAR 默认 Direct；保留可选 Cartesian、真空厚度与晶格常数覆盖。
 - 界面仅保留 DFTDesk Soft 风格；主题页统一管理浅色/深色、强调色、圆角、轮盘透明度、动画和实际窗口尺寸。**轮盘不透明度右侧显示实时轮盘预览**，滑块和强调色调整时立即刷新，与资源管理器实际轮盘使用同一渲染器。侧边栏展开/收起宽度为 230 / 64。保留上游 MIT 版权信息。
 
 ## 配置工作引擎

@@ -48,8 +48,8 @@ internal sealed partial class CrystalShell : UserControl
     private bool _reduced;
     private bool _collapsed;
     private bool _initializing = true;
-    // ASE is the only engine. Older engine.json settings retain AseCartesian.
-    private bool _aseCartesian = true;
+    // Direct (fractional) coordinates are the default for POSCAR exports.
+    private bool _aseCartesian = false;
     private string _savedPythonExecutable = "python";
 
     public event Action? BrowseFilesRequested;
@@ -773,7 +773,10 @@ internal sealed partial class CrystalShell : UserControl
     {
         public string PythonExecutable { get; set; } = "python";
         // An old engine.json may also contain Name and NativeCartesian; ignore both.
-        public bool AseCartesian { get; set; } = true;
+        public bool AseCartesian { get; set; } = false;
+        // Older versions saved Cartesian=true as a default, not necessarily a user choice.
+        // Migrate those settings once; future explicit selections remain persistent.
+        public int CoordinateModeVersion { get; set; } = 0;
     }
 
     private void LoadEngineSettings()
@@ -785,13 +788,13 @@ internal sealed partial class CrystalShell : UserControl
                 var settings = JsonSerializer.Deserialize<EngineOptions>(File.ReadAllText(EngineSettingsFile));
                 if (settings is not null)
                 {
-                    _aseCartesian = settings.AseCartesian;
+                    _aseCartesian = settings.CoordinateModeVersion >= 2 && settings.AseCartesian;
                     Part<TextBox>("AsePythonExecutable").Text =
                         string.IsNullOrWhiteSpace(settings.PythonExecutable) ? "python" : settings.PythonExecutable;
                 }
             }
         }
-        catch (Exception) { /* Malformed settings fall back to Python and Cartesian coordinates. */ }
+        catch (Exception) { /* Malformed settings fall back to Python and Direct coordinates. */ }
 
         Part<CheckBox>("CartesianOption").IsChecked = _aseCartesian;
         _savedPythonExecutable = PythonExecutablePath;
@@ -806,6 +809,7 @@ internal sealed partial class CrystalShell : UserControl
             {
                 PythonExecutable = PythonExecutablePath,
                 AseCartesian = _aseCartesian,
+                CoordinateModeVersion = 2,
             }, new JsonSerializerOptions { WriteIndented = true }));
         }
         catch (IOException) { }

@@ -307,10 +307,10 @@
                   <Button Classes="accent" Content="转换为 CIF" Click="OnExportCif"/>
                   <Button Content="转换为 POSCAR" Click="OnExportPoscar"/>
                 </StackPanel>
-                <CheckBox x:Name="CartesianOption" IsChecked="True"
-                          Content="POSCAR 使用 Cartesian 坐标（默认）"/>
+                <CheckBox x:Name="CartesianOption" IsChecked="False"
+                          Content="使用 Cartesian 笛卡尔坐标（可选）"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
-                           Text="取消勾选则使用 Direct 分数坐标；只影响 POSCAR 输出。"/>
+                           Text="默认 Direct 分数坐标；勾选后使用 Cartesian，只影响 POSCAR 输出。"/>
               </StackPanel>
             </Border>
             <Border Classes="card">
@@ -378,8 +378,8 @@
                   </StackPanel>
                   <StackPanel Grid.Column="2" Spacing="6">
                     <TextBlock Classes="label" Text="POSCAR 坐标"/>
-                    <CheckBox x:Name="ClusterCartesian" IsChecked="True"
-                              Content="Cartesian（默认，取消则 Direct）"/>
+                    <CheckBox x:Name="ClusterCartesian" IsChecked="False"
+                              Content="默认 Direct 分数坐标；勾选则 Cartesian"/>
                   </StackPanel>
                 </Grid>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
