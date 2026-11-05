@@ -18,6 +18,27 @@ public class AseConversionTests
         0.85 0.05 0.15
         """;
 
+    // P1 sites are deliberately Zn -> O -> C, not alphabetical C -> O -> Zn.
+    private const string NonAlphabeticalCif = """
+        data_explicit_order
+        _cell_length_a 5.0
+        _cell_length_b 5.0
+        _cell_length_c 6.0
+        _cell_angle_alpha 90
+        _cell_angle_beta 90
+        _cell_angle_gamma 90
+        _space_group_name_H-M_alt 'P 1'
+        loop_
+          _atom_site_label
+          _atom_site_type_symbol
+          _atom_site_fract_x
+          _atom_site_fract_y
+          _atom_site_fract_z
+          Zn1 Zn 0.10 0.20 0.30
+          O1  O  0.40 0.50 0.60
+          C1  C  0.70 0.80 0.90
+        """;
+
     [Fact]
     public async Task Missing_python_reports_error_and_leaves_no_partial_output()
     {
@@ -77,11 +98,23 @@ public class AseConversionTests
             Assert.Contains("Direct", directText);
             Assert.Contains("Si", directText);
             Assert.Contains("O", directText);
+            Assert.Equal(new[] { "Si", "O", "O" }, ReadPoscarAtomOrder(back));
+            Assert.Equal(new[] { "Si", "O", "O" }, ReadCifAtomOrder(cif));
+            AssertPoscarDirectX(back, 0.125, 0.50, 0.85);
 
             var cartesian = await AseConversion.ConvertOneAsync(cif, folder, ExportFormat.Poscar,
                 cartesian: true, python);
             Assert.Contains("Cartesian", File.ReadAllText(cartesian));
             Assert.Equal(3, CountAtoms(cartesian));
+            Assert.Equal(new[] { "Si", "O", "O" }, ReadPoscarAtomOrder(cartesian));
+
+            // CIF -> POSCAR must keep the original non-alphabetical site order too.
+            var sourceCif = Path.Combine(folder, "ordered.cif");
+            File.WriteAllText(sourceCif, NonAlphabeticalCif);
+            var converted = await AseConversion.ConvertOneAsync(sourceCif, folder,
+                ExportFormat.Poscar, cartesian: false, python);
+            Assert.Equal(new[] { "Zn", "O", "C" }, ReadPoscarAtomOrder(converted));
+            AssertPoscarDirectX(converted, 0.10, 0.40, 0.70);
             Assert.Empty(Directory.EnumerateFiles(folder).Where(p =>
                 Path.GetFileName(p).StartsWith(".dftdesk-", StringComparison.Ordinal)));
         }
@@ -89,6 +122,52 @@ public class AseConversionTests
         {
             Directory.Delete(folder, recursive: true);
         }
+    }
+
+    private static string[] ReadPoscarAtomOrder(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        var symbols = lines[5].Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var counts = lines[6].Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToArray();
+        Assert.Equal(symbols.Length, counts.Length);
+        return symbols.Zip(counts, (symbol, count) => Enumerable.Repeat(symbol, count))
+            .SelectMany(group => group).ToArray();
+    }
+
+    private static double[] ReadPoscarDirectX(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        var index = Array.FindIndex(lines, line => line.Trim().Equals("Direct", StringComparison.OrdinalIgnoreCase));
+        Assert.True(index >= 0);
+        return lines.Skip(index + 1).Take(CountAtoms(path))
+            .Select(line => double.Parse(line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0],
+                System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+    }
+
+    private static string[] ReadCifAtomOrder(string path)
+    {
+        var lines = File.ReadAllLines(path);
+        var typeHeaderIndex = Array.FindIndex(lines, line => line.Trim() == "_atom_site_type_symbol");
+        Assert.True(typeHeaderIndex >= 0);
+        var firstHeader = typeHeaderIndex;
+        while (firstHeader > 0 && lines[firstHeader - 1].TrimStart().StartsWith("_atom_site_", StringComparison.Ordinal))
+            firstHeader--;
+        var endHeader = typeHeaderIndex + 1;
+        while (endHeader < lines.Length && lines[endHeader].TrimStart().StartsWith("_atom_site_", StringComparison.Ordinal))
+            endHeader++;
+        var typeColumn = typeHeaderIndex - firstHeader;
+        return lines.Skip(endHeader)
+            .TakeWhile(line => !string.IsNullOrWhiteSpace(line) && !line.StartsWith('#'))
+            .Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries)[typeColumn])
+            .ToArray();
+    }
+
+    private static void AssertPoscarDirectX(string path, params double[] expected)
+    {
+        var actual = ReadPoscarDirectX(path);
+        Assert.Equal(expected.Length, actual.Length);
+        for (var i = 0; i < expected.Length; i++)
+            Assert.InRange(actual[i], expected[i] - 1e-5, expected[i] + 1e-5);
     }
 
     // Test-only POSCAR checks. The DFTDesk executable contains no C# structure parser.

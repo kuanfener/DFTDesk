@@ -41,7 +41,8 @@ def main():
                     raise ValueError("Partial CIF occupancies cannot be written faithfully to POSCAR.")
     if output_format == "vasp":
         write(destination, atoms, format="vasp", direct=(coordinate_mode == "direct"),
-              sort=True, vasp5=True)
+              # Keep the incoming atom/element sequence, including the order of element blocks.
+              sort=False, vasp5=True)
     else:
         write(destination, atoms, format="cif", wrap=True)
 
