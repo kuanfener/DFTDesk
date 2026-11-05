@@ -175,6 +175,15 @@ internal sealed class DftDonutPopup : IDisposable
         // only its child donut. Explorer otherwise shows a forbidden cursor
         // while it is crossing the transparent window frame.
         DragDrop.SetAllowDrop(_window, true);
+        _window.KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                Hide();
+            }
+        };
+        _window.Deactivated += (_, _) => Hide();
         _donut.SegmentInvoked += (_, index) =>
         {
             if (index is 0 or 1)

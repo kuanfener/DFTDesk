@@ -1,81 +1,73 @@
-using Filee.App.Services.Triggers;
-using Filee.Core.Settings;
 using Filee.Platform.Windows;
 using SharpHook;
 using SharpHook.Data;
 
 namespace DFTDesk;
 
-/// <summary>Detects only Explorer Ctrl + left mouse drag for DFTDesk's conversion wheel.</summary>
+/// <summary>
+/// Opens DFTDesk's Explorer conversion wheel with Ctrl + middle mouse click.
+/// The original Ctrl + left drag is never intercepted, so Explorer can copy files normally.
+/// </summary>
 internal sealed class GlobalTriggerHost : IDisposable
 {
-    private readonly GestureDetector _detector = new();
+    private const int ClickTolerancePixels = 6;
     private readonly WindowsPlatformServices _platform = new();
-    private QueuedGlobalHook? _hook;
+    private SimpleGlobalHook? _hook;
     private Thread? _thread;
+    private (int X, int Y)? _middlePress;
 
-    public event Action<int, int>? DragStarted;
-    public event Action<int, int>? DragEnded;
+    public event Action<int, int>? WheelRequested;
     public event Action<string>? Failure;
 
     public IReadOnlyList<string> SelectedFiles() => _platform.GetFileManagerSelection();
 
-    public GlobalTriggerHost()
-    {
-        _detector.SystemDragThreshold = _platform.SystemDragThreshold;
-        _detector.Configure(TriggerGesture.Defaults().Where(g =>
-            g.Kind == TriggerKind.Drag &&
-            g.Modifiers == ModifierKeys.Ctrl &&
-            g.Button == TriggerMouseButton.Left));
-        _detector.ScopeFilter = (_, x, y) => _platform.IsFileManagerAt(x, y);
-        _detector.DragStarted += (_, x, y) => DragStarted?.Invoke(x, y);
-        _detector.DragEnded += (x, y) => DragEnded?.Invoke(x, y);
-    }
+    // Pure predicates are also covered by Windows CI tests without starting a global hook.
+    internal static bool IsWheelGesture(MouseButton button, EventMask mask) =>
+        button == MouseButton.Button3 &&
+        mask.HasCtrl() && !mask.HasAlt() && !mask.HasShift() && !mask.HasMeta();
+
+    internal static bool IsStationaryClick(int downX, int downY, int upX, int upY) =>
+        Math.Abs(upX - downX) <= ClickTolerancePixels &&
+        Math.Abs(upY - downY) <= ClickTolerancePixels;
 
     public void Start()
     {
         if (_hook is not null) return;
         try
         {
-            _hook = new QueuedGlobalHook();
+            // Only synchronous hooks can suppress Ctrl+middle events before Explorer
+            // reacts to them. The handlers do only fast checks and queue UI work.
+            _hook = new SimpleGlobalHook();
             _hook.MousePressed += (_, e) =>
-                _detector.MouseDown(Button(e.Data.Button), e.Data.X, e.Data.Y, Modifiers(e.RawEvent.Mask));
+            {
+                if (!IsWheelGesture(e.Data.Button, e.RawEvent.Mask)) return;
+                var at = System.Windows.Forms.Cursor.Position;
+                if (!_platform.IsFileManagerAt(at.X, at.Y)) return;
+                _middlePress = (at.X, at.Y);
+                e.SuppressEvent = true;
+            };
             _hook.MouseReleased += (_, e) =>
-                _detector.MouseUp(Button(e.Data.Button), e.Data.X, e.Data.Y);
-            _hook.MouseDragged += (_, e) => Move(e.Data.X, e.Data.Y, e.RawEvent.Mask);
-            _hook.MouseMoved += (_, e) => Move(e.Data.X, e.Data.Y, e.RawEvent.Mask);
+            {
+                if (e.Data.Button != MouseButton.Button3 || _middlePress is not { } press)
+                    return;
+                _middlePress = null;
+                e.SuppressEvent = true;
+                var at = System.Windows.Forms.Cursor.Position;
+                if (IsStationaryClick(press.X, press.Y, at.X, at.Y))
+                    WheelRequested?.Invoke(at.X, at.Y);
+            };
             var hook = _hook;
             _thread = new Thread(() =>
             {
                 try { hook.Run(); }
                 catch (Exception ex) { Failure?.Invoke(ex.GetBaseException().Message); }
-            }) { IsBackground = true, Name = "Crystal converter input hook", Priority = ThreadPriority.Highest };
+            }) { IsBackground = true, Name = "DFTDesk Explorer wheel input hook", Priority = ThreadPriority.Highest };
             _thread.Start();
         }
         catch (Exception ex)
         {
             Failure?.Invoke(ex.Message);
         }
-    }
-
-    private void Move(int x, int y, EventMask mask) => _detector.MouseMove(x, y, Modifiers(mask),
-        mask.HasFlag(EventMask.Button1) ? TriggerMouseButton.Left : TriggerMouseButton.None);
-
-    private static TriggerMouseButton Button(MouseButton button) => button switch
-    {
-        MouseButton.Button1 => TriggerMouseButton.Left,
-        MouseButton.Button2 => TriggerMouseButton.Right,
-        _ => TriggerMouseButton.None,
-    };
-
-    private static ModifierKeys Modifiers(EventMask mask)
-    {
-        var result = ModifierKeys.None;
-        if (mask.HasCtrl()) result |= ModifierKeys.Ctrl;
-        if (mask.HasAlt()) result |= ModifierKeys.Alt;
-        if (mask.HasShift()) result |= ModifierKeys.Shift;
-        if (mask.HasMeta()) result |= ModifierKeys.Meta;
-        return result;
     }
 
     public void Dispose()

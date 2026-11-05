@@ -1,4 +1,4 @@
-# DFTDesk v2.3.9
+# DFTDesk v2.3.10
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -8,7 +8,13 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## v2.3.9 最新更新
+## v2.3.10 最新更新
+
+- **环形工具栏快捷键改为 Ctrl + 鼠标中键单击**：先在 Windows 资源管理器中选中结构文件，然后按住 Ctrl 单击鼠标滚轮呼出转换轮盘；使用左键选择 CIF / POSCAR，Esc 或点击轮盘外关闭。
+- **恢复 Windows 原生文件操作**：取消全局 Ctrl + 左键拖动手势，让 Windows 文件多选与 Ctrl + 拖动复制不受 DFTDesk 干扰；中键快捷键仅在文件管理器范围识别。
+- **事件隔离与测试**：新的 Windows 同步鼠标监听仅消费有效 Ctrl + 中键事件，避免资源管理器同时处理该次中键点击；加入按键组合与点击移动阈值测试。
+
+## v2.3.9 更新记录
 
 - **VASP 规范元素分组**：CIF → POSCAR 时，相同元素只写入一个连续区段。元素种类遵循输入结构中**首次出现的顺序**，不会按字母排序；同种元素内部原子保持相对顺序，坐标与约束随原子一起重排。
 - **修复重复元素头部**：例如 `Co P Sc H O H`（`63 64 1 1 1 1`）导出为 `Co P Sc H O`（`63 64 1 2 1`）。避免重复 H 影响与 POTCAR 的元素区段匹配。
@@ -55,7 +61,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.9 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.10 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF；导出 POSCAR 时按元素首次出现顺序稳定分组，避免同种元素重复区段；支持拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
@@ -78,7 +84,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 - 输入：POSCAR、CONTCAR、`.vasp`、`.poscar`、CIF。
 - 输出 POSCAR 默认 **Cartesian（Å）**；可以切换为 Direct。
-- 在资源管理器按住 **Ctrl 并用鼠标左键拖动结构文件**，呼出快捷轮盘。
+- 在资源管理器中先选中结构文件，再按 **Ctrl + 鼠标中键单击** 呼出快捷轮盘；Ctrl + 左键拖动仍用于文件复制。
 - 云朵导入区提示「点击或拖入添加文件」，载入后切换为文件列表；输出不会覆盖已有同名文件。
 
 ### 团簇生成

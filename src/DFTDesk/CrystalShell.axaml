@@ -73,7 +73,7 @@
               </StackPanel>
             </Button>
           </Grid>
-          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.9"/>
+          <TextBlock x:Name="VersionText" Classes="caption" Margin="8,0" Text="版本 2.3.10"/>
         </StackPanel>
         <StackPanel x:Name="CollapsedFooter" DockPanel.Dock="Bottom" Spacing="8" IsVisible="False">
           <Button Classes="navlink" Click="OnGitHub" ToolTip.Tip="DFTDesk" Padding="8,6">
@@ -184,7 +184,7 @@
                     BorderBrush="{DynamicResource AccentSoftBrush}" BorderThickness="1">
               <StackPanel Spacing="13">
                 <TextBlock Classes="caption" Text="DFTDESK / COMPUTATIONAL MATERIALS" FontWeight="SemiBold"/>
-                <TextBlock Text="DFTDesk 2.3.9" FontSize="34" FontWeight="Bold"/>
+                <TextBlock Text="DFTDesk 2.3.10" FontSize="34" FontWeight="Bold"/>
                 <TextBlock Text="计算材料结构工作台" FontSize="19" FontWeight="SemiBold"/>
                 <TextBlock Classes="muted" TextWrapping="Wrap"
                            Text="晶体结构转换 · 团簇生成 · 自由能台阶图 · 表面吸附态 Pourbaix 图 · DOS / COHP / ICOHP。本机处理数据。"/>
@@ -259,7 +259,7 @@
                        Text="使用 ASE 统一管理结构文件导入、批量转换和结果保存。支持 POSCAR、CONTCAR 与 CIF。"/>
             <Border Background="{DynamicResource AccentFaintBrush}" CornerRadius="12" Padding="12,10">
               <TextBlock TextWrapping="Wrap"
-                         Text="提示：在 Windows 资源管理器中按住 Ctrl 并左键拖动结构文件，可呼出轮盘快捷转换。"/>
+                         Text="提示：在 Windows 资源管理器中先选中结构文件，再按 Ctrl + 鼠标中键单击呼出轮盘；Ctrl + 左键拖动仍用于复制文件。"/>
             </Border>
             <!-- One shared surface: cloud importer when empty, the actual list when files exist. -->
             <Border x:Name="DropZone" DragDrop.AllowDrop="True" Cursor="Arrow"
@@ -808,7 +808,7 @@
                   <StackPanel Spacing="4" VerticalAlignment="Center">
                     <TextBlock Classes="h2" Text="轮盘不透明度"/>
                     <TextBlock Classes="caption" TextWrapping="Wrap"
-                               Text="拖动滑块调整透明度；将鼠标移到右侧轮盘上可预览扇区高亮效果。"/>
+                               Text="拖动滑块调整透明度；右侧可实时预览。轮盘快捷键：Ctrl + 鼠标中键单击。"/>
                   </StackPanel>
                   <Grid Grid.Column="1" ColumnDefinitions="*,56" ColumnSpacing="8"
                         VerticalAlignment="Center">

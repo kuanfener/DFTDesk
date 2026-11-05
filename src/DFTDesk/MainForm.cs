@@ -20,11 +20,9 @@ internal sealed partial class MainForm : Form
     private readonly DftDonutHost _wheel = new();
     private readonly DftDonutPopup _popup = new();
     private readonly GlobalTriggerHost _global = new();
-    private readonly System.Windows.Forms.Timer _dragGraceTimer = new() { Interval = 350 };
     private readonly List<string> _paths = [];
     private CancellationTokenSource? _cancellation;
     private bool _busy;
-    private bool _popupFromDrag;
     private Label? _recentEmpty;
     private Label? _selectedCount;
 
@@ -38,27 +36,16 @@ internal sealed partial class MainForm : Form
 
         _popup.FormatChosen += target =>
         {
-            _dragGraceTimer.Stop();
             _popup.Hide();
-            _popupFromDrag = false;
             _ = StartBatchAsync(target);
         };
         _popup.FilesDropped += (target, files) =>
         {
-            _dragGraceTimer.Stop();
             _popup.Hide();
-            _popupFromDrag = false;
             AddFiles(files, replace: true);
             _ = StartBatchAsync(target);
         };
-        _dragGraceTimer.Tick += (_, _) =>
-        {
-            _dragGraceTimer.Stop();
-            if (_popupFromDrag) _popup.Hide();
-            _popupFromDrag = false;
-        };
-        _global.DragStarted += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y), dragMode: true));
-        _global.DragEnded += (x, y) => Post(() => EndExplorerDrag(new Point(x, y)));
+        _global.WheelRequested += (x, y) => Post(() => OpenExplorerWheel(new Point(x, y)));
         _global.Failure += error => Post(() => Log("全局手势不可用：" + error));
 
         DragEnter += (_, e) => e.Effect = e.Data?.GetDataPresent(DataFormats.FileDrop) == true
@@ -92,7 +79,6 @@ internal sealed partial class MainForm : Form
             DisposeStepResult();
             DisposeCohpResult();
             DisposeDosResult();
-            _dragGraceTimer.Dispose();
             _global.Dispose();
             _popup.Dispose();
             DisposeTray();
@@ -185,23 +171,18 @@ internal sealed partial class MainForm : Form
         RefreshFiles();
     }
 
-    private void OpenExplorerWheel(Point at, bool dragMode)
+    private void OpenExplorerWheel(Point at)
     {
-        if (_busy || _popup.Visible) return;
+        if (_busy) return;
+        if (_popup.Visible)
+        {
+            _popup.Hide();
+            return;
+        }
         var selection = _global.SelectedFiles();
         if (!selection.Any(path => CrystalFiles.Detect(path) is not null)) return;
         AddFiles(selection, replace: true);
-        _popupFromDrag = dragMode;
-        _popup.OpenAt(at, activate: !dragMode);
-    }
-
-    private void EndExplorerDrag(Point at)
-    {
-        if (!_popup.Visible || !_popupFromDrag) return;
-        // The OLE Drop event can arrive slightly after the global mouse-up.
-        // Do not hide the drop target first or Explorer will show "×" and lose the drop.
-        _dragGraceTimer.Stop();
-        _dragGraceTimer.Start();
+        _popup.OpenAt(at, activate: true);
     }
 
     private void Post(Action action)

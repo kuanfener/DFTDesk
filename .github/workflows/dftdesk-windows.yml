@@ -58,7 +58,7 @@ jobs:
           path: dist/step-templates/*.xlsx
           if-no-files-found: error
 
-      - name: Build DFTDesk 2.3.9 and blank original HER/ORR/OER templates
+      - name: Build DFTDesk 2.3.10 and blank original HER/ORR/OER templates
         run: dotnet build src/DFTDesk/DFTDesk.csproj -c Release
 
       - name: Prepare optional private donation QR assets

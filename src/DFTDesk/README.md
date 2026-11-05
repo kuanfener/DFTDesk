@@ -1,6 +1,12 @@
-# DFTDesk 2.3.9 — Windows 科研结构工作台
+# DFTDesk 2.3.10 — Windows 科研结构工作台
 
-**DFTDesk 2.3.9 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.10 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+
+## v2.3.10 轮盘快捷键与 Windows 文件复制
+
+- 在资源管理器先选中结构文件，按 Ctrl + 鼠标中键单击呼出 CIF / POSCAR 轮盘；左键选择输出格式，按 Esc 或点击其他位置可关闭。
+- 全局鼠标监听仅在文件管理器内识别该组合；原 Ctrl + 左键拖动触发已删除，Windows 的多选和 Ctrl + 拖动复制恢复原生行为。
+- Windows 同步监听只屏蔽该次 Ctrl + 中键按下/抬起事件，不屏蔽其他鼠标操作。
 
 ## v2.3.9 VASP 结构转换元素分组
 
@@ -23,7 +29,7 @@
 ## 主要功能
 
 - 拖入 POSCAR、CONTCAR、`.vasp`、`.poscar` 或 `.cif` 文件，选择 CIF / POSCAR 输出格式。
-- 在结构转换、台阶图、DOS 与 COHP 分析页面点击云朵或拖放文件（提示统一为「点击或拖入添加文件」）；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 左键拖动呼出轮盘。已移除 Ctrl + Alt + Space。
+- 在结构转换、台阶图、DOS 与 COHP 分析页面点击云朵或拖放文件（提示统一为「点击或拖入添加文件」）；导入后同区显示文件列表，可继续添加、移除或清空；资源管理器 Ctrl + 鼠标中键单击呼出轮盘（先选中结构文件）。Ctrl + 左键拖动由 Windows 正常处理，Ctrl + Alt + Space 仍不启用。
 - 导出 POSCAR 默认 **Cartesian**，可在「结构文件格式转换」页面取消勾选切换 Direct。
 - 输出前先生成临时文件，成功后以不覆盖已有文件的方式命名；失败时清理临时输出文件。
 - 首页为科研工作台；侧边栏包含「首页」「结构文件格式转换」「团簇生成」「绘制台阶图」「表面 Pourbaix 图」「DOS 分析」「COHP / ICOHP 分析」「主题」「工作引擎」「关于」十个入口。
