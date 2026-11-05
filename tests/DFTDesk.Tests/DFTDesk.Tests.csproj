@@ -9,6 +9,7 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <Compile Include="../../src/DFTDesk/CrystalFiles.cs" Link="CrystalFiles.cs" />
+    <Compile Include="../../src/DFTDesk/WheelGestureRules.cs" Link="WheelGestureRules.cs" />
     <Compile Include="../../src/DFTDesk/AseConversion.cs" Link="AseConversion.cs" />
     <Compile Include="../../src/DFTDesk/ClusterGeneration.cs" Link="ClusterGeneration.cs" />
     <Compile Include="../../src/DFTDesk/PythonPackageProbe.cs" Link="PythonPackageProbe.cs" />

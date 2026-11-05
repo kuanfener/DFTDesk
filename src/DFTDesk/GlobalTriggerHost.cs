@@ -10,7 +10,6 @@ namespace DFTDesk;
 /// </summary>
 internal sealed class GlobalTriggerHost : IDisposable
 {
-    private const int ClickTolerancePixels = 6;
     private readonly WindowsPlatformServices _platform = new();
     private SimpleGlobalHook? _hook;
     private Thread? _thread;
@@ -20,15 +19,6 @@ internal sealed class GlobalTriggerHost : IDisposable
     public event Action<string>? Failure;
 
     public IReadOnlyList<string> SelectedFiles() => _platform.GetFileManagerSelection();
-
-    // Pure predicates are also covered by Windows CI tests without starting a global hook.
-    internal static bool IsWheelGesture(MouseButton button, EventMask mask) =>
-        button == MouseButton.Button3 &&
-        mask.HasCtrl() && !mask.HasAlt() && !mask.HasShift() && !mask.HasMeta();
-
-    internal static bool IsStationaryClick(int downX, int downY, int upX, int upY) =>
-        Math.Abs(upX - downX) <= ClickTolerancePixels &&
-        Math.Abs(upY - downY) <= ClickTolerancePixels;
 
     public void Start()
     {
@@ -40,7 +30,9 @@ internal sealed class GlobalTriggerHost : IDisposable
             _hook = new SimpleGlobalHook();
             _hook.MousePressed += (_, e) =>
             {
-                if (!IsWheelGesture(e.Data.Button, e.RawEvent.Mask)) return;
+                if (!WheelGestureRules.IsActivation((int)e.Data.Button,
+                        e.RawEvent.Mask.HasCtrl(), e.RawEvent.Mask.HasAlt(),
+                        e.RawEvent.Mask.HasShift(), e.RawEvent.Mask.HasMeta())) return;
                 var at = System.Windows.Forms.Cursor.Position;
                 if (!_platform.IsFileManagerAt(at.X, at.Y)) return;
                 _middlePress = (at.X, at.Y);
@@ -53,7 +45,7 @@ internal sealed class GlobalTriggerHost : IDisposable
                 _middlePress = null;
                 e.SuppressEvent = true;
                 var at = System.Windows.Forms.Cursor.Position;
-                if (IsStationaryClick(press.X, press.Y, at.X, at.Y))
+                if (WheelGestureRules.IsStationaryClick(press.X, press.Y, at.X, at.Y))
                     WheelRequested?.Invoke(at.X, at.Y);
             };
             var hook = _hook;
