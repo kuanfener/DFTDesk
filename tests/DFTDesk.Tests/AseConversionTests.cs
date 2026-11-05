@@ -39,6 +39,31 @@ public class AseConversionTests
           C1  C  0.70 0.80 0.90
         """;
 
+    // Duplicate H atom-site rows are separated by O. The POSCAR must use a
+    // single H block but keep Co, P, Sc, H, O in their first-appearance order.
+    private const string InterleavedCif = """
+        data_interleaved
+        _cell_length_a 6.0
+        _cell_length_b 6.0
+        _cell_length_c 8.0
+        _cell_angle_alpha 90
+        _cell_angle_beta 90
+        _cell_angle_gamma 90
+        _space_group_name_H-M_alt 'P 1'
+        loop_
+          _atom_site_label
+          _atom_site_type_symbol
+          _atom_site_fract_x
+          _atom_site_fract_y
+          _atom_site_fract_z
+          Co1 Co 0.11 0.10 0.10
+          P1  P  0.22 0.20 0.20
+          Sc1 Sc 0.33 0.30 0.30
+          H1  H  0.44 0.40 0.40
+          O1  O  0.55 0.50 0.50
+          H2  H  0.66 0.60 0.60
+        """;
+
     [Fact]
     public async Task Missing_python_reports_error_and_leaves_no_partial_output()
     {
@@ -115,6 +140,22 @@ public class AseConversionTests
                 ExportFormat.Poscar, cartesian: false, python);
             Assert.Equal(new[] { "Zn", "O", "C" }, ReadPoscarAtomOrder(converted));
             AssertPoscarDirectX(converted, 0.10, 0.40, 0.70);
+
+            // Regression: duplicate element sites in CIF must be a single POSCAR
+            // block; H2 coordinates must move together with its H identity.
+            var interleaved = Path.Combine(folder, "interleaved.cif");
+            File.WriteAllText(interleaved, InterleavedCif);
+            var grouped = await AseConversion.ConvertOneAsync(interleaved, folder,
+                ExportFormat.Poscar, cartesian: false, python);
+            var groupedLines = File.ReadAllLines(grouped);
+            Assert.Equal(new[] { "Co", "P", "Sc", "H", "O" },
+                groupedLines[5].Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            Assert.Equal(new[] { "1", "1", "1", "2", "1" },
+                groupedLines[6].Split(' ', StringSplitOptions.RemoveEmptyEntries));
+            Assert.Equal(new[] { "Co", "P", "Sc", "H", "H", "O" },
+                ReadPoscarAtomOrder(grouped));
+            AssertPoscarDirectX(grouped, 0.11, 0.22, 0.33, 0.44, 0.66, 0.55);
+
             Assert.Empty(Directory.EnumerateFiles(folder).Where(p =>
                 Path.GetFileName(p).StartsWith(".dftdesk-", StringComparison.Ordinal)));
         }

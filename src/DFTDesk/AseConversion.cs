@@ -40,8 +40,14 @@ def main():
                 if abs(float(occ) - 1.0) > 1e-6:
                     raise ValueError("Partial CIF occupancies cannot be written faithfully to POSCAR.")
     if output_format == "vasp":
+        # POSCAR requires one contiguous block per element. Keep the order in which
+        # elements first appear (not alphabetical), and keep atoms stable within each
+        # element. Slicing the Atoms object moves coordinates and constraints together.
+        symbols = atoms.get_chemical_symbols()
+        first_appearance = {symbol: i for i, symbol in enumerate(dict.fromkeys(symbols))}
+        grouped_indices = sorted(range(len(atoms)), key=lambda i: first_appearance[symbols[i]])
+        atoms = atoms[grouped_indices]
         write(destination, atoms, format="vasp", direct=(coordinate_mode == "direct"),
-              # Keep the incoming atom/element sequence, including the order of element blocks.
               sort=False, vasp5=True)
     else:
         write(destination, atoms, format="cif", wrap=True)

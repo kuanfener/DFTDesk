@@ -1,4 +1,4 @@
-# DFTDesk v2.3.8
+# DFTDesk v2.3.9
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -8,9 +8,15 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## v2.3.8 最新更新
+## v2.3.9 最新更新
 
-- **结构转换保留元素与原子排列顺序**：移除 ASE 写出 POSCAR 时的元素字母排序；POSCAR/CONTCAR → CIF 和 CIF → POSCAR 都沿用读取时的原子顺序，原子坐标与对应元素不再因导出被重排。对具有显式原子位置的 P1 CIF 提供往返排序测试；涉及空间群对称操作展开的 CIF 仍需核对新增原子排列。
+- **VASP 规范元素分组**：CIF → POSCAR 时，相同元素只写入一个连续区段。元素种类遵循输入结构中**首次出现的顺序**，不会按字母排序；同种元素内部原子保持相对顺序，坐标与约束随原子一起重排。
+- **修复重复元素头部**：例如 `Co P Sc H O H`（`63 64 1 1 1 1`）导出为 `Co P Sc H O`（`63 64 1 2 1`）。避免重复 H 影响与 POTCAR 的元素区段匹配。
+- **回归测试**：新增 CIF 中 H–O–H 非相邻原子的用例，验证 POSCAR 只有一个 H 区段，数量合并、坐标对应正确；原有双向转换测试继续保留。
+
+## v2.3.8 更新记录
+
+- **移除字母排序**：停止在 POSCAR 输出时按元素名称排序。v2.3.9 进一步补全 VASP 所需的相同元素归组逻辑；对于非 P1 CIF，对称性展开可能增加原子，仍须核对。
 - **双向回归测试**：新增非字母顺序的元素数据，检查原子顺序、坐标与 Direct/Cartesian 输出。
 
 ## v2.3.7 更新记录
@@ -49,8 +55,8 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.8 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
-| 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF，保留读取时元素/原子顺序，拖放、多选、批量导出 |
+| 首页 | DFTDesk 2.3.9 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF；导出 POSCAR 时按元素首次出现顺序稳定分组，避免同种元素重复区段；支持拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
 | 表面 Pourbaix 图 | 用 pymatgen 解析 * / *OH / *O / *OOH 组成，并用四电子 CHE 绘制 pH–SHE 电位稳定区；支持同 Excel 多催化剂与可编辑数据导出 |

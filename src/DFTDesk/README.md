@@ -1,10 +1,16 @@
-# DFTDesk 2.3.8 — Windows 科研结构工作台
+# DFTDesk 2.3.9 — Windows 科研结构工作台
 
-**DFTDesk 2.3.8 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.9 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
-## v2.3.8 结构转换原子顺序
+## v2.3.9 VASP 结构转换元素分组
 
-- ASE 导出 POSCAR 时使用 `sort=False`，不再按元素名称排序；从 POSCAR/CONTCAR 到 CIF，以及从 CIF 到 POSCAR 均保留 ASE 已读取的原子序列与元素顺序。
+- CIF → POSCAR 将同种元素合并为连续区段：按元素首次出现顺序排列各区段（非字母排序），同种元素内部保持原有相对顺序，并同步移动坐标和约束。
+- 例如 CIF 元素序列 `Co P Sc H O H` 变为 POSCAR `Co P Sc H O`，数量合并为 `1 1 1 2 1`，实际原子位置不变。避免重复元素区段影响 POTCAR 对应。
+- Windows CI 增加非连续 H–O–H 位点回归测试，同时保留 P1 CIF 双向转换的元素与坐标核对。
+
+## v2.3.8 结构转换改动
+
+- ASE 导出 POSCAR 使用 `sort=False`，不再按字母排序。v2.3.9 在此前提下，对同种元素进行稳定归组，以符合 VASP 的元素区段要求。
 - Windows CI 增加含非字母顺序元素的 P1 CIF / POSCAR 往返测试，检查元素序列及原子位置。对于包含非平凡空间群对称操作的 CIF，读取时可能发生原子展开，不承诺输出行数与 CIF 不对称单元完全相同。
 
 ## v2.3.7 Windows 启动与托盘
@@ -78,7 +84,7 @@ Excel/CSV/DAT 包含每一网格的 pH、电位、稳定吸附态和各吸附态
 
 ## 注意的结构边界
 
-ASE 负责结构读取和写出。当前桥接使用 `read(...,format='vasp'/'cif')` 与 `write(...,format='vasp'/'cif')`，POSCAR 写出启用 `sort=False` 和 `vasp5=True`，保留 ASE 读取后的原子与元素顺序；CIF 写出同样使用原始原子序列。ASE 输出精度与 VESTA 并不相同。CIF 部分占位会拒绝写为 POSCAR；Selective Dynamics、空间群元数据和非 P1 CIF 的对称性展开仍可能影响结构表示。重要结构请核对晶胞、原子数、元素及约束。
+ASE 负责结构读取和写出。当前桥接使用 `read(...,format='vasp'/'cif')` 与 `write(...,format='vasp'/'cif')`，POSCAR 写出启用 `sort=False` 和 `vasp5=True`，并在写出前按元素首次出现顺序稳定分组；CIF 写出使用 ASE 读取后的原子序列。ASE 输出精度与 VESTA 并不相同。CIF 部分占位会拒绝写为 POSCAR；Selective Dynamics、空间群元数据和非 P1 CIF 的对称性展开仍可能影响结构表示。重要结构请核对晶胞、原子数、元素及约束。
 
 ## 构建和测试
 
