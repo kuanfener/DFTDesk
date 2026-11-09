@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 namespace DFTDesk;
 
 internal sealed record SurfacePourbaixRequest(string InputPath, double PhMin, double PhMax,
-    double UMin, double UMax, int Resolution = 121);
+    double UMin, double UMax, int Resolution = 121, string Layout = "horizontal");
 
 internal sealed class SurfacePourbaixData
 {
@@ -39,6 +39,7 @@ internal static class SurfacePourbaixAnalysis
         if (request.PhMin < 0 || request.PhMax > 14 || request.PhMin >= request.PhMax ||
             request.UMin < -3 || request.UMax > 3 || request.UMin >= request.UMax ||
             request.Resolution < 40 || request.Resolution > 201 ||
+            (request.Layout != "horizontal" && request.Layout != "vertical") ||
             !double.IsFinite(request.PhMin) || !double.IsFinite(request.PhMax) ||
             !double.IsFinite(request.UMin) || !double.IsFinite(request.UMax))
             throw new ArgumentException("pH 或 SHE 电位范围无效。");
@@ -72,6 +73,7 @@ internal static class SurfacePourbaixAnalysis
                 "--umin", request.UMin.ToString("G17", CultureInfo.InvariantCulture),
                 "--umax", request.UMax.ToString("G17", CultureInfo.InvariantCulture),
                 "--resolution", request.Resolution.ToString(CultureInfo.InvariantCulture),
+                "--layout", request.Layout,
             }) start.ArgumentList.Add(arg);
 
             using var process = new Process { StartInfo = start };

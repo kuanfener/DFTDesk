@@ -3,6 +3,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
+from xml.etree import ElementTree
 
 from openpyxl import Workbook
 
@@ -11,7 +13,9 @@ STEPS = Path(__file__).resolve().parents[1] / "src" / "DFTDesk" / "StepScripts"
 sys.path.insert(0, str(STEPS))
 sys.path.insert(0, str(SCRIPT))
 
-from surface_pourbaix import (ELECTRONS, analyze, compute_map, read_adsorbates)
+from surface_pourbaix import (COLORS, ELECTRONS, RT_LOG10_F, analyze,
+                             compute_map, read_adsorbates, render_maps,
+                             stable_rhe_intervals)
 
 
 class SurfacePourbaixTests(unittest.TestCase):
@@ -24,6 +28,47 @@ class SurfacePourbaixTests(unittest.TestCase):
         self.assertEqual(int(ids[0, 0]), 0)  # clean surface at U_RHE=0
         self.assertEqual(int(ids[1, 0]), 3)  # OOH at high U_RHE
         self.assertAlmostEqual(rhe[0, 1] - she[0, 1], 14 * 0.059159, places=4)
+
+    def test_exact_phase_boundaries_without_grid_stair_steps(self):
+        # Adjacent CHE coexistence potentials are exact straight lines,
+        # independent of the sampling density in compute_map/export_grid.
+        intervals = stable_rhe_intervals((0.0, 0.73, 1.68, 2.83))
+        self.assertAlmostEqual(intervals[0][1], 0.73)
+        self.assertAlmostEqual(intervals[1][0], 0.73)
+        self.assertAlmostEqual(intervals[1][1], 0.95)
+        self.assertAlmostEqual(intervals[2][1], 1.15)
+        self.assertAlmostEqual(0.73 - RT_LOG10_F * 14, -0.098225, places=4)
+        # A higher-energy intermediate can be skipped by the lower envelope.
+        self.assertIsNone(stable_rhe_intervals((0.0, 2.0, 1.68, 2.83))[1])
+
+    def test_horizontal_and_vertical_vector_figures(self):
+        import numpy as np
+        from matplotlib.axes import Axes
+        catalysts = [
+            {"material": label, "dg": (0.0, 0.73, 1.68, 2.83)}
+            for label in ("Pt4", "Pt3Co", "Pt3Co-CF3")
+        ]
+        with tempfile.TemporaryDirectory() as folder:
+            sizes = {}
+            with patch.object(Axes, "pcolormesh", side_effect=AssertionError(
+                    "Stable boundaries must not be rendered as a stepped grid")):
+                for layout in ("horizontal", "vertical"):
+                    svg = Path(folder) / f"{layout}.svg"
+                    render_maps(catalysts, np.linspace(0, 14, 40),
+                                np.linspace(-1, 2, 40),
+                                Path(folder) / f"{layout}.png", svg, layout)
+                    figure = ElementTree.parse(svg).getroot()
+                    sizes[layout] = (float(figure.attrib["width"].removesuffix("pt")),
+                                     float(figure.attrib["height"].removesuffix("pt")))
+                    content = svg.read_text(encoding="utf-8")
+                    for color in COLORS:
+                        self.assertIn(color, content)
+            self.assertGreater(sizes["horizontal"][0], sizes["horizontal"][1])
+            self.assertGreater(sizes["vertical"][1], sizes["vertical"][0])
+            self.assertRaises(ValueError, render_maps, catalysts,
+                              np.array([0, 14]), np.array([-1, 2]),
+                              Path(folder) / "wrong.png", Path(folder) / "wrong.svg",
+                              "diagonal")
 
     def test_multiple_catalysts_and_export(self):
         with tempfile.TemporaryDirectory() as folder:

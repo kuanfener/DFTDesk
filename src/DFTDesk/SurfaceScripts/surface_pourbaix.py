@@ -14,7 +14,6 @@ from pathlib import Path
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from matplotlib.colors import BoundaryNorm, ListedColormap
 from matplotlib.patches import Patch
 import numpy as np
 from openpyxl import Workbook
@@ -61,43 +60,114 @@ def compute_map(dg, ph_values, she_values):
     return ph, potential_she, potential_rhe, omega, phase_ids
 
 
-def render_maps(catalysts, ph_values, she_values, png_path, svg_path):
+def stable_rhe_intervals(dg):
+    """Exact lower-envelope intervals in U_RHE for the linear CHE energies.
+
+    All four states depend on pH and U_SHE only through
+    U_RHE = U_SHE + RT_LOG10_F*pH. Their coexistence boundaries therefore
+    remain straight lines, independent of the exported numerical grid.
+    """
+    intervals = []
+    for index, (energy, electrons) in enumerate(zip(dg, ELECTRONS)):
+        lower, upper = -math.inf, math.inf
+        possible = True
+        for other, (other_energy, other_electrons) in enumerate(zip(dg, ELECTRONS)):
+            if index == other:
+                continue
+            difference = other_electrons - electrons
+            if difference == 0:
+                if energy > other_energy:
+                    possible = False
+                continue
+            crossing = (other_energy - energy) / difference
+            if difference > 0:
+                upper = min(upper, crossing)
+            else:
+                lower = max(lower, crossing)
+        intervals.append((lower, upper) if possible and lower < upper - 1e-10 else None)
+    return intervals
+
+
+def _label_position(interval, ph_limits, she_limits):
+    """Place a phase name inside the widest visible part of its region."""
+    left, right = ph_limits
+    bottom, top = she_limits
+    lower, upper = interval
+    xs = np.linspace(left + 0.07 * (right - left),
+                     right - 0.07 * (right - left), 61)
+    low = np.maximum(bottom + 0.03 * (top - bottom), lower - RT_LOG10_F * xs)
+    high = np.minimum(top - 0.03 * (top - bottom), upper - RT_LOG10_F * xs)
+    widths = high - low
+    # Prefer the plot center when several locations have comparable clearance.
+    centrality = 1.0 - 0.20 * np.abs(xs - (left + right) / 2) / ((right - left) / 2)
+    at = int(np.argmax(widths * centrality))
+    if widths[at] < 0.07 * (top - bottom):
+        return None
+    return float(xs[at]), float((low[at] + high[at]) / 2)
+
+
+def render_maps(catalysts, ph_values, she_values, png_path, svg_path,
+                layout="horizontal"):
+    if layout not in ("horizontal", "vertical"):
+        raise ValueError("排列方式必须为 horizontal 或 vertical。")
     count = len(catalysts)
-    columns = min(3, count)
+    columns = 1 if layout == "vertical" else min(3, count)
     rows = math.ceil(count / columns)
-    fig, axes = plt.subplots(rows, columns, figsize=(6.1 * columns, 4.6 * rows),
+    fig, axes = plt.subplots(rows, columns, figsize=(6.5 * columns, 4.9 * rows),
                              squeeze=False, constrained_layout=True)
-    cmap = ListedColormap(COLORS)
-    norm = BoundaryNorm(np.arange(-0.5, 4.5, 1), cmap.N)
+    ph_limits = (float(ph_values[0]), float(ph_values[-1]))
+    she_limits = (float(she_values[0]), float(she_values[-1]))
+    xs = np.array(ph_limits)
+    # Finite values outside the visible axes make unbounded end states into
+    # ordinary straight-sided polygons; Matplotlib clips them at the axes.
+    pad = 10 * (she_limits[1] - she_limits[0])
     for ax, catalyst in zip(axes.flat, catalysts):
-        ph, she, _, _, phase_ids = compute_map(catalyst["dg"], ph_values, she_values)
-        ax.pcolormesh(ph, she, phase_ids, cmap=cmap, norm=norm, shading="auto")
+        intervals = stable_rhe_intervals(catalyst["dg"])
+        for index, interval in enumerate(intervals):
+            if interval is None:
+                continue
+            lower, upper = interval
+            bottom = (lower - RT_LOG10_F * xs if math.isfinite(lower)
+                      else np.full_like(xs, she_limits[0] - pad))
+            top = (upper - RT_LOG10_F * xs if math.isfinite(upper)
+                   else np.full_like(xs, she_limits[1] + pad))
+            ax.fill_between(xs, bottom, top, color=COLORS[index], linewidth=0,
+                            zorder=1)
+            if math.isfinite(upper):
+                ax.plot(xs, top, color="#64707a", alpha=0.65,
+                        linewidth=0.85, zorder=2)
         # Dashed thermodynamic water-stability boundaries, not kinetic onset.
         ax.plot(ph_values, -RT_LOG10_F * ph_values, color="#426388",
-                linestyle="--", linewidth=1, label="H2/H2O")
+                linestyle="--", linewidth=1.35, label="H2/H2O", zorder=3)
         ax.plot(ph_values, 1.23 - RT_LOG10_F * ph_values, color="#a45743",
-                linestyle="--", linewidth=1, label="O2/H2O")
-        for i, label in enumerate(PHASES):
-            where = np.argwhere(phase_ids == i)
-            if len(where) < 25:
+                linestyle="--", linewidth=1.35, label="O2/H2O", zorder=3)
+        for index, label in enumerate(PHASES):
+            if intervals[index] is None:
                 continue
-            center = where[len(where) // 2]
-            ax.text(float(ph[tuple(center)]), float(she[tuple(center)]),
-                    label, fontsize=10, ha="center", va="center",
+            position = _label_position(intervals[index], ph_limits, she_limits)
+            if position is None:
+                continue
+            ax.text(*position,
+                    label, fontsize=13, ha="center", va="center",
                     color="#20242c", fontweight="bold",
-                    bbox={"boxstyle": "round,pad=0.16", "facecolor": "white",
-                          "edgecolor": "none", "alpha": 0.75})
-        ax.set(title=catalyst["material"], xlabel="pH",
-               ylabel="Potential (V vs SHE)",
-               xlim=(ph_values[0], ph_values[-1]),
-               ylim=(she_values[0], she_values[-1]))
-        ax.grid(alpha=0.13)
+                    bbox={"boxstyle": "round,pad=0.18", "facecolor": "white",
+                          "edgecolor": "none", "alpha": 0.78}, zorder=4)
+        ax.set(xlabel="pH", ylabel="Potential (V vs SHE)",
+               xlim=ph_limits, ylim=she_limits)
+        ax.set_title(catalyst["material"], fontsize=15, fontweight="semibold", pad=9)
+        ax.tick_params(axis="both", labelsize=11)
+        ax.xaxis.label.set_size(12)
+        ax.yaxis.label.set_size(12)
+        ax.set_axisbelow(True)
+        ax.grid(alpha=0.10, linewidth=0.7)
     for ax in list(axes.flat)[count:]:
         ax.set_visible(False)
     legend = [Patch(color=color, label=label) for color, label in zip(COLORS, PHASES)]
-    fig.legend(handles=legend, loc="outside lower center", ncol=4)
-    fig.suptitle("Surface adsorbate Pourbaix (4e CHE, 298.15 K)", fontsize=15)
-    fig.savefig(png_path, dpi=180, bbox_inches="tight")
+    fig.legend(handles=legend, loc="outside lower center", ncol=4,
+               fontsize=12, frameon=False)
+    fig.suptitle("Surface adsorbate Pourbaix (4e CHE, 298.15 K)",
+                 fontsize=17, fontweight="semibold")
+    fig.savefig(png_path, dpi=240, bbox_inches="tight")
     fig.savefig(svg_path, bbox_inches="tight")
     plt.close(fig)
 
@@ -147,13 +217,16 @@ def export_grid(catalysts, ph_values, she_values, csv_path, dat_path, excel_path
     workbook.save(excel_path)
 
 
-def analyze(input_path, outdir, phmin=0, phmax=14, umin=-1.0, umax=2.0, resolution=121):
+def analyze(input_path, outdir, phmin=0, phmax=14, umin=-1.0, umax=2.0,
+            resolution=121, layout="horizontal"):
     if not (0 <= phmin < phmax <= 14):
         raise ValueError("pH 范围必须满足 0 ≤ 下限 < 上限 ≤ 14。")
     if not (-3 <= umin < umax <= 3):
         raise ValueError("SHE 电位范围需在 -3 至 3 V 之间且上限大于下限。")
     if resolution < 40 or resolution > 201:
         raise ValueError("网格精度必须为 40–201。")
+    if layout not in ("horizontal", "vertical"):
+        raise ValueError("排列方式必须为 horizontal 或 vertical。")
     catalysts = read_adsorbates(input_path)
     if len(catalysts) > 12:
         raise ValueError("一次最多绘制 12 个催化剂，请拆分工作簿。")
@@ -163,7 +236,8 @@ def analyze(input_path, outdir, phmin=0, phmax=14, umin=-1.0, umax=2.0, resoluti
               for ext in ("png", "svg", "csv", "dat", "xlsx")}
     ph_values = np.linspace(phmin, phmax, resolution)
     she_values = np.linspace(umin, umax, resolution)
-    render_maps(catalysts, ph_values, she_values, output["png"], output["svg"])
+    render_maps(catalysts, ph_values, she_values, output["png"], output["svg"],
+                layout=layout)
     export_grid(catalysts, ph_values, she_values, output["csv"], output["dat"], output["xlsx"])
     return {
         "Png": output["png"], "Svg": output["svg"], "Csv": output["csv"],
@@ -171,6 +245,7 @@ def analyze(input_path, outdir, phmin=0, phmax=14, umin=-1.0, umax=2.0, resoluti
         "SeriesCount": len(catalysts),
         "Summary": (f"{len(catalysts)} 个催化剂；pH {phmin:g}–{phmax:g}，"
                     f"电位 {umin:g}–{umax:g} V vs SHE，"
+                    f"{'竖向' if layout == 'vertical' else '横向'}排列，"
                     "表面稳定态：*、*OH、*O、*OOH（CHE 近似）"),
     }
 
@@ -184,9 +259,11 @@ def main():
     parser.add_argument("--umin", type=float, default=-1)
     parser.add_argument("--umax", type=float, default=2)
     parser.add_argument("--resolution", type=int, default=121)
+    parser.add_argument("--layout", choices=("horizontal", "vertical"),
+                        default="horizontal")
     args = parser.parse_args()
     result = analyze(args.input, args.outdir, args.phmin, args.phmax,
-                     args.umin, args.umax, args.resolution)
+                     args.umin, args.umax, args.resolution, args.layout)
     print(json.dumps(result, ensure_ascii=False))
 
 

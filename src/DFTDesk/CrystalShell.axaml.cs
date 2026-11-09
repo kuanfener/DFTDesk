@@ -370,7 +370,10 @@ internal sealed partial class CrystalShell : UserControl
             throw new ArgumentException("pH 必须在 0–14 之间，且上限大于下限。");
         if (uMin < -3 || uMax > 3 || uMin >= uMax)
             throw new ArgumentException("SHE 电位必须在 -3–3 V 之间，且上限大于下限。");
-        return new SurfacePourbaixRequest(inputPath, phMin, phMax, uMin, uMax);
+        var layout = Part<ComboBox>("SurfaceLayout").SelectedIndex == 1
+            ? "vertical" : "horizontal";
+        return new SurfacePourbaixRequest(inputPath, phMin, phMax, uMin, uMax,
+            Layout: layout);
     }
 
     public void SetSurfaceInput(string path)
@@ -401,7 +404,12 @@ internal sealed partial class CrystalShell : UserControl
     {
         var image = Part<Image>("SurfacePlotImage");
         var previous = image.Source as Bitmap;
-        image.Source = new Bitmap(data.Png);
+        var bitmap = new Bitmap(data.Png);
+        image.Source = bitmap;
+        // A one-column figure can be tall: let the scrollable page display
+        // it at a readable size instead of squeezing it into 560 pixels.
+        var aspect = bitmap.PixelSize.Height / (double)Math.Max(1, bitmap.PixelSize.Width);
+        image.Height = Math.Clamp(870 * aspect, 530, 6000);
         previous?.Dispose();
         image.IsVisible = true;
         Part<TextBlock>("SurfacePlotPlaceholder").IsVisible = false;

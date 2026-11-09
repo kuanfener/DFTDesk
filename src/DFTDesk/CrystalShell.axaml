@@ -527,6 +527,13 @@
                 </Grid>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
                            Text="支持五行分块的 ORR 原始表（可重复多个催化剂），或 Material / DG_OH / DG_O / DG_OOH 宽表；也兼容台阶图支持的 G 与 E+Corr 数据。纵轴采用 SHE，虚线标出水稳定区；RHE = SHE + 0.05916×pH（298.15 K）。"/>
+                <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                  <TextBlock Classes="label" Text="多催化剂排列方式" VerticalAlignment="Center"/>
+                  <ComboBox x:Name="SurfaceLayout" SelectedIndex="0" Width="160">
+                    <ComboBoxItem Content="横向排列"/>
+                    <ComboBoxItem Content="竖向排列"/>
+                  </ComboBox>
+                </StackPanel>
                 <Border x:Name="SurfaceDropZone" Classes="import-drop" DragDrop.AllowDrop="True"
                         Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource AccentSoftBrush}"
                         BorderThickness="1.5" CornerRadius="{DynamicResource SoftRadiusLarge}" Padding="12">
@@ -570,7 +577,7 @@
               <StackPanel Spacing="10">
                 <TextBlock Classes="h2" Text="表面吸附态稳定区预览"/>
                 <TextBlock x:Name="SurfacePlotPlaceholder" Classes="caption"
-                           Text="生成完成后显示 pH–电位稳定区，多催化剂自动分面展示。"/>
+                            Text="生成完成后显示平滑的 pH–电位稳定区，可选择多催化剂横向或竖向排列。"/>
                 <Image x:Name="SurfacePlotImage" Height="560" Stretch="Uniform" IsVisible="False"/>
                 <TextBlock x:Name="SurfaceSummary" Classes="caption" TextWrapping="Wrap"/>
                 <TextBlock Classes="caption" TextWrapping="Wrap"
