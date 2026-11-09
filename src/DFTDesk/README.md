@@ -1,11 +1,14 @@
-# DFTDesk 2.3.10 — Windows 科研结构工作台
+# DFTDesk 2.3.11 — Windows 科研结构工作台
 
-**DFTDesk 2.3.10 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.11 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
 
-## v2.3.10 默认 Direct 分数坐标与轮盘快捷键
+## v2.3.11 Pourbaix 连续相界与排版
 
 - 表面 Pourbaix 图采用 CHE 解析相界，直接绘制直线而不是对稳定态网格着色；四种吸附态颜色与水稳定边界线颜色不变。增加字体大小与高分辨率 PNG，SVG 输出仍为矢量。
 - 「表面 Pourbaix 图」新增横向 / 竖向排列选项，默认横向；两种排布共享同一套自由能数据与逐网格 Excel/CSV/DAT 导出。
+
+## v2.3.10 默认 Direct 分数坐标与轮盘快捷键
+
 - 结构转换和团簇生成生成 POSCAR 时均默认 Direct 分数坐标，Cartesian 笛卡尔坐标保持可选。
 - 已保存旧版本 `engine.json` 的用户首次升级时默认转为 Direct；新版本中的手动选择将继续保存。
 - 本次只改坐标表示方式，原有元素稳定分组与坐标对应关系保持不变。

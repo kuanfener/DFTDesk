@@ -1,4 +1,4 @@
-# DFTDesk v2.3.10
+# DFTDesk v2.3.11
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -8,11 +8,14 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## v2.3.10 最新更新
+## v2.3.11 最新更新
 
 - **Pourbaix 相界平滑**：由四电子 CHE 自由能交点直接求稳定区域分界，绘制连续直线，消除离散网格造成的锯齿；Excel/CSV/Origin DAT 逐网格数值输出不变。
 - **保留原始配色并提高可读性**：`*`、`*OH`、`*O`、`*OOH` 四种稳定区沿用既有颜色；加大字号、提高 PNG 分辨率，SVG 保持矢量输出。
 - **横向 / 竖向排列可选**：「表面 Pourbaix 图」绘制前选择多催化剂排布方式，默认横向；竖向布局的预览高度随图像比例调整。
+
+## v2.3.10 更新记录
+
 - **POSCAR 默认 Direct 分数坐标**：结构转换和团簇生成两处导出入口均改为默认 Direct。Cartesian 仍作为可勾选的可选模式。
 - **兼容旧版本设置**：旧 `engine.json` 中的 Cartesian 默认值在首次升级时切换为 Direct；新版本中手动选用 Cartesian 后会继续保存并在下次启动时恢复。
 - **原子与元素顺序不变更**：保持 v2.3.9 的 VASP 同元素分组规则；仅修改导出坐标的表示方式，不改变真实结构。
@@ -68,7 +71,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.10 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.11 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF；导出 POSCAR 时按元素首次出现顺序稳定分组，避免同种元素重复区段；支持拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |
