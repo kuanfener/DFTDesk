@@ -12,7 +12,18 @@ using System.Threading.Tasks;
 namespace DFTDesk;
 
 internal sealed record StepDiagramRequest(
-    string InputPath, string Mode, double Potential, double Ph, string Reference);
+    string InputPath, string Mode, double Potential, double Ph, string Reference,
+    string Palette = "contrast", string Distinguish = "all",
+    string LegendPosition = "bottom", string DisplayMode = "overlay",
+    string SortMode = "input", string LineLabels = "none",
+    string[]? Highlights = null);
+
+internal sealed class StepDiagramPlot
+{
+    public string Name { get; set; } = "";
+    public string Png { get; set; } = "";
+    public string Svg { get; set; } = "";
+}
 
 internal sealed class StepDiagramData
 {
@@ -23,6 +34,8 @@ internal sealed class StepDiagramData
     public string Dat { get; set; } = "";
     public string Summary { get; set; } = "";
     public int SeriesCount { get; set; }
+    public List<string> Materials { get; set; } = new();
+    public List<StepDiagramPlot> AdditionalPlots { get; set; } = new();
     public string WorkingDirectory { get; set; } = "";
 }
 
@@ -44,6 +57,13 @@ internal static class StepDiagramAnalysis
         if (request.Reference is not ("RHE" or "SHE") ||
             !double.IsFinite(request.Potential) || !double.IsFinite(request.Ph))
             throw new ArgumentException("电位、pH 或电位参考标尺无效。");
+        if (request.Palette is not ("default" or "contrast" or "colorblind") ||
+            request.Distinguish is not ("color" or "line" or "all") ||
+            request.LegendPosition is not ("auto" or "bottom" or "right" or "inside" or "hidden") ||
+            request.DisplayMode is not ("overlay" or "group" or "single") ||
+            request.SortMode is not ("input" or "name" or "performance") ||
+            request.LineLabels is not ("none" or "highlight" or "all"))
+            throw new ArgumentException("绘图样式参数不受支持。");
         var folder = Path.Combine(Path.GetTempPath(), "DFTDesk-STEP-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         try
@@ -53,6 +73,11 @@ internal static class StepDiagramAnalysis
             foreach (var file in new[] { data.Png, data.Svg, data.Csv, data.Xlsx, data.Dat })
                 if (string.IsNullOrWhiteSpace(file) || !File.Exists(file) || new FileInfo(file).Length == 0)
                     throw new IOException("台阶图导出文件缺失或为空。");
+            foreach (var plot in data.AdditionalPlots)
+                foreach (var file in new[] { plot.Png, plot.Svg })
+                    if (string.IsNullOrWhiteSpace(file) || !File.Exists(file) ||
+                        new FileInfo(file).Length == 0)
+                        throw new IOException("分组或单结构图片导出文件缺失：" + file);
             return data;
         }
         catch
@@ -196,7 +221,14 @@ internal static class StepDiagramAnalysis
                 "--outdir", folder, "--mode", request.Mode,
                 "--potential", request.Potential.ToString("G17", System.Globalization.CultureInfo.InvariantCulture),
                 "--ph", request.Ph.ToString("G17", System.Globalization.CultureInfo.InvariantCulture),
-                "--reference", request.Reference
+                "--reference", request.Reference,
+                "--palette", request.Palette,
+                "--distinguish", request.Distinguish,
+                "--legend", request.LegendPosition,
+                "--display", request.DisplayMode,
+                "--sort", request.SortMode,
+                "--line-labels", request.LineLabels,
+                "--highlights-json", JsonSerializer.Serialize(request.Highlights ?? Array.Empty<string>())
             }) start.ArgumentList.Add(arg);
             using var process = new Process { StartInfo = start };
             try

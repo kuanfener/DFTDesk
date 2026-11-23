@@ -1,6 +1,13 @@
-# DFTDesk 2.3.11 — Windows 科研结构工作台
+# DFTDesk 2.3.12 — Windows 科研结构工作台
 
-**DFTDesk 2.3.11 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+**DFTDesk 2.3.12 使用 ASE 处理结构，使用 pymatgen / NumPy 处理 VASP DOS 与 LOBSTER COHP/ICOHP，使用 openpyxl 输出 Excel。** 不包含独立的 C# 结构读写引擎。
+
+## v2.3.12 多催化剂台阶图辨识与导出
+
+- 高对比配色为默认；10–12 个催化剂分配不同颜色、线型和标记，图例默认置于图下方。支持科研和色盲友好配色、区分方式、图例位置、排序、显示模式和文字标签。
+- 首次绘图后可以在列表中多选重点结构，重新绘图时其余曲线淡化；未选择时全部正常显示。
+- 支持全部叠加、每组最多五条的分组绘图、单结构绘图，PNG/SVG 按需导出额外图片。Excel 新增 `Plot Styles` 工作表；原始自由能、HER/ORR/OER 的 CHE 指标和 OPJU 模板映射不变。
+- 新增十种 HER 曲线和 OER 数据一致性回归测试；保留 Pourbaix、DOS/COHP、结构转换、团簇、托盘和二维码。
 
 ## v2.3.11 Pourbaix 连续相界与排版
 

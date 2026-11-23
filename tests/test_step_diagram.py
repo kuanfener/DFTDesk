@@ -353,5 +353,87 @@ class TestStepDiagram(unittest.TestCase):
             self.assertEqual(1, result["SeriesCount"])
 
 
+    def test_v2312_ten_distinct_styles_highlight_and_group_export(self):
+        """Ten HER catalysts remain identifiable; groups retain original input data."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "ten_HER.xlsx"
+            book = Workbook()
+            sheet = book.active
+            sheet.append(["Material", "State", "DeltaG"])
+            names = [f"CoP-{x}" for x in
+                     ("Sc", "Ti", "V", "Cr", "Mn", "Fe", "Co", "Ni", "Cu", "Zn")]
+            for i, name in enumerate(names):
+                sheet.append([name, "*H2O", -.50 + i * .03])
+                sheet.append([name, "*H-OH", .20 + i * .02])
+                sheet.append([name, "*H", -.25 + i * .01])
+            book.save(source)
+            args = ["--palette", "contrast", "--distinguish", "all",
+                    "--legend", "bottom", "--display", "overlay"]
+            all_result = run_script(source, root / "all", extra=args)
+            self.assertEqual(names, all_result["Materials"])
+            self.assertEqual([], all_result["AdditionalPlots"])
+            xlsx = load_workbook(all_result["Xlsx"], read_only=True, data_only=True)
+            self.assertIn("Plot Styles", xlsx.sheetnames)
+            rows = list(xlsx["Plot Styles"].values)[1:]
+            self.assertEqual(10, len(rows))
+            self.assertEqual(10, len({row[1] for row in rows}))
+            self.assertEqual(10, len({row[3] for row in rows}))
+            self.assertEqual(names, [row[0] for row in rows])
+            original = list(xlsx["Reaction Profiles"].values)
+            xlsx.close()
+            svg = Path(all_result["Svg"]).read_text(encoding="utf-8").lower()
+            self.assertIn("#004488", svg)
+            self.assertIn("#cf4c97", svg)
+            self.assertIn("cop-fe", svg)
+
+            highlighted = run_script(source, root / "highlight",
+                                     extra=args + ["--highlights-json",
+                                                   json.dumps(["CoP-Fe"])])
+            hi_svg = Path(highlighted["Svg"]).read_text(encoding="utf-8").lower()
+            self.assertIn("#b5bac5", hi_svg)  # Non-selected lines are muted.
+            self.assertIn("#0099c6", hi_svg)  # Fe remains in its original palette.
+            check = load_workbook(highlighted["Xlsx"], read_only=True, data_only=True)
+            self.assertEqual(original, list(check["Reaction Profiles"].values))
+            check.close()
+
+            grouped = run_script(source, root / "groups",
+                                 extra=["--display", "group", "--legend", "bottom"])
+            self.assertEqual(2, len(grouped["AdditionalPlots"]))
+            for item in grouped["AdditionalPlots"]:
+                self.assertGreater(Path(item["Png"]).stat().st_size, 0)
+                self.assertGreater(Path(item["Svg"]).stat().st_size, 0)
+
+            singles = run_script(source, root / "singles",
+                                 extra=["--display", "single", "--line-labels", "highlight",
+                                        "--highlights-json", json.dumps(["CoP-Ni"])])
+            self.assertEqual(10, len(singles["AdditionalPlots"]))
+            self.assertGreater(Path(singles["AdditionalPlots"][-1]["Svg"]).stat().st_size, 0)
+
+    def test_v2312_oxygen_style_preserves_che_calculation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "oxygen.xlsx"
+            self.oxygen_workbook(source, [
+                ("Pt4", (1.60, 2.80, 3.90)),
+                ("Pt3Co", (1.23, 2.46, 3.69)),
+            ])
+            baseline = run_script(source, root / "baseline", extra=["--mode", "OER"])
+            styled = run_script(source, root / "styled", extra=[
+                "--mode", "OER", "--palette", "colorblind",
+                "--distinguish", "line", "--sort", "performance",
+                "--legend", "right", "--line-labels", "all",
+            ])
+            book_a = load_workbook(baseline["Xlsx"], read_only=True, data_only=True)
+            book_b = load_workbook(styled["Xlsx"], read_only=True, data_only=True)
+            for name in ("CHE Metrics", "CHE Four Steps", "Reaction Profiles"):
+                self.assertEqual(list(book_a[name].values), list(book_b[name].values))
+            self.assertIn("Plot Styles", book_b.sheetnames)
+            book_a.close()
+            book_b.close()
+            self.assertGreater(Path(styled["Png"]).stat().st_size, 0)
+
+
+
 if __name__ == "__main__":
     unittest.main()

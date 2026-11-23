@@ -1,4 +1,4 @@
-# DFTDesk v2.3.11
+# DFTDesk v2.3.12
 
 **面向 VASP / DFT / 计算材料研究的 Windows 桌面工作台。**
 
@@ -8,7 +8,14 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 [![Windows build](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml/badge.svg)](https://github.com/kuanfener/DFTDesk/actions/workflows/dftdesk-windows.yml)
 
-## v2.3.11 最新更新
+## v2.3.12 最新更新
+
+- **多催化剂高区分度台阶图**：默认高对比色、不同线型与中间态平台标记；图例默认放在图下方多列，缓解 10–12 条曲线间的视觉混淆。
+- **可选绘图样式**：科研 / 高对比 / 色盲友好配色、曲线区分方式、图例位置、全部叠加 / 每组最多 5 条 / 单结构绘图、排序和图内标签；首次绘图后可选重点高亮结构，未选择时所有曲线正常显示。
+- **分组及单结构输出**：PNG/SVG 可同时导出总预览和各组/单结构图；Excel 新增 `Plot Styles` 页记录颜色、线型、标记。原始 HER/ORR/OER 数值、CHE 热力学计算以及原生 Origin OPJU 映射规则保持不变。
+- **回归测试**：覆盖十种催化剂、分组/单结构绘图、高亮前后自由能一致和 OER 指标稳定性。
+
+## v2.3.11 更新记录
 
 - **Pourbaix 相界平滑**：由四电子 CHE 自由能交点直接求稳定区域分界，绘制连续直线，消除离散网格造成的锯齿；Excel/CSV/Origin DAT 逐网格数值输出不变。
 - **保留原始配色并提高可读性**：`*`、`*OH`、`*O`、`*OOH` 四种稳定区沿用既有颜色；加大字号、提高 PNG 分辨率，SVG 保持矢量输出。
@@ -71,7 +78,7 @@ DFTDesk 将晶体结构处理、金属团簇初猜、自由能台阶图与表面
 
 | 页面 | 功能 |
 | --- | --- |
-| 首页 | DFTDesk 2.3.11 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
+| 首页 | DFTDesk 2.3.12 总览，结构转换、团簇生成、台阶图、表面 Pourbaix、DOS、COHP 六个功能入口 |
 | 结构文件格式转换 | 使用 ASE 进行 POSCAR / CONTCAR ⇄ CIF；导出 POSCAR 时按元素首次出现顺序稳定分组，避免同种元素重复区段；支持拖放、多选、批量导出 |
 | 团簇生成 | 任意元素、批量原子数、普通几何或 FCC 晶面取向，生成 POSCAR 和 CIF |
 | 绘制台阶图 | HER / ORR / OER 多催化剂自由能台阶，四电子 CHE 反应步、限制电位、过电位和 PDS，导出图片、Excel、Origin DAT / 原生 OPJU |

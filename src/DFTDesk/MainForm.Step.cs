@@ -160,11 +160,19 @@ internal sealed partial class MainForm
             UseDescriptionForTitle = true,
         };
         if (dialog.ShowDialog() != DialogResult.OK) return;
-        var files = new[]
+        var files = new List<(string Source, string Extension, string Suffix)>
         {
-            (data.Png, ".png"), (data.Svg, ".svg"), (data.Csv, ".csv"),
-            (data.Xlsx, ".xlsx"), (data.Dat, ".dat")
-        }.Where(item => selected.Contains(item.Item2)).ToArray();
+            (data.Png, ".png", ""), (data.Svg, ".svg", ""),
+            (data.Csv, ".csv", ""), (data.Xlsx, ".xlsx", ""), (data.Dat, ".dat", "")
+        }.Where(item => selected.Contains(item.Extension)).ToList();
+        // Group/single figure files are only exported when that image format
+        // was selected; original reaction data and OPJU mapping stay unchanged.
+        foreach (var plot in data.AdditionalPlots)
+        {
+            var suffix = "_" + plot.Name;
+            if (selected.Contains(".png")) files.Add((plot.Png, ".png", suffix));
+            if (selected.Contains(".svg")) files.Add((plot.Svg, ".svg", suffix));
+        }
         var stem = "DFTDesk_StepDiagram_" + DateTime.Now.ToString("yyyyMMdd_HHmmss");
         var count = 0;
         string[] destinations;
@@ -172,7 +180,8 @@ internal sealed partial class MainForm
         do
         {
             var prefix = stem + (count == 0 ? "" : "_" + count);
-            destinations = files.Select(file => Path.Combine(dialog.SelectedPath, prefix + file.Item2)).ToArray();
+            destinations = files.Select(file =>
+                Path.Combine(dialog.SelectedPath, prefix + file.Suffix + file.Extension)).ToArray();
             originOutput = Path.Combine(dialog.SelectedPath, prefix + ".opju");
             count++;
         } while (destinations.Any(File.Exists) ||
@@ -186,7 +195,7 @@ internal sealed partial class MainForm
         {
             for (var i = 0; i < files.Length; i++)
             {
-                File.Copy(files[i].Item1, destinations[i], overwrite: false);
+                File.Copy(files[i].Source, destinations[i], overwrite: false);
                 copied.Add(destinations[i]);
             }
 

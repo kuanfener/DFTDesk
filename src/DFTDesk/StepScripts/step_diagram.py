@@ -406,7 +406,59 @@ def read_oxygen_profiles(path, mode, potential, ph, reference):
     return profiles, metrics
 
 
-def export_profiles(profiles, outdir, metrics=None):
+
+# Distinct, deterministic colors; the first 12 are intentionally not recycled.
+PALETTES = {
+    "default": ("#2F66C5", "#09958C", "#42A464", "#C65A7A", "#B37D31",
+                "#7354AD", "#D46E2C", "#0084AC", "#9E577B", "#536F24"),
+    "contrast": ("#004488", "#E06C00", "#009E73", "#B21F36", "#7F3C8D",
+                 "#0099C6", "#A15F00", "#CF4C97", "#527C16", "#6B5A4F",
+                 "#562D9C", "#C33B1E"),
+    "colorblind": ("#332288", "#88CCEE", "#44AA99", "#117733", "#999933",
+                   "#DDCC77", "#CC6677", "#882255", "#AA4499", "#DDDDDD",
+                   "#4477AA", "#EE6677"),
+}
+LINE_STYLES = ("-", "--", "-.", ":", (0, (5, 2, 1, 2)), (0, (3, 1, 1, 1)),
+               (0, (6, 2)), (0, (1, 1)), (0, (4, 1, 1, 1)),
+               (0, (2, 2)), (0, (5, 1, 2, 1)), (0, (3, 2, 2, 2)))
+MARKERS = ("o", "s", "^", "D", "v", "P", "X", "h", "<", ">", "*", "8")
+
+
+def make_styles(profiles, palette_name="contrast", distinguish="all"):
+    if palette_name not in PALETTES or distinguish not in ("color", "line", "all"):
+        raise ValueError("未知的配色或曲线区分模式。")
+    names = list(dict.fromkeys(profile[0][0] for profile in profiles))
+    palette = PALETTES[palette_name]
+    return {name: {
+        "Color": palette[i % len(palette)],
+        "LineStyle": LINE_STYLES[i % len(LINE_STYLES)] if distinguish != "color" else "-",
+        "Marker": MARKERS[i % len(MARKERS)] if distinguish == "all" else "",
+        "LineStyleName": ("solid", "dashed", "dashdot", "dotted")[i % 4]
+            if distinguish != "color" else "solid",
+    } for i, name in enumerate(names)}
+
+
+def sorted_profiles(profiles, order="input", metrics=None, mode="HER"):
+    if order not in ("input", "name", "performance"):
+        raise ValueError("未知的催化剂排序方式。")
+    if order == "name":
+        return sorted(profiles, key=lambda p: p[0][0].casefold())
+    if order == "performance":
+        eta = {m["Material"]: m["Eta_V"] for m in metrics or []}
+        if mode in ("OER", "ORR"):
+            return sorted(profiles, key=lambda p: (eta.get(p[0][0], math.inf), p[0][0]))
+        # This is only a visualization descriptor for HER, not an ORR overpotential.
+        def h_descriptor(profile):
+            values = [abs(float(r[2])) for r in profile[1:-1]
+                      if r[1].replace(" ", "").lower() in ("*h", "h*")]
+            if not values:
+                values = [abs(float(r[2])) for r in profile[1:-1]]
+            return (min(values, default=math.inf), profile[0][0])
+        return sorted(profiles, key=h_descriptor)
+    return list(profiles)
+
+
+def export_profiles(profiles, outdir, metrics=None, plot_styles=None):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill
     path = Path(outdir)
@@ -472,6 +524,19 @@ def export_profiles(profiles, outdir, metrics=None):
             cell.fill = PatternFill("solid", fgColor="433E91")
         for col, width in {"A": 24, "B": 15, "C": 12, "D": 18, "E": 18, "F": 12}.items():
             step_sheet.column_dimensions[col].width = width
+    if plot_styles:
+        styles_sheet = book.create_sheet("Plot Styles")
+        styles_sheet.append(["Material", "Color_HEX", "LineStyle", "Marker"])
+        for name, style in plot_styles.items():
+            styles_sheet.append([name, style["Color"], style["LineStyleName"],
+                                 style["Marker"] or "none"])
+        styles_sheet.freeze_panes = "A2"
+        styles_sheet.auto_filter.ref = styles_sheet.dimensions
+        for cell in styles_sheet[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill("solid", fgColor="433E91")
+        for col, width in {"A": 26, "B": 18, "C": 18, "D": 14}.items():
+            styles_sheet.column_dimensions[col].width = width
     guide = book.create_sheet("Origin Guide")
     guide.append(["数据来源", "HER 自由能台阶；或 ORR/OER 四电子 CHE 反应自由能（eV）"])
     guide.append(["Origin 导入", "File > Import > Single ASCII，选择 step_diagram_origin.dat"])
@@ -482,151 +547,242 @@ def export_profiles(profiles, outdir, metrics=None):
     return str(csv_path), str(xlsx_path), str(dat_path)
 
 
-def draw_profiles(profiles, outdir, mode="HER", metrics=None):
-    """Origin-inspired horizontal energy levels, grouped by comparable pathways."""
+def draw_profiles(profiles, outdir, mode="HER", metrics=None,
+                  palette_name="contrast", distinguish="all",
+                  legend_position="bottom", display_mode="overlay",
+                  highlights=None, sort_mode="input", line_labels="none"):
+    """Draw stable-styled HER/ORR/OER energy levels without changing any energy."""
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
     from matplotlib import font_manager
+    from matplotlib.lines import Line2D
+
+    if legend_position not in ("auto", "bottom", "right", "inside", "hidden"):
+        raise ValueError("未知的图例位置。")
+    if display_mode not in ("overlay", "group", "single"):
+        raise ValueError("未知的绘图模式。")
+    if line_labels not in ("none", "highlight", "all"):
+        raise ValueError("未知的标签模式。")
     available = {f.name for f in font_manager.fontManager.ttflist}
     for name in ("Microsoft YaHei", "SimHei", "Noto Sans CJK SC", "Arial Unicode MS"):
         if name in available:
             plt.rcParams["font.sans-serif"] = [name]
             break
     plt.rcParams["axes.unicode_minus"] = False
-    plt.rcParams["svg.fonttype"] = "none"  # Editable text labels in Origin/Inkscape
-
-    # An Origin project may contain both a shared-intermediate comparison and
-    # detailed reaction-coordinate pathways. Infer both without guessing states.
-    common = []
-    if mode == "HER" and len(profiles) > 1:
-        common = [state for _, state, _ in profiles[0][1:-1]
-                  if all(state in {r[1] for r in other[1:-1]} for other in profiles[1:])]
-    panels = []
-    if len(common) >= 2:
-        comparison = []
-        for profile in profiles:
-            values = {state: energy for _, state, energy in profile[1:-1]}
-            comparison.append(
-                [(profile[0][0], "初态", 0.0)] +
-                [(profile[0][0], state, values[state]) for state in common] +
-                [(profile[0][0], "终态", 0.0)])
-        panels.append(("共同中间态对比", comparison))
-
-    groups = OrderedDict()
-    for profile in profiles:
-        signature = tuple(row[1] for row in profile[1:-1])
-        groups.setdefault(signature, []).append(profile)
-    for signature, members in groups.items():
-        if len(common) >= 2 and len(groups) == 1:
-            continue  # The comparison already represents the same complete path.
-        if len(common) >= 2 and len(members) == 1:
-            continue  # Avoid duplicating a lone short path already in comparison.
-        title = "完整反应路径" if len(members) > 1 else members[0][0][0]
-        panels.append((title, members))
-    if not panels:
-        panels = [("完整反应路径", profiles)]
-
-    colors = ["#2F66C5", "#09958C", "#42A464", "#C65A7A", "#B37D31"]
-    palette = {profile[0][0]: colors[i % len(colors)] for i, profile in enumerate(profiles)}
+    plt.rcParams["svg.fonttype"] = "none"
+    styles = make_styles(profiles, palette_name, distinguish)
+    ordered = sorted_profiles(profiles, sort_mode, metrics, mode)
+    highlights = set(highlights or [])
+    unknown = highlights.difference(styles)
+    if unknown:
+        raise ValueError("高亮结构不在输入数据中：" + "、".join(sorted(unknown)))
     che_metrics = ({item["Material"]: item for item in metrics or []}
                    if mode in ("ORR", "OER") else {})
-    panel_height = max(4.1, 3.8 * len(panels),
-                       (2.1 + .66 * len(che_metrics)) if che_metrics else 0)
-    if che_metrics:
-        fig = plt.figure(figsize=(13.6, panel_height))
-        grid = fig.add_gridspec(len(panels), 2, width_ratios=(3.65, 1.55),
-                               wspace=.24, hspace=.35)
-        axes = [fig.add_subplot(grid[i, 0]) for i in range(len(panels))]
-        summaries = [fig.add_subplot(grid[i, 1]) for i in range(len(panels))]
-    else:
-        fig, grid_axes = plt.subplots(len(panels), 1,
-                                     figsize=(10.6, panel_height), squeeze=False)
-        axes = [grid_axes[i][0] for i in range(len(panels))]
-        summaries = [None] * len(panels)
-    for panel_index, (title, paths) in enumerate(panels):
-        ax = axes[panel_index]
-        all_energies = []
-        for profile in paths:
-            material = profile[0][0]
-            levels = [float(row[2]) for row in profile]
-            all_energies.extend(levels)
-            color = palette[material]
-            metadata = che_metrics.get(material)
-            pds_step = metadata["PDS_step"] if metadata else None
-            for index, energy in enumerate(levels):
-                ax.hlines(energy, index - .31, index + .31,
-                          color=color, lw=2.6, zorder=3,
-                          label=material if index == 0 else None)
-                if index + 1 < len(levels):
-                    is_pds = pds_step == index + 1
-                    ax.plot([index + .31, index + .69],
-                            [energy, levels[index + 1]],
-                            color=color, lw=3.4 if is_pds else 1.1,
-                            ls="-" if is_pds else (0, (4, 3)),
-                            zorder=5 if is_pds else 2)
-                    if is_pds:
-                        midpoint = (energy + levels[index + 1]) / 2
-                        ax.scatter([index + .5], [midpoint], s=67, marker="D",
-                                   color=color, edgecolor="white", linewidth=.9,
-                                   zorder=6)
-                        if len(paths) == 1:
-                            ax.annotate("PDS", (index + .5, midpoint),
-                                        xytext=(9, 11), textcoords="offset points",
-                                        fontsize=9, fontweight="bold", color=color,
-                                        bbox=dict(boxstyle="round,pad=.25",
-                                                  fc="white", ec=color, lw=1))
-            if len(paths) == 1:
-                for index, energy in enumerate(levels[1:-1], 1):
-                    ax.annotate(f"{energy:+.2f}", (index, energy),
-                                xytext=(0, 8), textcoords="offset points",
-                                ha="center", fontsize=8.5, color=color)
-        labels = [row[1] for row in paths[0]]
-        ax.set_xticks(range(len(labels)), labels, rotation=12, ha="center")
-        ax.set_xlim(-.58, len(labels) - .4)
-        padding = max(.22, (max(all_energies) - min(all_energies)) * .18)
-        ax.set_ylim(min(all_energies) - padding, max(all_energies) + padding)
-        ax.axhline(0, color="#B6B8C0", ls=":", lw=.85, zorder=1)
-        ax.set_title(title, loc="left", fontsize=12, weight="bold")
-        ax.set_ylabel("Free Energy (eV)")
-        ax.set_xlabel("Reaction Coordinates")
-        if len(paths) > 1:
-            ax.legend(loc="lower left", frameon=False, fontsize=9, ncol=min(3, len(paths)))
-        ax.spines[["top", "right"]].set_visible(False)
-        ax.tick_params(direction="in", length=4)
-        sidebar = summaries[panel_index]
-        if sidebar is not None:
-            sidebar.set_axis_off()
-            sidebar.text(.03, .99, f"{mode} | CHE 指标",
-                         va="top", fontsize=13, fontweight="bold", color="#243F72",
-                         transform=sidebar.transAxes)
-            count = max(len(paths), 1)
-            pitch = .88 / count
-            for i, profile in enumerate(paths):
+
+    def build_panels(items, mode_name):
+        if mode_name == "single":
+            return [(p[0][0], [p]) for p in items]
+        if mode_name == "group":
+            # Do not mix incompatible state sequences in one panel.
+            groups = OrderedDict()
+            for profile in items:
+                signature = tuple(row[1] for row in profile)
+                groups.setdefault(signature, []).append(profile)
+            panels = []
+            for members in groups.values():
+                for index in range(0, len(members), 5):
+                    part = members[index:index + 5]
+                    panels.append((f"分组对比 {len(panels)+1}", part))
+            return panels
+        common = []
+        if mode == "HER" and len(items) > 1:
+            common = [state for _, state, _ in items[0][1:-1]
+                      if all(state in {r[1] for r in other[1:-1]} for other in items[1:])]
+        panels = []
+        if len(common) >= 2:
+            comparison = []
+            for profile in items:
+                values = {state: energy for _, state, energy in profile[1:-1]}
+                comparison.append(
+                    [(profile[0][0], "初态", 0.0)] +
+                    [(profile[0][0], state, values[state]) for state in common] +
+                    [(profile[0][0], "终态", 0.0)])
+            panels.append(("共同中间态对比", comparison))
+        groups = OrderedDict()
+        for profile in items:
+            signature = tuple(row[1] for row in profile[1:-1])
+            groups.setdefault(signature, []).append(profile)
+        for members in groups.values():
+            if len(common) >= 2 and len(groups) == 1:
+                continue
+            if len(common) >= 2 and len(members) == 1:
+                continue
+            title = "完整反应路径" if len(members) > 1 else members[0][0][0]
+            panels.append((title, members))
+        return panels or [("完整反应路径", items)]
+
+    effective_legend = ("bottom" if len(profiles) > 5 else "inside") \
+        if legend_position == "auto" else legend_position
+    panels = build_panels(ordered, display_mode)
+
+    def render(panel_specs, png_path, svg_path, local_legend):
+        rows = len(panel_specs)
+        largest = max((len(members) for _, members in panel_specs), default=1)
+        sidebars = bool(che_metrics)
+        fig_width = 13.6 if sidebars else 11.6
+        fig_height = max(4.5 * rows, 3.9, (2.2 + .62 * largest) * rows if sidebars else 0)
+        if sidebars:
+            fig = plt.figure(figsize=(fig_width, fig_height))
+            grid = fig.add_gridspec(rows, 2, width_ratios=(3.65, 1.55),
+                                   wspace=.25, hspace=.38)
+            axes = [fig.add_subplot(grid[i, 0]) for i in range(rows)]
+            summaries = [fig.add_subplot(grid[i, 1]) for i in range(rows)]
+        else:
+            fig, axs = plt.subplots(rows, 1, figsize=(fig_width, fig_height), squeeze=False)
+            axes = [axs[i, 0] for i in range(rows)]
+            summaries = [None] * rows
+        all_names = list(dict.fromkeys(p[0][0] for _, paths in panel_specs for p in paths))
+        labels_shown = []
+        for panel_index, (title, paths) in enumerate(panel_specs):
+            ax = axes[panel_index]
+            all_energies = []
+            for profile in paths:
                 material = profile[0][0]
-                info = che_metrics.get(material)
-                if not info:
-                    continue
-                short = count > 7
-                desc = (f"{material}\nη = {info['Eta_V']:.3f} V · PDS 第 {info['PDS_step']} 步"
-                        if short else
-                        f"{material}\nη = {info['Eta_V']:.3f} V\nPDS：第 {info['PDS_step']} 步")
-                sidebar.text(.03, .90 - i * pitch, desc, ha="left", va="top",
-                             fontsize=8.6 if short else 10.1, linespacing=1.32,
-                             fontweight="semibold", color=palette[material],
-                             bbox=dict(boxstyle="round,pad=.52", fc="#F5F7FC",
-                                       ec=palette[material], lw=1.15, alpha=.98),
+                levels = [float(row[2]) for row in profile]
+                all_energies.extend(levels)
+                visual = styles[material]
+                faded = bool(highlights) and material not in highlights
+                color = "#B5BAC5" if faded else visual["Color"]
+                alpha = .28 if faded else 1.
+                metadata = che_metrics.get(material)
+                pds_step = metadata["PDS_step"] if metadata else None
+                for index, energy in enumerate(levels):
+                    ax.plot([index - .31, index + .31], [energy, energy],
+                            color=color, lw=(1.5 if faded else 3.0 if material in highlights else 2.35),
+                            ls=visual["LineStyle"], alpha=alpha, zorder=3)
+                    # Mark only intermediate platforms; all paths share initial/final zeros.
+                    if visual["Marker"] and 0 < index < len(levels) - 1:
+                        ax.plot([index], [energy], marker=visual["Marker"],
+                                markersize=6.0, markerfacecolor="white",
+                                markeredgecolor=color, markeredgewidth=1.45,
+                                linestyle="None", alpha=alpha, zorder=4)
+                    if index + 1 < len(levels):
+                        is_pds = pds_step == index + 1
+                        ax.plot([index + .31, index + .69],
+                                [energy, levels[index + 1]],
+                                color=color, lw=3.1 if is_pds and not faded else 1.0,
+                                ls="-" if is_pds else (0, (4, 3)),
+                                alpha=alpha, zorder=5 if is_pds else 2)
+                        if is_pds:
+                            midpoint = (energy + levels[index + 1]) / 2
+                            ax.scatter([index + .5], [midpoint], s=67, marker="D",
+                                       color=color, alpha=alpha, edgecolor="white",
+                                       linewidth=.8, zorder=6)
+                            if len(paths) == 1:
+                                ax.annotate("PDS", (index + .5, midpoint),
+                                            xytext=(9, 11), textcoords="offset points",
+                                            fontsize=9, fontweight="bold", color=color,
+                                            bbox=dict(boxstyle="round,pad=.25",
+                                                      fc="white", ec=color, lw=1))
+                if len(paths) == 1:
+                    for index, energy in enumerate(levels[1:-1], 1):
+                        ax.annotate(f"{energy:+.2f}", (index, energy),
+                                    xytext=(0, 9), textcoords="offset points",
+                                    ha="center", fontsize=9, color=color)
+                if (line_labels == "all" or
+                    (line_labels == "highlight" and material in highlights)) \
+                        and material not in labels_shown:
+                    # Direct labels at one representative intermediate; suppress duplicates.
+                    at = min(len(levels) - 2, max(1, len(levels) // 2))
+                    if at > 0:
+                        ax.annotate(material, (at, levels[at]), xytext=(7, 13),
+                                    textcoords="offset points", fontsize=8.8,
+                                    color=color, alpha=alpha,
+                                    bbox=dict(boxstyle="round,pad=.12", fc="white", ec="none", alpha=.8))
+                        labels_shown.append(material)
+            if not all_energies:
+                continue
+            labels = [row[1] for row in paths[0]]
+            ax.set_xticks(range(len(labels)), labels, rotation=12, ha="center")
+            ax.set_xlim(-.58, len(labels) - .4)
+            padding = max(.22, (max(all_energies) - min(all_energies)) * .18)
+            ax.set_ylim(min(all_energies) - padding, max(all_energies) + padding)
+            ax.axhline(0, color="#B6B8C0", ls=":", lw=.85, zorder=1)
+            ax.set_title(title, loc="left", fontsize=13, weight="bold")
+            ax.set_ylabel("Free Energy (eV)", fontsize=11)
+            ax.set_xlabel("Reaction Coordinates", fontsize=11)
+            ax.tick_params(direction="in", length=4, labelsize=10)
+            ax.spines[["top", "right"]].set_visible(False)
+            if local_legend == "inside" and len(paths) > 1:
+                handles = [
+                    Line2D([0], [0], color=styles[p[0][0]]["Color"], lw=2.4,
+                           ls=styles[p[0][0]]["LineStyle"],
+                           marker=styles[p[0][0]]["Marker"] or None, markersize=5)
+                    for p in paths
+                ]
+                ax.legend(handles, [p[0][0] for p in paths], loc="lower left",
+                          ncol=min(3, len(paths)), frameon=False, fontsize=8.6)
+            sidebar = summaries[panel_index]
+            if sidebar is not None:
+                sidebar.set_axis_off()
+                sidebar.text(.03, .99, f"{mode} | CHE 指标",
+                             va="top", fontsize=13, fontweight="bold", color="#243F72",
                              transform=sidebar.transAxes)
-            sidebar.text(.03, .02, "PDS = 热力学电位决定步骤\nRDS 需另算动力学能垒",
-                         fontsize=8, color="#626B7D", transform=sidebar.transAxes,
-                         va="bottom")
-    fig.tight_layout()
+                count = max(len(paths), 1)
+                pitch = .85 / count
+                for i, profile in enumerate(paths):
+                    material = profile[0][0]
+                    info = che_metrics.get(material)
+                    if not info:
+                        continue
+                    faded = bool(highlights) and material not in highlights
+                    desc = (f"{material}\nη = {info['Eta_V']:.3f} V · PDS 第 {info['PDS_step']} 步"
+                            if count > 7 else
+                            f"{material}\nη = {info['Eta_V']:.3f} V\nPDS：第 {info['PDS_step']} 步")
+                    color = "#B5BAC5" if faded else styles[material]["Color"]
+                    sidebar.text(.03, .90 - i * pitch, desc, ha="left", va="top",
+                                 fontsize=8.3 if count > 7 else 9.6, linespacing=1.26,
+                                 fontweight="semibold", color=color,
+                                 bbox=dict(boxstyle="round,pad=.42", fc="#F5F7FC",
+                                           ec=color, lw=1, alpha=.75 if faded else .98),
+                                 transform=sidebar.transAxes)
+                sidebar.text(.03, .02, "PDS = 热力学电位决定步骤\nRDS 需另算动力学能垒",
+                             fontsize=8, color="#626B7D", transform=sidebar.transAxes,
+                             va="bottom")
+        if local_legend in ("bottom", "right") and all_names:
+            handles = [Line2D([0], [0], color=styles[name]["Color"],
+                              lw=2.4, ls=styles[name]["LineStyle"],
+                              marker=styles[name]["Marker"] or None, markersize=6)
+                       for name in all_names]
+            if local_legend == "bottom":
+                fig.legend(handles, all_names, loc="lower center",
+                           bbox_to_anchor=(.5, .005), ncol=min(5, len(all_names)),
+                           frameon=False, fontsize=9.3)
+            else:
+                fig.legend(handles, all_names, loc="center right",
+                           bbox_to_anchor=(.995, .5), ncol=1,
+                           frameon=False, fontsize=9.3)
+        bottom = min(.28, max(.11, .44 / fig_height)) if local_legend == "bottom" else .055
+        right = .80 if local_legend == "right" else .99
+        fig.tight_layout(rect=(.01, bottom, right, .99))
+        fig.savefig(png_path, dpi=240, bbox_inches="tight")
+        fig.savefig(svg_path, bbox_inches="tight")
+        plt.close(fig)
+
     png = str(Path(outdir) / "step_diagram.png")
     svg = str(Path(outdir) / "step_diagram.svg")
-    fig.savefig(png, dpi=240, bbox_inches="tight")
-    fig.savefig(svg, bbox_inches="tight")
-    plt.close(fig)
-    return png, svg
+    render(panels, png, svg, effective_legend)
+    additional = []
+    if display_mode != "overlay":
+        for index, panel in enumerate(panels, 1):
+            sub_png = str(Path(outdir) / f"step_{display_mode}_{index:02d}.png")
+            sub_svg = str(Path(outdir) / f"step_{display_mode}_{index:02d}.svg")
+            render([panel], sub_png, sub_svg, effective_legend)
+            additional.append({"Name": f"{display_mode}_{index:02d}",
+                               "Png": sub_png, "Svg": sub_svg})
+    return png, svg, additional
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -637,6 +793,13 @@ def main():
     parser.add_argument("--potential", type=float, default=0.0)
     parser.add_argument("--ph", type=float, default=0.0)
     parser.add_argument("--reference", choices=("RHE", "SHE"), default="RHE")
+    parser.add_argument("--palette", choices=tuple(PALETTES), default="contrast")
+    parser.add_argument("--distinguish", choices=("color", "line", "all"), default="all")
+    parser.add_argument("--legend", choices=("auto", "bottom", "right", "inside", "hidden"), default="bottom")
+    parser.add_argument("--display", choices=("overlay", "group", "single"), default="overlay")
+    parser.add_argument("--sort", choices=("input", "name", "performance"), default="input")
+    parser.add_argument("--line-labels", choices=("none", "highlight", "all"), default="none")
+    parser.add_argument("--highlights-json", default="[]")
     args = parser.parse_args()
     if args.action == "template":
         if not args.outdir:
@@ -666,13 +829,21 @@ def main():
                             f" U_L={item['U_lim_selected_V']:.3f} V vs {args.reference},"
                             f" PDS=第 {item['PDS_step']} 步"
                             for item in metrics))
+    highlights = json.loads(args.highlights_json)
+    if not isinstance(highlights, list) or any(not isinstance(n, str) for n in highlights):
+        raise ValueError("高亮结构列表需要 JSON 字符串数组。")
+    styles = make_styles(profiles, args.palette, args.distinguish)
     result = {"Summary": message, "SeriesCount": len(profiles),
+              "Materials": list(styles), "AdditionalPlots": [],
               "Png": "", "Svg": "", "Csv": "", "Xlsx": "", "Dat": ""}
     if args.action == "analyze":
         if not args.outdir:
             raise ValueError("缺少输出目录。")
-        result["Csv"], result["Xlsx"], result["Dat"] = export_profiles(profiles, args.outdir, metrics)
-        result["Png"], result["Svg"] = draw_profiles(profiles, args.outdir, args.mode, metrics)
+        result["Csv"], result["Xlsx"], result["Dat"] = export_profiles(
+            profiles, args.outdir, metrics, styles)
+        result["Png"], result["Svg"], result["AdditionalPlots"] = draw_profiles(
+            profiles, args.outdir, args.mode, metrics, args.palette, args.distinguish,
+            args.legend, args.display, highlights, args.sort, args.line_labels)
     print(json.dumps(result, ensure_ascii=False))
 
 

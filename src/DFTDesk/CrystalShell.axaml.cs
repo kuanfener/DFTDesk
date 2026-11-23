@@ -265,6 +265,7 @@ internal sealed partial class CrystalShell : UserControl
     {
         if (_initializing) return;
         Part<StackPanel>("StepCheOptions").IsVisible = Part<ComboBox>("StepMode").SelectedIndex != 0;
+        ResetStepMaterials();
         ClearStepPreview();
         SetStepStatus("模式已切换；请确认 Excel 数据列与反应类型相符，然后重新绘图。");
     }
@@ -279,8 +280,22 @@ internal sealed partial class CrystalShell : UserControl
     public StepDiagramRequest ReadStepRequest(string inputPath)
     {
         var mode = SelectedStepMode;
-        if (mode == "HER")
-            return new StepDiagramRequest(inputPath, mode, 0, 0, "RHE");
+        static string Option(int index, params string[] values) =>
+            values[Math.Clamp(index, 0, values.Length - 1)];
+        var palette = Option(Part<ComboBox>("StepPalette").SelectedIndex,
+                             "default", "contrast", "colorblind");
+        var distinguish = Option(Part<ComboBox>("StepDistinguish").SelectedIndex,
+                                 "color", "line", "all");
+        var legend = Option(Part<ComboBox>("StepLegend").SelectedIndex,
+                            "auto", "bottom", "right", "inside", "hidden");
+        var display = Option(Part<ComboBox>("StepDisplay").SelectedIndex,
+                             "overlay", "group", "single");
+        var order = Option(Part<ComboBox>("StepSort").SelectedIndex,
+                           "input", "name", "performance");
+        var lineLabels = Option(Part<ComboBox>("StepLineLabels").SelectedIndex,
+                                "none", "highlight", "all");
+        var highlights = Part<ListBox>("StepHighlightList").SelectedItems?
+            .OfType<string>().ToArray() ?? Array.Empty<string>();
 
         static double ParseSetting(string? text, string name)
         {
@@ -290,12 +305,19 @@ internal sealed partial class CrystalShell : UserControl
                 throw new ArgumentException(name + "必须是有效数字（请使用英文小数点）。");
             return value;
         }
-        var potential = ParseSetting(Part<TextBox>("StepPotential").Text, "电位");
-        var ph = ParseSetting(Part<TextBox>("StepPh").Text, "pH");
+        var potential = mode == "HER" ? 0 : ParseSetting(Part<TextBox>("StepPotential").Text, "电位");
+        var ph = mode == "HER" ? 0 : ParseSetting(Part<TextBox>("StepPh").Text, "pH");
         if (ph < 0 || ph > 14)
             throw new ArgumentException("目前仅支持 pH 0–14 的溶液条件。");
-        return new StepDiagramRequest(inputPath, mode, potential, ph, "RHE");
+        return new StepDiagramRequest(inputPath, mode, potential, ph, "RHE",
+            palette, distinguish, legend, display, order, lineLabels, highlights);
     }
+
+    private void OnClearStepHighlights(object? sender, RoutedEventArgs e) =>
+        Part<ListBox>("StepHighlightList").SelectedItems?.Clear();
+
+    private void ResetStepMaterials() =>
+        Part<ListBox>("StepHighlightList").ItemsSource = Array.Empty<string>();
 
     private void ShowSingleFileImport(string prefix, string? path)
     {
@@ -308,12 +330,14 @@ internal sealed partial class CrystalShell : UserControl
     public void SetStepInput(string path)
     {
         ShowSingleFileImport("Step", path);
+        ResetStepMaterials();
         ClearStepPreview();
     }
 
     public void ClearStepInput()
     {
         ShowSingleFileImport("Step", null);
+        ResetStepMaterials();
         ClearStepPreview();
     }
 
@@ -337,6 +361,22 @@ internal sealed partial class CrystalShell : UserControl
         image.IsVisible = true;
         Part<TextBlock>("StepPlotPlaceholder").IsVisible = false;
         Part<TextBlock>("StepSummary").Text = result.Summary;
+        var materials = result.Materials ?? new List<string>();
+        var list = Part<ListBox>("StepHighlightList");
+        var current = (list.ItemsSource ?? Array.Empty<object>())
+            .OfType<string>().ToArray();
+        if (!current.SequenceEqual(materials))
+        {
+            var selected = list.SelectedItems?.OfType<string>().ToHashSet()
+                ?? new HashSet<string>();
+            list.ItemsSource = materials.ToArray();
+            foreach (var name in materials)
+                if (selected.Contains(name))
+                    list.SelectedItems?.Add(name);
+        }
+        var extraCount = result.AdditionalPlots?.Count ?? 0;
+        if (extraCount > 0)
+            Part<TextBlock>("StepSummary").Text += $"；已生成 {extraCount} 张可单独导出的分组/单结构图片。";
         Part<Button>("StepExportButton").IsEnabled = true;
     }
 
