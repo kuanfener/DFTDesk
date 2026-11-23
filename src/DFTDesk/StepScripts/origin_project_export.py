@@ -7,6 +7,7 @@ It never uploads or silently replaces the source project.
 """
 import argparse
 import json
+import hashlib
 import math
 import os
 import sys
@@ -119,6 +120,8 @@ def write_project(template, data, destination):
     if target.exists():
         raise FileExistsError("输出 .opju 文件已存在，请更换保存名称。")
     profiles = read_profiles(data)
+    # The original user-provided OPJU must never be modified, even by accident.
+    original_digest = hashlib.sha256(source.read_bytes()).hexdigest()
 
     try:
         if op.oext:
@@ -126,6 +129,8 @@ def write_project(template, data, destination):
         op.open(str(source), readonly=False, asksave=False)
         layout = graph_layout(op)
         graph, layers = match_graph(layout, len(profiles))
+        original_layout = [(str(page), [len(plots) for _, plots in graph_layers])
+                           for page, graph_layers in layout]
         books = list(op.pages("w"))
         if not books:
             raise ValueError("Origin 模板没有 Book 工作簿，无法保留其 Book 结构。")
@@ -146,11 +151,24 @@ def write_project(template, data, destination):
         op.wait()
         op.save(str(target))
         op.wait()
+        updated_layout = graph_layout(op)
+        if [(str(page), [len(plots) for _, plots in graph_layers])
+                for page, graph_layers in updated_layout] != original_layout:
+            # Avoid claiming a lossless template if Origin changed its plot hierarchy.
+            if target.exists():
+                target.unlink()
+            raise RuntimeError("Origin 保存后 Graph/Layer/Plot 层次发生变化，已取消导出。")
+        if hashlib.sha256(source.read_bytes()).hexdigest() != original_digest:
+            if target.exists():
+                target.unlink()
+            raise RuntimeError("原始 Origin 模板文件发生变化。请从备份恢复模板。")
         if not target.is_file() or target.stat().st_size == 0:
             raise IOError("Origin 没有生成有效的 .opju 文件。请检查 Origin 2024 的保存权限。")
         return {"Output": str(target), "SeriesCount": len(profiles),
                 "BookCount": len(books), "GraphCount": len(layout),
-                "TemplateGraph": str(graph)}
+                "TemplateGraph": str(graph),
+                "GraphHierarchyPreserved": True,
+                "PlotMapping": "one-existing-plot-per-catalyst"}
     finally:
         if op.oext:
             op.exit()

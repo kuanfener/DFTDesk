@@ -138,6 +138,8 @@ class TestOriginProjectExport(unittest.TestCase):
             with mock.patch.dict("sys.modules", {"originpro": fake}):
                 result = mod.write_project(source, xlsx, dest)
             self.assertEqual(2, result["SeriesCount"])
+            self.assertTrue(result["GraphHierarchyPreserved"])
+            self.assertEqual("one-existing-plot-per-catalyst", result["PlotMapping"])
             self.assertEqual(["DFTDesk_Profiles"], fake.book.sheet_names)
             self.assertEqual(4, len(fake.book.sheet.columns))
             self.assertEqual(1, len(plots[0].updated))
