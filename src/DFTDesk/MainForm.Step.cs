@@ -193,7 +193,7 @@ internal sealed partial class MainForm
         var copied = new List<string>();
         try
         {
-            for (var i = 0; i < files.Length; i++)
+            for (var i = 0; i < files.Count; i++)
             {
                 File.Copy(files[i].Source, destinations[i], overwrite: false);
                 copied.Add(destinations[i]);
